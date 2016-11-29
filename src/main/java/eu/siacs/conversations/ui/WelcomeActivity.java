@@ -24,7 +24,7 @@ public class WelcomeActivity extends Activity {
 		}
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.welcome);
-		final Button createAccount = (Button) findViewById(R.id.create_account);
+		/*final Button createAccount = (Button) findViewById(R.id.create_account);
 		createAccount.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
@@ -32,7 +32,7 @@ public class WelcomeActivity extends Activity {
 				intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
 				startActivity(intent);
 			}
-		});
+		});*/
 		final Button useOwnProvider = (Button) findViewById(R.id.use_own_provider);
 		useOwnProvider.setOnClickListener(new View.OnClickListener() {
 			@Override
