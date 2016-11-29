@@ -123,14 +123,14 @@
 	<string name="pref_never_send_crash">Never send crash reports</string>
 	<string name="pref_never_send_crash_summary">By sending in stack traces you are helping the ongoing development of Conversations</string>
 	<string name="pref_confirm_messages">Confirm Messages</string>
-	<string name="pref_confirm_messages_summary">Let your contact know when you have received and read a message</string>
+	<string name="pref_confirm_messages_summary">Let your contacts know when you have received and read their messages</string>
 	<string name="pref_ui_options">UI</string>
 	<string name="openpgp_error">OpenKeychain reported an error</string>
 	<string name="error_decrypting_file">I/O Error decrypting file</string>
 	<string name="accept">Accept</string>
 	<string name="error">An error has occurred</string>
 	<string name="pref_grant_presence_updates">Grant presence updates</string>
-	<string name="pref_grant_presence_updates_summary">Preemptively grant and ask for presence subscription for contacts you created</string>
+	<string name="pref_grant_presence_updates_summary">Preemptively grant and request presence subscriptions for contacts you have created</string>
 	<string name="subscriptions">Subscriptions</string>
 	<string name="your_account">Your account</string>
 	<string name="keys">Keys</string>
@@ -371,8 +371,8 @@
 	<string name="url_copied_to_clipboard">URL copied to clipboard</string>
 	<string name="message_copied_to_clipboard">Message copied to clipboard</string>
 	<string name="image_transmission_failed">Image transmission failed</string>
-	<string name="scan_qr_code">Scan QR code</string>
-	<string name="show_qr_code">Show QR code</string>
+	<string name="scan_qr_code">Scan 2D Barcode</string>
+	<string name="show_qr_code">Show 2D Barcode</string>
 	<string name="show_block_list">Show block list</string>
 	<string name="account_details">Account details</string>
 	<string name="verify_otr">Verify OTR</string>
@@ -505,7 +505,7 @@
 	<string name="contact_is_typing">%s is typing…</string>
 	<string name="contact_has_stopped_typing">%s has stopped typing</string>
 	<string name="pref_chat_states">Typing notifications</string>
-	<string name="pref_chat_states_summary">Let your contact know when you are writing a new message</string>
+	<string name="pref_chat_states_summary">Let your contacts know when you are writing messages to them</string>
 	<string name="send_location">Send location</string>
 	<string name="show_location">Show location</string>
 	<string name="no_application_found_to_display_location">No application found to display location</string>
@@ -700,4 +700,18 @@
 	<string name="data_saver_enabled_explained">Your operating system is restricting Conversations from accessing the Internet when in background. To receive notifications of new messages you should allow Conversations unrestricted access when Data saver is on.\nConversations will still make an effort to save data when possible.</string>
 	<string name="device_does_not_support_data_saver">Your device does not support disabling Data saver for Conversations.</string>
 	<string name="add_account_details">Add Account Details</string>
+	<string name="error_unable_to_create_temporary_file">Unable to create temporary file</string>
+	<string name="this_device_has_been_verified">This device has been verified</string>
+	<string name="copy_fingerprint">Copy fingerprint</string>
+	<string name="all_omemo_keys_have_been_verified">All OMEMO keys have been verified</string>
+	<string name="barcode_does_not_contain_fingerprints_for_this_conversation">Barcode does not contain fingerprints for this conversation.</string>
+	<string name="verified_fingerprints">Verified fingerprints</string>
+	<string name="use_camera_icon_to_scan_barcode">Use the camera to scan a contacts barcode</string>
+	<string name="please_wait_for_keys_to_be_fetched">Please wait for keys to be fetched</string>
+	<string name="share_as_barcode">Share as Barcode</string>
+	<string name="share_as_uri">Share as XMPP URI</string>
+	<string name="share_as_http">Share as HTTP link</string>
+	<string name="pref_blind_trust_before_verification">Blind Trust Before Verification</string>
+	<string name="pref_blind_trust_before_verification_summary">Automatically trust all new devices from contacts that haven’t been verified before.</string>
+	<string name="blindly_trusted_omemo_keys">Blindly trusted OMEMO keys</string>
 </resources>
