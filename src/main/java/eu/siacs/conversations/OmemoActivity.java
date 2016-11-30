@@ -20,6 +20,7 @@ import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.widget.Switch;
 import eu.siacs.conversations.utils.CryptoHelper;
+import spreedbox.me.app.R;
 
 
 public abstract class OmemoActivity extends XmppActivity {

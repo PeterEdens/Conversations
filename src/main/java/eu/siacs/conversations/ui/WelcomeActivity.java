@@ -10,7 +10,7 @@ import android.widget.Button;
 
 import java.util.List;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 
 public class WelcomeActivity extends XmppActivity {

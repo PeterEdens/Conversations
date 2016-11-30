@@ -12,7 +12,7 @@ import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Blockable;
 import eu.siacs.conversations.services.XmppConnectionService;
 

@@ -19,7 +19,7 @@ import com.google.zxing.integration.android.IntentResult;
 import net.java.otr4j.OtrException;
 import net.java.otr4j.session.Session;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;

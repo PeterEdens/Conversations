@@ -13,7 +13,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.ui.adapter.KnownHostsAdapter;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;

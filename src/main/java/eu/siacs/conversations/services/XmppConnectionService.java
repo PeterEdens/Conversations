@@ -61,7 +61,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import de.duenndns.ssl.MemorizingTrustManager;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.PgpDecryptionService;
 import eu.siacs.conversations.crypto.PgpEngine;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;

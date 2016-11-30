@@ -11,7 +11,7 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 
 public class SettingsFragment extends PreferenceFragment {
 

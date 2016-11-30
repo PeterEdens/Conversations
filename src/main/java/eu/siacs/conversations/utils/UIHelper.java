@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.Locale;
 
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;

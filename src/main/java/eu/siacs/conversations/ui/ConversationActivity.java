@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.timroes.android.listview.EnhancedListView;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;

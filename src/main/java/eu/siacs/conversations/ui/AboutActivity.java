@@ -5,7 +5,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 
 public class AboutActivity extends Activity {
 

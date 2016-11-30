@@ -25,7 +25,7 @@ import java.util.Locale;
 
 import de.duenndns.ssl.MemorizingTrustManager;
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.services.ExportLogsService;
 import eu.siacs.conversations.xmpp.XmppConnection;

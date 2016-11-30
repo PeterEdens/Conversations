@@ -15,7 +15,7 @@ import android.widget.ListView;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.siacs.conversations.R;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.ListItem;
 import eu.siacs.conversations.ui.adapter.ListItemAdapter;
 
