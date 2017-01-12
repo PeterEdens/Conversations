@@ -115,13 +115,13 @@
             android:summary="@string/pref_return_to_previous_summary"/>
     </PreferenceCategory>
     <PreferenceCategory android:title="@string/pref_ui_options">
-        <ListPreference
+        <!--<ListPreference
             android:defaultValue="light"
             android:entries="@array/themes"
             android:entryValues="@array/themes_values"
             android:key="theme"
             android:summary="@string/pref_theme_options_summary"
-            android:title="@string/pref_theme_options"/>
+            android:title="@string/pref_theme_options"/>-->
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="use_subject"

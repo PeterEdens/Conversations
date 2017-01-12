@@ -300,10 +300,10 @@
 	<string name="pref_dont_save_encrypted_summary">Warning: This could lead to message loss</string>
 	<string name="pref_expert_options">Expert settings</string>
 	<string name="pref_expert_options_summary">Please be careful with these</string>
-	<string name="title_activity_about">About Conversations</string>
+	<string name="title_activity_about">About Spreedbox</string>
 	<string name="pref_about_conversations_summary">Build and licensing information</string>
 	<string name="pref_about_message" translatable="false">
-			Conversations • the very last word in instant messaging.
+			Based upon Conversations • the very last word in instant messaging.
 			\n\nCopyright © 2014-2016 Daniel Gultsch
 			\n\nThis program is free software: you can redistribute it and/or modify
 			it under the terms of the GNU General Public License as published by

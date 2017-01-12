@@ -55,10 +55,10 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 24
-        versionCode 182
+        versionCode 183
         versionName "1.14.9"
         archivesBaseName += "-$versionName"
-        applicationId "eu.siacs.conversations"
+        applicationId "spreedbox.me.app"
     }
 
     dexOptions {

@@ -7,6 +7,7 @@ import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 
+
 public class PresenceGenerator extends AbstractGenerator {
 
 	public PresenceGenerator(XmppConnectionService service) {
@@ -56,7 +57,7 @@ public class PresenceGenerator extends AbstractGenerator {
 			Element cap = packet.addChild("c",
 					"http://jabber.org/protocol/caps");
 			cap.setAttribute("hash", "sha-1");
-			cap.setAttribute("node", "http://conversations.im");
+			cap.setAttribute("node", "http://" + account.getJid().getDomainpart());
 			cap.setAttribute("ver", capHash);
 		}
 		return packet;

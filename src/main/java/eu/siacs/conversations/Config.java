@@ -12,7 +12,7 @@ public final class Config {
 	private static final int OTR = 4;
 	private static final int OMEMO = 8;
 
-	private static final int ENCRYPTION_MASK = UNENCRYPTED | OPENPGP | OTR | OMEMO;
+	private static final int ENCRYPTION_MASK = UNENCRYPTED /*| OPENPGP*/ | OTR | OMEMO;
 
 	public static boolean supportUnencrypted() {
 		return (ENCRYPTION_MASK & UNENCRYPTED) != 0;
@@ -34,14 +34,14 @@ public final class Config {
 		return (ENCRYPTION_MASK & (ENCRYPTION_MASK - 1)) != 0;
 	}
 
-	public static final String LOGTAG = "conversations";
+	public static final String LOGTAG = "spreedboxchat";
 
-	public static final String BUG_REPORTS = "bugs@conversations.im";
+	public static final String BUG_REPORTS = "peter.edens@spreedbox.me";
 
 
 	public static final String DOMAIN_LOCK = null; //only allow account creation for this domain
-	public static final String MAGIC_CREATE_DOMAIN = "conversations.im";
-	public static final boolean DISALLOW_REGISTRATION_IN_UI = false; //hide the register checkbox
+	public static final String MAGIC_CREATE_DOMAIN = "spreedbox.me";
+	public static final boolean DISALLOW_REGISTRATION_IN_UI = true; //hide the register checkbox
 
 	public static final boolean ALLOW_NON_TLS_CONNECTIONS = false; //very dangerous. you should have a good reason to set this to true
 	public static final boolean FORCE_ORBOT = false; // always use TOR

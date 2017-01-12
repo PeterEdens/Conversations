@@ -546,10 +546,10 @@ public class Contact implements ListItem, Blockable {
 		public static final int TO = 0;
 		public static final int FROM = 1;
 		public static final int ASKING = 2;
-		public static final int PREEMPTIVE_GRANT = 3;
-		public static final int IN_ROSTER = 4;
-		public static final int PENDING_SUBSCRIPTION_REQUEST = 5;
-		public static final int DIRTY_PUSH = 6;
-		public static final int DIRTY_DELETE = 7;
+		public static final int PREEMPTIVE_GRANT = 4;
+		public static final int IN_ROSTER = 8;
+		public static final int PENDING_SUBSCRIPTION_REQUEST = 16;
+		public static final int DIRTY_PUSH = 32;
+		public static final int DIRTY_DELETE = 64;
 	}
 }
