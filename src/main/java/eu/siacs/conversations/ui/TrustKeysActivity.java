@@ -15,8 +15,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
 import org.whispersystems.libaxolotl.IdentityKey;
 
@@ -29,6 +27,7 @@ import java.util.Set;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.OmemoActivity;
+import eu.siacs.conversations.qr_reader.DecoderActivity;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
@@ -52,6 +51,7 @@ public class TrustKeysActivity extends OmemoActivity implements OnKeyStatusUpdat
 	private LinearLayout foreignKeys;
 	private Button mSaveButton;
 	private Button mCancelButton;
+	private final int DECODER_ACTIVITY_RESULT = 1;
 
 	private AxolotlService.FetchStatus lastFetchReport = AxolotlService.FetchStatus.SUCCESS;
 
@@ -130,7 +130,9 @@ public class TrustKeysActivity extends OmemoActivity implements OnKeyStatusUpdat
 				if (hasPendingKeyFetches()) {
 					Toast.makeText(this, R.string.please_wait_for_keys_to_be_fetched, Toast.LENGTH_SHORT).show();
 				} else {
-					new IntentIntegrator(this).initiateScan(Arrays.asList("AZTEC","QR_CODE"));
+					//new IntentIntegrator(this).initiateScan(Arrays.asList("AZTEC","QR_CODE"));
+					Intent i = new Intent(this, DecoderActivity.class);
+					startActivityForResult(i, DECODER_ACTIVITY_RESULT);
 					return true;
 				}
 		}
@@ -139,15 +141,21 @@ public class TrustKeysActivity extends OmemoActivity implements OnKeyStatusUpdat
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-		if (scanResult != null && scanResult.getFormatName() != null) {
-			String data = scanResult.getContents();
-			XmppUri uri = new XmppUri(data);
-			if (xmppConnectionServiceBound) {
-				processFingerprintVerification(uri);
-				populateView();
-			} else {
-				this.mPendingFingerprintVerificationUri =uri;
+		if ((requestCode) == DECODER_ACTIVITY_RESULT) {
+			String scanResult = null;
+			if (resultCode == RESULT_OK) {
+				scanResult = intent.getStringExtra("result");
+			}
+
+			if (scanResult != null) {
+				String data = scanResult;
+				XmppUri uri = new XmppUri(data);
+				if (xmppConnectionServiceBound) {
+					processFingerprintVerification(uri);
+					populateView();
+				} else {
+					this.mPendingFingerprintVerificationUri = uri;
+				}
 			}
 		}
 	}

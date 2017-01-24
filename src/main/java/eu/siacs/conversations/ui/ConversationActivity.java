@@ -69,7 +69,7 @@ import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
-public class ConversationActivity extends XmppActivity
+public class ConversationActivity extends DrawerActivity
 	implements OnAccountUpdate, OnConversationUpdate, OnRosterUpdate, OnUpdateBlocklist, XmppConnectionService.OnShowErrorToast {
 
 	public static final String ACTION_VIEW_CONVERSATION = "eu.siacs.conversations.action.VIEW";
@@ -202,8 +202,9 @@ public class ConversationActivity extends XmppActivity
 		listView.setAdapter(this.listAdapter);
 
 		if (getActionBar() != null) {
-			getActionBar().setDisplayHomeAsUpEnabled(false);
-			getActionBar().setHomeButtonEnabled(false);
+			getActionBar().setDisplayHomeAsUpEnabled(true);
+			getActionBar().setHomeButtonEnabled(true);
+			setupDrawer();
 		}
 
 		listView.setOnItemClickListener(new OnItemClickListener() {
@@ -358,8 +359,8 @@ public class ConversationActivity extends XmppActivity
 					ab.setTitle(conversation.getJid().toBareJid().toString());
 				}
 			} else {
-				ab.setDisplayHomeAsUpEnabled(false);
-				ab.setHomeButtonEnabled(false);
+				//ab.setDisplayHomeAsUpEnabled(false);
+				//ab.setHomeButtonEnabled(false);
 				ab.setTitle(R.string.app_name);
 			}
 		}
@@ -665,7 +666,13 @@ public class ConversationActivity extends XmppActivity
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
 		if (item.getItemId() == android.R.id.home) {
-			showConversationsOverview();
+
+			if (isDrawerOpen()) {
+				closeDrawer();
+			} else {
+				openDrawer();
+			}
+
 			return true;
 		} else if (item.getItemId() == R.id.action_add) {
 			startActivity(new Intent(this, StartConversationActivity.class));

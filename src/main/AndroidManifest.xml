@@ -15,16 +15,22 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <uses-feature android:name="android.hardware.camera"/>
+    <uses-feature android:name="android.hardware.camera.autofocus"/>
+
     <uses-permission
         android:name="android.permission.READ_PHONE_STATE"
         tools:node="remove" />
 
     <application
+        android:name="eu.siacs.conversations.SpreedboxApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/ConversationsTheme"
-        tools:replace="android:label">
+        tools:replace="android:icon,android:theme,android:label">
         <service android:name="eu.siacs.conversations.services.XmppConnectionService" />
 
         <receiver android:name="eu.siacs.conversations.services.EventReceiver">
@@ -39,6 +45,7 @@
         <activity
             android:name="eu.siacs.conversations.ui.ConversationActivity"
             android:label="@string/app_name"
+            android:theme="@style/AppCompatTheme"
             android:launchMode="singleTask"
             android:minWidth="300dp"
             android:minHeight="300dp"
@@ -52,6 +59,7 @@
         <activity
             android:name="eu.siacs.conversations.ui.StartConversationActivity"
             android:label="@string/title_activity_start_conversation"
+            android:theme="@style/AppCompatTheme"
             android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
@@ -89,6 +97,11 @@
             </intent-filter>
 
         </activity>
+        <activity
+            android:name="eu.siacs.conversations.qr_reader.DecoderActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppCompatTheme"
+            android:launchMode="singleTask"/>
         <activity
             android:name="eu.siacs.conversations.ui.WelcomeActivity"
             android:label="@string/app_name"
@@ -211,6 +224,211 @@
             android:grantUriPermissions="true"/>
 
 
+        <!-- nextcloud activities -->
+        <activity
+            android:name="com.owncloud.android.ui.activity.FileDisplayActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ownCloud.Toolbar.Drawer">
+        </activity>
+        <activity android:name="com.owncloud.android.ui.activity.ManageAccountsActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+        <activity android:name="com.owncloud.android.ui.activity.ParticipateActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+        <activity android:name="com.owncloud.android.ui.activity.UploadFilesActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity android:name="com.owncloud.android.ui.activity.ReceiveExternalFilesActivity"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.ownCloud.NoActionBar">
+            <activity android:name="com.owncloud.android.ui.activity.LocalDirectorySelectorActivity" />
+            <activity android:name="com.owncloud.android.ui.activity.StorageMigrationActivity" />
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="*/*" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.owncloud.android.ui.activity.Preferences"
+            android:theme="@style/Theme.ownCloud" >
+        </activity>
+        <activity
+            android:name="com.owncloud.android.ui.preview.PreviewImageActivity"
+            android:theme="@style/Theme.ownCloud.Overlay" />
+        <activity
+            android:name="com.owncloud.android.ui.preview.PreviewVideoActivity"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ownCloud.Fullscreen" />
+
+        <service
+            android:name="com.owncloud.android.authentication.AccountAuthenticatorService"
+            android:exported="true" >
+            <intent-filter android:priority="100" >
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
+        <service
+            android:name="com.owncloud.android.syncadapter.FileSyncService"
+            android:exported="true" >
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter_files" />
+        </service>
+
+        <provider
+            android:name="com.owncloud.android.providers.FileContentProvider"
+            android:authorities="@string/authority"
+            android:enabled="true"
+            android:exported="true"
+            android:label="@string/sync_string_files"
+            android:syncable="true" />
+
+        <provider
+            android:name="com.owncloud.android.providers.UsersAndGroupsSearchProvider"
+            android:authorities="@string/share_with_authority"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/search_users_and_groups_hint" />
+
+        <provider
+            android:name="org.nextcloud.providers.DocumentsStorageProvider"
+            android:authorities="@string/document_provider_authority"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS"
+            android:enabled="@bool/atLeastKitKat">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
+        </provider>
+
+
+        <activity
+            android:name="com.owncloud.android.authentication.AuthenticatorActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:theme="@style/Theme.ownCloud.noActionBar.Login" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="@string/oauth2_redirect_scheme" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.owncloud.android.workaround.accounts.CREATE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="@string/login_data_own_scheme" android:host="login"/>
+            </intent-filter>
+        </activity>
+
+        <service android:name="com.owncloud.android.services.OperationsService" />
+        <service android:name="com.owncloud.android.files.services.FileDownloader" />
+        <service android:name="com.owncloud.android.files.services.FileUploader" />
+        <service android:name="com.owncloud.android.media.MediaService" />
+
+        <activity android:name="com.owncloud.android.ui.activity.PassCodeActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity android:name="com.owncloud.android.ui.activity.ConflictsResolveActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+        <activity android:name="com.owncloud.android.ui.activity.GenericExplanationActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+        <activity android:name="com.owncloud.android.ui.activity.ErrorsWhileCopyingHandlerActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+
+        <activity android:name="com.owncloud.android.ui.activity.LogHistoryActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+
+        <activity android:name="com.owncloud.android.ui.errorhandling.ErrorShowActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+        <activity android:name="com.owncloud.android.ui.activity.UploadListActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"/>
+
+        <receiver android:name="com.owncloud.android.files.services.ConnectivityActionReceiver"
+            android:enabled="true" android:label="ConnectivityActionReceiver">
+            <intent-filter>
+                <!--action android:name="android.net.conn.CONNECTIVITY_CHANGE"/-->
+                <action android:name="android.net.wifi.STATE_CHANGE"/>
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.owncloud.android.files.InstantUploadBroadcastReceiver">
+            <intent-filter>
+
+                <!-- unofficially supported by many Android phones but not by HTC devices: -->
+                <action android:name="com.android.camera.NEW_PICTURE" />
+                <!-- officially supported since Android 4.0 (SDK 14, works even for HTC devices): -->
+                <action android:name="android.hardware.action.NEW_PICTURE" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.hardware.action.NEW_VIDEO" />
+
+                <data android:mimeType="video/*" />
+            </intent-filter>
+        </receiver>
+        <receiver android:name="com.owncloud.android.files.BootupBroadcastReceiver" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <service android:name="com.owncloud.android.services.observer.FileObserverService" />
+
+        <activity
+            android:name="com.owncloud.android.ui.activity.CopyToClipboardActivity"
+            android:icon="@drawable/copy_link"
+            android:theme="@style/Theme.ownCloud.Toolbar"
+            android:label="@string/copy_link" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.FolderPickerActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"
+            android:label="@string/app_name" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.UploadPathActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar"
+            android:label="@string/app_name" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.ShareActivity"
+            android:label="@string/share_dialog_title"
+            android:theme="@style/Theme.ownCloud.Dialog.NoTitle"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize" >
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+            </intent-filter>
+            <meta-data android:name="android.app.searchable"
+                android:resource="@xml/users_and_groups_searchable"/>
+        </activity>
+        <activity android:name="com.owncloud.android.ui.activity.ManageSpaceActivity"
+            android:label="@string/manage_space_title"
+            android:theme="@style/Theme.ownCloud" />
     </application>
 
 </manifest>

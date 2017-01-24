@@ -13,12 +13,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
 import net.java.otr4j.OtrException;
 import net.java.otr4j.session.Session;
 
+import eu.siacs.conversations.qr_reader.DecoderActivity;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
@@ -52,6 +51,7 @@ public class VerifyOTRActivity extends XmppActivity implements XmppConnectionSer
 	private Conversation mConversation;
 	private int mode = MODE_MANUAL_VERIFICATION;
 	private XmppUri mPendingUri = null;
+	private final int DECODER_ACTIVITY_RESULT = 1;
 
 	private DialogInterface.OnClickListener mVerifyFingerprintListener = new DialogInterface.OnClickListener() {
 
@@ -209,7 +209,9 @@ public class VerifyOTRActivity extends XmppActivity implements XmppConnectionSer
 			}
 			this.mode = intent.getIntExtra("mode", MODE_MANUAL_VERIFICATION);
 			if (this.mode == MODE_SCAN_FINGERPRINT) {
-				new IntentIntegrator(this).initiateScan();
+				//new IntentIntegrator(this).initiateScan();
+				Intent i = new Intent(this, DecoderActivity.class);
+				startActivityForResult(i, DECODER_ACTIVITY_RESULT);
 				return false;
 			}
 			return true;
@@ -220,10 +222,14 @@ public class VerifyOTRActivity extends XmppActivity implements XmppConnectionSer
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-		if ((requestCode & 0xFFFF) == IntentIntegrator.REQUEST_CODE) {
-			IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-			if (scanResult != null && scanResult.getFormatName() != null) {
-				String data = scanResult.getContents();
+		if ((requestCode) == DECODER_ACTIVITY_RESULT) {
+			String scanResult = null;
+			if (resultCode == RESULT_OK) {
+				scanResult = intent.getStringExtra("result");
+			}
+
+			if (scanResult != null) {
+				String data = scanResult;
 				XmppUri uri = new XmppUri(data);
 				if (xmppConnectionServiceBound) {
 					verifyWithUri(uri);

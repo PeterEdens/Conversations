@@ -53,8 +53,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.zxing.integration.android.IntentIntegrator;
-import com.google.zxing.integration.android.IntentResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,6 +61,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.qr_reader.DecoderActivity;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Blockable;
@@ -80,7 +79,7 @@ import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
-public class StartConversationActivity extends XmppActivity implements OnRosterUpdate, OnUpdateBlocklist {
+public class StartConversationActivity extends DrawerActivity implements OnRosterUpdate, OnUpdateBlocklist {
 
     public int conference_context_id;
     public int contact_context_id;
@@ -100,6 +99,7 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
     private AtomicBoolean mRequestedContactsPermission = new AtomicBoolean(false);
     private final int REQUEST_SYNC_CONTACTS = 0x3b28cf;
     private final int REQUEST_CREATE_CONFERENCE = 0x3b39da;
+    private final int DECODER_ACTIVITY_RESULT = 1;
     private Dialog mCurrentDialog = null;
 
     private MenuItem.OnActionExpandListener mOnActionExpandListener = new MenuItem.OnActionExpandListener() {
@@ -260,6 +260,12 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
         mViewPager = (ViewPager) findViewById(R.id.start_conversation_view_pager);
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        if (getActionBar() != null) {
+            getActionBar().setDisplayHomeAsUpEnabled(true);
+            getActionBar().setHomeButtonEnabled(true);
+            setupDrawer();
+        }
 
         mContactsTab = actionBar.newTab().setText(R.string.contacts)
                 .setTabListener(mTabListener);
@@ -615,26 +621,36 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_create_contact:
-                showCreateContactDialog(null, null);
-                return true;
-            case R.id.action_join_conference:
-                showJoinConferenceDialog(null);
-                return true;
-            case R.id.action_create_conference:
-                showCreateConferenceDialog();
-                return true;
-            case R.id.action_scan_qr_code:
-                new IntentIntegrator(this).initiateScan(Arrays.asList("AZTEC","QR_CODE"));
-                return true;
-            case R.id.action_hide_offline:
-                mHideOfflineContacts = !item.isChecked();
-                getPreferences().edit().putBoolean("hide_offline", mHideOfflineContacts).commit();
-                if (mSearchEditText != null) {
-                    filter(mSearchEditText.getText().toString());
-                }
-                invalidateOptionsMenu();
+        int i1 = item.getItemId();
+        if (i1 == android.R.id.home) {
+
+            if (isDrawerOpen()) {
+                closeDrawer();
+            } else {
+                openDrawer();
+            }
+
+            return true;
+        } else if (i1 == R.id.action_create_contact) {
+            showCreateContactDialog(null, null);
+            return true;
+        } else if (i1 == R.id.action_join_conference) {
+            showJoinConferenceDialog(null);
+            return true;
+        } else if (i1 == R.id.action_create_conference) {
+            showCreateConferenceDialog();
+            return true;
+        } else if (i1 == R.id.action_scan_qr_code) {//new IntentIntegrator(this).initiateScan(Arrays.asList("AZTEC","QR_CODE"));
+            Intent i = new Intent(this, DecoderActivity.class);
+            startActivityForResult(i, DECODER_ACTIVITY_RESULT);
+            return true;
+        } else if (i1 == R.id.action_hide_offline) {
+            mHideOfflineContacts = !item.isChecked();
+            getPreferences().edit().putBoolean("hide_offline", mHideOfflineContacts).commit();
+            if (mSearchEditText != null) {
+                filter(mSearchEditText.getText().toString());
+            }
+            invalidateOptionsMenu();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -664,10 +680,14 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        if ((requestCode & 0xFFFF) == IntentIntegrator.REQUEST_CODE) {
-            IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-            if (scanResult != null && scanResult.getFormatName() != null) {
-                String data = scanResult.getContents();
+        if ((requestCode) == DECODER_ACTIVITY_RESULT) {
+            String scanResult = null;
+            if(resultCode == RESULT_OK){
+                scanResult = intent.getStringExtra("result");
+            }
+
+            if (scanResult != null) {
+                String data = scanResult;
                 Invite invite = new Invite(data);
                 if (xmppConnectionServiceBound) {
                     invite.invite();
@@ -780,8 +800,8 @@ public class StartConversationActivity extends XmppActivity implements OnRosterU
         boolean noConversations = xmppConnectionService.getConversations().size() == 0;
         if ((init || noConversations) && ab != null) {
             ab.setDisplayShowHomeEnabled(false);
-            ab.setDisplayHomeAsUpEnabled(false);
-            ab.setHomeButtonEnabled(false);
+            //ab.setDisplayHomeAsUpEnabled(false);
+            //ab.setHomeButtonEnabled(false);
         }
         this.mKnownHosts = xmppConnectionService.getKnownHosts();
         this.mKnownConferenceHosts = xmppConnectionService.getKnownConferenceHosts();

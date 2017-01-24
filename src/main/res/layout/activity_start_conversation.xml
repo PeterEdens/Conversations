@@ -1,8 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/start_conversation_view_pager"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/color_background_primary" >
 
-</android.support.v4.view.ViewPager>
+<android.support.v4.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+android:id="@+id/drawer_layout"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:fitsSystemWindows="true"
+android:clickable="true" >
+
+<!-- The main content view -->
+    <android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/start_conversation_view_pager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/color_background_primary" >
+
+    </android.support.v4.view.ViewPager>
+
+
+<include
+    layout="@layout/conversation_drawer"
+    android:layout_width="@dimen/drawer_width"
+    android:layout_height="match_parent"
+    android:layout_gravity="start"/>
+
+</android.support.v4.widget.DrawerLayout>

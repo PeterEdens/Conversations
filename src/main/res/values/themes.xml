@@ -169,4 +169,20 @@
         <item name="android:background">@drawable/actionbar_tab_indicator</item>
     </style>
 
+    <style name="QRCodeActionBar" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="android:background">@color/primary500</item>
+        <item name="background">@color/primary500</item>
+    </style>
+
+    <!-- inherit from the AppCompat theme -->
+    <style name="AppCompatTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:actionBarStyle">@style/QRCodeActionBar</item>
+        <item name="actionBarStyle">@style/QRCodeActionBar</item>
+        <item name="android:actionBarWidgetTheme">@style/ConversationsActionBarWidget</item>
+        <item name="android:actionBarTabStyle">@style/ConversationsActionBarTabs</item>
+        <item name="TextSizeInfo">12sp</item>
+        <item name="TextSizeBody">14sp</item>
+        <item name="TextSizeHeadline">20sp</item>
+    </style>
+
 </resources>
