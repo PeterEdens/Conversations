@@ -37,8 +37,6 @@ public class WelcomeActivity extends XmppActivity {
 			ab.setDisplayShowHomeEnabled(false);
 			ab.setDisplayHomeAsUpEnabled(false);
 		}
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.welcome);
 		/*final Button createAccount = (Button) findViewById(R.id.create_account);
 
 		createAccount.setOnClickListener(new View.OnClickListener() {

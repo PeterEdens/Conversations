@@ -678,8 +678,14 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 	public boolean updateAccount(Account account) {
 		SQLiteDatabase db = this.getWritableDatabase();
 		String[] args = {account.getUuid()};
-		final int rows = db.update(Account.TABLENAME, account.getContentValues(), Account.UUID + "=?", args);
-		return rows == 1;
+		try {
+			final int rows = db.update(Account.TABLENAME, account.getContentValues(), Account.UUID + "=?", args);
+			return rows == 1;
+		}
+		catch (SQLiteCantOpenDatabaseException e) {
+			e.printStackTrace();
+		}
+		return false;
 	}
 
 	public boolean deleteAccount(Account account) {

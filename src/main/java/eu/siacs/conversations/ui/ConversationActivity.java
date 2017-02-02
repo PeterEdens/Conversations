@@ -1,7 +1,6 @@
 package eu.siacs.conversations.ui;
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.FragmentTransaction;
 import android.app.PendingIntent;
@@ -20,6 +19,7 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.widget.SlidingPaneLayout;
 import android.support.v4.widget.SlidingPaneLayout.PanelSlideListener;
+import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -35,6 +35,10 @@ import android.widget.CheckBox;
 import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
+
+import com.owncloud.android.authentication.AuthenticatorActivity;
+import com.owncloud.android.ui.activity.FileActivity;
+import com.owncloud.android.ui.activity.FileDisplayActivity;
 
 import net.java.otr4j.session.SessionStatus;
 
@@ -201,9 +205,9 @@ public class ConversationActivity extends DrawerActivity
 		this.listAdapter = new ConversationAdapter(this, conversationList);
 		listView.setAdapter(this.listAdapter);
 
-		if (getActionBar() != null) {
-			getActionBar().setDisplayHomeAsUpEnabled(true);
-			getActionBar().setHomeButtonEnabled(true);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+			getSupportActionBar().setHomeButtonEnabled(true);
 			setupDrawer();
 		}
 
@@ -347,7 +351,7 @@ public class ConversationActivity extends DrawerActivity
 	}
 
 	private void updateActionBarTitle(boolean titleShouldBeName) {
-		final ActionBar ab = getActionBar();
+		final ActionBar ab = getSupportActionBar();
 		final Conversation conversation = getSelectedConversation();
 		if (ab != null) {
 			if (titleShouldBeName && conversation != null) {
@@ -1192,13 +1196,12 @@ public class ConversationActivity extends DrawerActivity
 				if (Config.X509_VERIFICATION) {
 					startActivity(new Intent(this, ManageAccountActivity.class));
 				} else if (Config.MAGIC_CREATE_DOMAIN != null) {
-					startActivity(new Intent(this, WelcomeActivity.class));
+					startActivity(new Intent(this, SpreedboxAuthenticatorActivity.class));
 				} else {
 					Intent editAccount = new Intent(this, EditAccountActivity.class);
 					editAccount.putExtra("init",true);
 					startActivity(editAccount);
 				}
-				finish();
 			}
 		} else if (conversationList.size() <= 0) {
 			if (mRedirected.compareAndSet(false, true)) {

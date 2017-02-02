@@ -155,7 +155,7 @@ public abstract class DrawerActivity extends XmppActivity {
 
         setupDrawerToggle();
 
-        getActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     /**

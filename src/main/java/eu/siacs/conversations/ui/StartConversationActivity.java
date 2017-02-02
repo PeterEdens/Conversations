@@ -3,9 +3,6 @@ package eu.siacs.conversations.ui;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.ActionBar;
-import android.app.ActionBar.Tab;
-import android.app.ActionBar.TabListener;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Fragment;
@@ -26,8 +23,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v13.app.FragmentPagerAdapter;
+import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
+import android.support.v7.widget.SearchView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -79,12 +79,12 @@ import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
-public class StartConversationActivity extends DrawerActivity implements OnRosterUpdate, OnUpdateBlocklist {
+public class StartConversationActivity extends DrawerActivity implements OnRosterUpdate, OnUpdateBlocklist, SearchView.OnQueryTextListener {
 
     public int conference_context_id;
     public int contact_context_id;
-    private Tab mContactsTab;
-    private Tab mConferencesTab;
+    private ActionBar.Tab mContactsTab;
+    private ActionBar.Tab mConferencesTab;
     private ViewPager mViewPager;
     private ListPagerAdapter mListPagerAdapter;
     private List<ListItem> contacts = new ArrayList<>();
@@ -102,7 +102,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     private final int DECODER_ACTIVITY_RESULT = 1;
     private Dialog mCurrentDialog = null;
 
-    private MenuItem.OnActionExpandListener mOnActionExpandListener = new MenuItem.OnActionExpandListener() {
+    private MenuItemCompat.OnActionExpandListener mOnActionExpandListener = new MenuItemCompat.OnActionExpandListener() {
 
         @Override
         public boolean onMenuItemActionExpand(MenuItem item) {
@@ -129,29 +129,29 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         }
     };
     private boolean mHideOfflineContacts = false;
-    private TabListener mTabListener = new TabListener() {
+    private ActionBar.TabListener mTabListener = new ActionBar.TabListener() {
 
         @Override
-        public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        public void onTabUnselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
             return;
         }
 
         @Override
-        public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        public void onTabSelected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
             mViewPager.setCurrentItem(tab.getPosition());
             onTabChanged();
         }
 
         @Override
-        public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        public void onTabReselected(ActionBar.Tab tab, android.support.v4.app.FragmentTransaction ft) {
             return;
         }
     };
     private ViewPager.SimpleOnPageChangeListener mOnPageChangeListener = new ViewPager.SimpleOnPageChangeListener() {
         @Override
         public void onPageSelected(int position) {
-            if (getActionBar() != null) {
-                getActionBar().setSelectedNavigationItem(position);
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setSelectedNavigationItem(position);
             }
             onTabChanged();
         }
@@ -176,7 +176,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     private TextView.OnEditorActionListener mSearchDone = new TextView.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-            int pos = getActionBar().getSelectedNavigationIndex();
+            int pos = getSupportActionBar().getSelectedNavigationIndex();
             if (pos == 0) {
                 if (contacts.size() == 1) {
                     openConversationForContact((Contact) contacts.get(0));
@@ -258,12 +258,12 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start_conversation);
         mViewPager = (ViewPager) findViewById(R.id.start_conversation_view_pager);
-        ActionBar actionBar = getActionBar();
+        ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
 
-        if (getActionBar() != null) {
-            getActionBar().setDisplayHomeAsUpEnabled(true);
-            getActionBar().setHomeButtonEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeButtonEnabled(true);
             setupDrawer();
         }
 
@@ -600,20 +600,22 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         MenuItem menuHideOffline = menu.findItem(R.id.action_hide_offline);
         menuHideOffline.setChecked(this.mHideOfflineContacts);
         mMenuSearchView = menu.findItem(R.id.action_search);
-        mMenuSearchView.setOnActionExpandListener(mOnActionExpandListener);
-        View mSearchView = mMenuSearchView.getActionView();
-        mSearchEditText = (EditText) mSearchView
-                .findViewById(R.id.search_field);
-        mSearchEditText.addTextChangedListener(mSearchTextWatcher);
-        mSearchEditText.setOnEditorActionListener(mSearchDone);
-        if (getActionBar().getSelectedNavigationIndex() == 0) {
+        MenuItemCompat.setOnActionExpandListener(mMenuSearchView, mOnActionExpandListener);
+        SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(mMenuSearchView);
+        //mSearchEditText = (EditText) mSearchView
+        //        .findViewById(R.id.search_field);
+       // mSearchEditText.addTextChangedListener(mSearchTextWatcher);
+        //mSearchEditText.setOnEditorActionListener(mSearchDone);
+
+        mSearchView.setOnQueryTextListener(this);
+        if (getSupportActionBar().getSelectedNavigationIndex() == 0) {
             menuCreateConference.setVisible(false);
         } else {
             menuCreateContact.setVisible(false);
         }
         if (mInitialJid != null) {
             mMenuSearchView.expandActionView();
-            mSearchEditText.append(mInitialJid);
+            //mSearchEditText.append(mInitialJid);
             filter(mInitialJid);
         }
         return super.onCreateOptionsMenu(menu);
@@ -795,7 +797,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
             }
         }
         final Intent intent = getIntent();
-        final ActionBar ab = getActionBar();
+        final ActionBar ab = getSupportActionBar();
         boolean init = intent != null && intent.getBooleanExtra("init", false);
         boolean noConversations = xmppConnectionService.getConversations().size() == 0;
         if ((init || noConversations) && ab != null) {
@@ -960,6 +962,30 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         if (mSearchEditText != null) {
             filter(mSearchEditText.getText().toString());
         }
+    }
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        int pos = getSupportActionBar().getSelectedNavigationIndex();
+        if (pos == 0) {
+            if (contacts.size() == 1) {
+                openConversationForContact((Contact) contacts.get(0));
+                return true;
+            }
+        } else {
+            if (conferences.size() == 1) {
+                openConversationsForBookmark((Bookmark) conferences.get(0));
+                return true;
+            }
+        }
+        hideKeyboard();
+        mListPagerAdapter.requestFocus(pos);
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        return false;
     }
 
     public class ListPagerAdapter extends PagerAdapter {

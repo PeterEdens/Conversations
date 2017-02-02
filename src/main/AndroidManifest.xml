@@ -98,6 +98,11 @@
 
         </activity>
         <activity
+            android:name="eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity"
+            android:label="@string/app_name"
+            android:theme="@style/AppCompatTheme"
+            android:launchMode="singleTask"/>
+        <activity
             android:name="eu.siacs.conversations.qr_reader.DecoderActivity"
             android:label="@string/app_name"
             android:theme="@style/AppCompatTheme"
@@ -278,7 +283,7 @@
 
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator" />
+                android:resource="@xml/conversations_authenticator" />
         </service>
         <service
             android:name="com.owncloud.android.syncadapter.FileSyncService"
@@ -367,6 +372,9 @@
             android:theme="@style/Theme.ownCloud.Toolbar"/>
         <activity android:name="com.owncloud.android.ui.activity.UploadListActivity"
             android:theme="@style/Theme.ownCloud.Toolbar"/>
+
+        <activity android:name="com.owncloud.android.ui.activity.WhatsNewActivity"
+            android:theme="@style/Theme.ownCloud.noActionBar.Login" />
 
         <receiver android:name="com.owncloud.android.files.services.ConnectivityActionReceiver"
             android:enabled="true" android:label="ConnectivityActionReceiver">
