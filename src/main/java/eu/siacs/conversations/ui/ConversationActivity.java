@@ -1207,7 +1207,7 @@ public class ConversationActivity extends DrawerActivity
 			if (mRedirected.compareAndSet(false, true)) {
 				Account pendingAccount = xmppConnectionService.getPendingAccount();
 				if (pendingAccount == null) {
-					Intent startConversationActivity = new Intent(this, StartConversationActivity.class);
+					Intent startConversationActivity = new Intent(this, ChooserActivity.class);
 					intent.putExtra("init", true);
 					startActivity(startConversationActivity);
 				} else {

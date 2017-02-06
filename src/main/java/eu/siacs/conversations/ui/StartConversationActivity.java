@@ -602,10 +602,10 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         mMenuSearchView = menu.findItem(R.id.action_search);
         MenuItemCompat.setOnActionExpandListener(mMenuSearchView, mOnActionExpandListener);
         SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(mMenuSearchView);
-        //mSearchEditText = (EditText) mSearchView
-        //        .findViewById(R.id.search_field);
-       // mSearchEditText.addTextChangedListener(mSearchTextWatcher);
-        //mSearchEditText.setOnEditorActionListener(mSearchDone);
+        mSearchEditText = (EditText) mSearchView
+                .findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        mSearchEditText.addTextChangedListener(mSearchTextWatcher);
+        mSearchEditText.setOnEditorActionListener(mSearchDone);
 
         mSearchView.setOnQueryTextListener(this);
         if (getSupportActionBar().getSelectedNavigationIndex() == 0) {

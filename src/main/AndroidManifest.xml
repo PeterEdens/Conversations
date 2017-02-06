@@ -14,11 +14,10 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
-    <uses-permission android:name="android.permission.CAMERA"/>
-
-    <uses-feature android:name="android.hardware.camera"/>
-    <uses-feature android:name="android.hardware.camera.autofocus"/>
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <uses-permission
         android:name="android.permission.READ_PHONE_STATE"
@@ -45,10 +44,10 @@
         <activity
             android:name="eu.siacs.conversations.ui.ConversationActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppCompatTheme"
             android:launchMode="singleTask"
-            android:minWidth="300dp"
             android:minHeight="300dp"
+            android:minWidth="300dp"
+            android:theme="@style/AppCompatTheme"
             android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -59,8 +58,8 @@
         <activity
             android:name="eu.siacs.conversations.ui.StartConversationActivity"
             android:label="@string/title_activity_start_conversation"
-            android:theme="@style/AppCompatTheme"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:theme="@style/AppCompatTheme">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
 
@@ -95,26 +94,25 @@
                 <data android:pathPrefix="/i/" />
                 <data android:pathPrefix="/j/" />
             </intent-filter>
-
         </activity>
         <activity
             android:name="eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppCompatTheme"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask"
+            android:theme="@style/AppCompatTheme" />
         <activity
             android:name="eu.siacs.conversations.qr_reader.DecoderActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppCompatTheme"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask"
+            android:theme="@style/AppCompatTheme" />
         <activity
             android:name="eu.siacs.conversations.ui.WelcomeActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask" />
         <activity
             android:name="eu.siacs.conversations.ui.MagicCreateActivity"
             android:label="@string/create_account"
-            android:launchMode="singleTask"/>
+            android:launchMode="singleTask" />
         <activity
             android:name="eu.siacs.conversations.ui.SetPresenceActivity"
             android:configChanges="orientation|screenSize"
@@ -223,30 +221,33 @@
                 android:resource="@xml/file_paths" />
         </provider>
         <provider
-            android:authorities="eu.siacs.conversations.barcodes"
             android:name="eu.siacs.conversations.services.BarcodeProvider"
+            android:authorities="eu.siacs.conversations.barcodes"
             android:exported="false"
-            android:grantUriPermissions="true"/>
-
+            android:grantUriPermissions="true" />
 
         <!-- nextcloud activities -->
         <activity
             android:name="com.owncloud.android.ui.activity.FileDisplayActivity"
             android:label="@string/app_name"
-            android:theme="@style/Theme.ownCloud.Toolbar.Drawer">
-        </activity>
-        <activity android:name="com.owncloud.android.ui.activity.ManageAccountsActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-        <activity android:name="com.owncloud.android.ui.activity.ParticipateActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-        <activity android:name="com.owncloud.android.ui.activity.UploadFilesActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar.Drawer"></activity>
+        <activity
+            android:name="com.owncloud.android.ui.activity.ManageAccountsActivity"
             android:theme="@style/Theme.ownCloud.Toolbar" />
-        <activity android:name="com.owncloud.android.ui.activity.ReceiveExternalFilesActivity"
-            android:taskAffinity=""
+        <activity
+            android:name="com.owncloud.android.ui.activity.ParticipateActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.UploadFilesActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.ReceiveExternalFilesActivity"
             android:excludeFromRecents="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.ownCloud.NoActionBar">
             <activity android:name="com.owncloud.android.ui.activity.LocalDirectorySelectorActivity" />
             <activity android:name="com.owncloud.android.ui.activity.StorageMigrationActivity" />
+
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
 
@@ -264,8 +265,7 @@
         </activity>
         <activity
             android:name="com.owncloud.android.ui.activity.Preferences"
-            android:theme="@style/Theme.ownCloud" >
-        </activity>
+            android:theme="@style/Theme.ownCloud"></activity>
         <activity
             android:name="com.owncloud.android.ui.preview.PreviewImageActivity"
             android:theme="@style/Theme.ownCloud.Overlay" />
@@ -276,8 +276,8 @@
 
         <service
             android:name="com.owncloud.android.authentication.AccountAuthenticatorService"
-            android:exported="true" >
-            <intent-filter android:priority="100" >
+            android:exported="true">
+            <intent-filter android:priority="100">
                 <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
 
@@ -287,7 +287,7 @@
         </service>
         <service
             android:name="com.owncloud.android.syncadapter.FileSyncService"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.content.SyncAdapter" />
             </intent-filter>
@@ -304,32 +304,29 @@
             android:exported="true"
             android:label="@string/sync_string_files"
             android:syncable="true" />
-
         <provider
             android:name="com.owncloud.android.providers.UsersAndGroupsSearchProvider"
             android:authorities="@string/share_with_authority"
             android:enabled="true"
             android:exported="false"
             android:label="@string/search_users_and_groups_hint" />
-
         <provider
             android:name="org.nextcloud.providers.DocumentsStorageProvider"
             android:authorities="@string/document_provider_authority"
+            android:enabled="@bool/atLeastKitKat"
             android:exported="true"
             android:grantUriPermissions="true"
-            android:permission="android.permission.MANAGE_DOCUMENTS"
-            android:enabled="@bool/atLeastKitKat">
+            android:permission="android.permission.MANAGE_DOCUMENTS">
             <intent-filter>
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
 
-
         <activity
             android:name="com.owncloud.android.authentication.AuthenticatorActivity"
             android:exported="true"
             android:launchMode="singleTask"
-            android:theme="@style/Theme.ownCloud.noActionBar.Login" >
+            android:theme="@style/Theme.ownCloud.noActionBar.Login">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -345,9 +342,13 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="@string/login_data_own_scheme" android:host="login"/>
+
+                <data
+                    android:host="login"
+                    android:scheme="@string/login_data_own_scheme" />
             </intent-filter>
         </activity>
 
@@ -356,33 +357,41 @@
         <service android:name="com.owncloud.android.files.services.FileUploader" />
         <service android:name="com.owncloud.android.media.MediaService" />
 
-        <activity android:name="com.owncloud.android.ui.activity.PassCodeActivity"
+        <activity
+            android:name="com.owncloud.android.ui.activity.PassCodeActivity"
             android:theme="@style/Theme.ownCloud.Toolbar" />
-        <activity android:name="com.owncloud.android.ui.activity.ConflictsResolveActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-        <activity android:name="com.owncloud.android.ui.activity.GenericExplanationActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-        <activity android:name="com.owncloud.android.ui.activity.ErrorsWhileCopyingHandlerActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-
-        <activity android:name="com.owncloud.android.ui.activity.LogHistoryActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-
-        <activity android:name="com.owncloud.android.ui.errorhandling.ErrorShowActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-        <activity android:name="com.owncloud.android.ui.activity.UploadListActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"/>
-
-        <activity android:name="com.owncloud.android.ui.activity.WhatsNewActivity"
+        <activity
+            android:name="com.owncloud.android.ui.activity.ConflictsResolveActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.GenericExplanationActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.ErrorsWhileCopyingHandlerActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.LogHistoryActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.errorhandling.ErrorShowActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.UploadListActivity"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
+        <activity
+            android:name="com.owncloud.android.ui.activity.WhatsNewActivity"
             android:theme="@style/Theme.ownCloud.noActionBar.Login" />
 
-        <receiver android:name="com.owncloud.android.files.services.ConnectivityActionReceiver"
-            android:enabled="true" android:label="ConnectivityActionReceiver">
+        <receiver
+            android:name="com.owncloud.android.files.services.ConnectivityActionReceiver"
+            android:enabled="true"
+            android:label="ConnectivityActionReceiver">
             <intent-filter>
-                <!--action android:name="android.net.conn.CONNECTIVITY_CHANGE"/-->
-                <action android:name="android.net.wifi.STATE_CHANGE"/>
-                <action android:name="android.intent.action.ACTION_POWER_CONNECTED"/>
-                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED"/>
+
+                <!-- action android:name="android.net.conn.CONNECTIVITY_CHANGE"/ -->
+                <action android:name="android.net.wifi.STATE_CHANGE" />
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
+                <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
             </intent-filter>
         </receiver>
         <receiver android:name="com.owncloud.android.files.InstantUploadBroadcastReceiver">
@@ -401,7 +410,7 @@
                 <data android:mimeType="video/*" />
             </intent-filter>
         </receiver>
-        <receiver android:name="com.owncloud.android.files.BootupBroadcastReceiver" >
+        <receiver android:name="com.owncloud.android.files.BootupBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
@@ -412,31 +421,39 @@
         <activity
             android:name="com.owncloud.android.ui.activity.CopyToClipboardActivity"
             android:icon="@drawable/copy_link"
-            android:theme="@style/Theme.ownCloud.Toolbar"
-            android:label="@string/copy_link" />
+            android:label="@string/copy_link"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
         <activity
             android:name="com.owncloud.android.ui.activity.FolderPickerActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"
-            android:label="@string/app_name" />
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
         <activity
             android:name="com.owncloud.android.ui.activity.UploadPathActivity"
-            android:theme="@style/Theme.ownCloud.Toolbar"
-            android:label="@string/app_name" />
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ownCloud.Toolbar" />
         <activity
             android:name="com.owncloud.android.ui.activity.ShareActivity"
             android:label="@string/share_dialog_title"
-            android:theme="@style/Theme.ownCloud.Dialog.NoTitle"
             android:launchMode="singleTop"
-            android:windowSoftInputMode="adjustResize" >
+            android:theme="@style/Theme.ownCloud.Dialog.NoTitle"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
-            <meta-data android:name="android.app.searchable"
-                android:resource="@xml/users_and_groups_searchable"/>
+
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/users_and_groups_searchable" />
         </activity>
-        <activity android:name="com.owncloud.android.ui.activity.ManageSpaceActivity"
+        <activity
+            android:name="com.owncloud.android.ui.activity.ManageSpaceActivity"
             android:label="@string/manage_space_title"
             android:theme="@style/Theme.ownCloud" />
+        <activity
+            android:name="eu.siacs.conversations.ui.ChooserActivity"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:label="@string/title_activity_chooser"
+            android:theme="@style/FullscreenTheme"></activity>
     </application>
 
 </manifest>

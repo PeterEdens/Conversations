@@ -238,7 +238,7 @@ public abstract class DrawerActivity extends XmppActivity {
                         if (menuItem.getItemId() == R.id.nav_files) {
                             Intent fileDisplayIntent = new Intent(getApplicationContext(),
                                     FileDisplayActivity.class);
-                            fileDisplayIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            //fileDisplayIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                             startActivity(fileDisplayIntent);
 
                         }

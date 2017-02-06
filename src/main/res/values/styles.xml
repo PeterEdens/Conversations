@@ -1,9 +1,11 @@
 <resources xmlns:android="http://schemas.android.com/apk/res/android">
+
     <style name="Divider">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1.5dp</item>
         <item name="android:background">@color/black12</item>
     </style>
+
     <style name="MD">
         <item name="animationVelocity">6</item>
         <item name="insetBottom">16dp</item>
@@ -16,6 +18,18 @@
         <item name="thumbDrawable">@drawable/switch_thumb</item>
         <item name="thumb_margin">-17dp</item>
         <item name="android:padding">16dp</item>
+    </style>
+
+    <style name="FullscreenTheme" parent="ConversationsTheme">
+        <item name="android:actionBarStyle">@style/FullscreenActionBarStyle</item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@null</item>
+        <item name="metaButtonBarStyle">?android:attr/buttonBarStyle</item>
+        <item name="metaButtonBarButtonStyle">?android:attr/buttonBarButtonStyle</item>
+    </style>
+
+    <style name="FullscreenActionBarStyle" parent="Widget.AppCompat.ActionBar">
+        <item name="android:background">@color/black_overlay</item>
     </style>
 
 </resources>
