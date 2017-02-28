@@ -1,5 +1,7 @@
 package eu.siacs.conversations.ui;
 
+import android.accounts.Account;
+import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.support.v7.app.ActionBar;
@@ -9,7 +11,10 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
+
+import org.appspot.apprtc.ConnectActivity;
 
 import spreedbox.me.app.R;
 
@@ -38,6 +43,22 @@ public class ChooserActivity extends AppCompatActivity {
                 Intent startConversationActivity = new Intent(view.getContext(), StartConversationActivity.class);
                 startConversationActivity.putExtra("init", true);
                 startActivity(startConversationActivity);
+            }
+        });
+
+        findViewById(R.id.video_call_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent connectActivity = new Intent(view.getContext(), ConnectActivity.class);
+                Account account = AccountUtils.getCurrentOwnCloudAccount(view.getContext());
+                if (account != null) {
+                    AccountManager accountMgr = AccountManager.get(view.getContext());
+                    String serverUrl = accountMgr.getUserData(account, com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_OC_BASE_URL);
+                    String displayName = accountMgr.getUserData(account, com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_DISPLAY_NAME);
+                    connectActivity.putExtra(ConnectActivity.EXTRA_SERVERURL, serverUrl);
+                    connectActivity.putExtra(ConnectActivity.EXTRA_DISPLAYNAME, displayName);
+                }
+                startActivity(connectActivity);
             }
         });
 

@@ -21,7 +21,7 @@
       standard menu
       all items in this group MUST have orderInCategory="0" set
     -->
-    <group android:id="@+id/drawer_menu_standard" android:checkableBehavior="single">
+    <group android:id="@+id/drawer_menu_standard" android:checkableBehavior="none">
 
         <item
             android:orderInCategory="3"

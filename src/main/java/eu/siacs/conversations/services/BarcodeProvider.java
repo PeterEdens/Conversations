@@ -40,7 +40,7 @@ import eu.siacs.conversations.xmpp.jid.Jid;
 
 public class BarcodeProvider extends ContentProvider implements ServiceConnection {
 
-    private static final String AUTHORITY = "eu.siacs.conversations.barcodes";
+    private static final String AUTHORITY = "spreedbox.me.app.barcodes";
 
     private final Object lock = new Object();
 

@@ -2,6 +2,7 @@ package eu.siacs.conversations.ui;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -26,7 +27,7 @@ public abstract class AbstractSearchableListItemActivity extends XmppActivity {
 
 	private EditText mSearchEditText;
 
-	private final MenuItem.OnActionExpandListener mOnActionExpandListener = new MenuItem.OnActionExpandListener() {
+	private final MenuItemCompat.OnActionExpandListener mOnActionExpandListener = new MenuItemCompat.OnActionExpandListener() {
 
 		@Override
 		public boolean onMenuItemActionExpand(final MenuItem item) {
@@ -107,7 +108,7 @@ public abstract class AbstractSearchableListItemActivity extends XmppActivity {
 		mSearchEditText = (EditText) mSearchView
 			.findViewById(R.id.search_field);
 		mSearchEditText.addTextChangedListener(mSearchTextWatcher);
-		menuSearchView.setOnActionExpandListener(mOnActionExpandListener);
+		MenuItemCompat.setOnActionExpandListener(menuSearchView, mOnActionExpandListener);
 		return true;
 	}
 

@@ -213,7 +213,7 @@
 
         <provider
             android:name="android.support.v4.content.FileProvider"
-            android:authorities="eu.siacs.conversations.files"
+            android:authorities="spreedbox.me.app.files"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
@@ -222,7 +222,7 @@
         </provider>
         <provider
             android:name="eu.siacs.conversations.services.BarcodeProvider"
-            android:authorities="eu.siacs.conversations.barcodes"
+            android:authorities="spreedbox.me.app.barcodes"
             android:exported="false"
             android:grantUriPermissions="true" />
 
@@ -454,6 +454,48 @@
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_chooser"
             android:theme="@style/FullscreenTheme"></activity>
+
+        <!-- webrtc -->
+        <activity
+            android:name="org.appspot.apprtc.ConnectActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustPan">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="appr.tc"
+                    android:scheme="https" />
+                <data
+                    android:host="appr.tc"
+                    android:scheme="http" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.appspot.apprtc.SettingsActivity"
+            android:label="@string/settings_name"></activity>
+        <activity
+            android:name="org.appspot.apprtc.CallActivity"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize"
+            android:label="@string/app_name"
+            android:screenOrientation="fullUser"
+            android:theme="@style/CallActivityTheme"></activity>
+
+        <service android:name="org.appspot.apprtc.service.WebsocketService"></service>
+
+        <activity android:name="org.appspot.apprtc.RoomActivity"
+            android:theme="@style/RoomActivityTheme"></activity>
+
+        <receiver android:name="org.appspot.apprtc.receiver.CallReceiver" >
+            <intent-filter>
+                <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_DESCRIPTION" />
+                <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_ICE_CANDIDATE" />
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

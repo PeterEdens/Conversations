@@ -2,14 +2,14 @@
 <resources>
     <!-- App name  and other strings-->
     <string name="app_name">Spreedbox</string>
-    <string name="account_type">nextcloud</string>	<!-- better if was a domain name; but changing it now would require migrate accounts when the app is updated -->
+    <string name="account_type">spreedbox</string>	<!-- better if was a domain name; but changing it now would require migrate accounts when the app is updated -->
     <string name="authority">org.nextcloud.spreedbox</string>	<!-- better if was the app package with ".provider" appended ; it identifies the provider -->
     <string name="document_provider_authority">org.nextcloud.spreedbox.documents</string>
     <string name="file_provider_authority">org.nextcloud.spreedbox.files</string>
-    <string name ="db_file">nextcloud.db</string>
-    <string name ="db_name">nextcloud</string>
-    <string name ="data_folder">nextcloud</string>
-    <string name ="log_name">nextcloud</string>
+    <string name ="db_file">spreedbox.db</string>
+    <string name ="db_name">spreedbox</string>
+    <string name ="data_folder">spreedbox</string>
+    <string name ="log_name">spreedbox</string>
     <string name ="default_display_name_for_root_folder">Spreedbox</string>
     <string name ="user_agent">Mozilla/5.0 (Android) ownCloud-android/%1$s</string>
     <string name="share_with_authority">com.nextcloud.spreedbox.android.providers.UsersAndGroupsSearchProvider</string>

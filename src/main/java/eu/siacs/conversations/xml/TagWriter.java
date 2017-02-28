@@ -79,6 +79,9 @@ public class TagWriter {
 				} catch (IllegalThreadStateException e) {
 					// already started
 				}
+				catch (OutOfMemoryError e) {
+					e.printStackTrace();
+				}
 			}
 			writeQueue.add(stanza);
 			return this;

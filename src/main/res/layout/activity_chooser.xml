@@ -13,7 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
-        android:keepScreenOn="true"
         android:text="@string/dummy_content"
         android:textColor="#33b5e5"
         android:textSize="50sp"
@@ -39,22 +38,57 @@
             android:orientation="vertical"
             tools:ignore="UselessParent">
 
+            <TextView
+                android:id="@+id/secure_chat_label"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:text="@string/secure_chat_button"/>
+
             <ImageButton
                 android:id="@+id/secure_chat_button"
                 style="?metaButtonBarButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_margin="10dp"
+                android:layout_weight=".3"
+                android:layout_marginBottom="10dp"
                 android:src="@drawable/secure_chat" />
+
+            <TextView
+                android:id="@+id/video_call_label"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:text="@string/video_call_button"/>
+
+            <ImageButton
+                android:id="@+id/video_call_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight=".3"
+                android:layout_marginBottom="10dp"
+                android:src="@drawable/video_call" />
+
+            <TextView
+                android:id="@+id/files_label"
+                android:layout_width="match_parent"
+                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:text="@string/files_button"/>
 
             <ImageButton
                 android:id="@+id/files_button"
                 style="?metaButtonBarButtonStyle"
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
-                android:layout_margin="10dp"
+                android:layout_weight=".3"
                 android:src="@drawable/files" />
 
         </LinearLayout>

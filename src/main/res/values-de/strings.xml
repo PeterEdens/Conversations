@@ -58,8 +58,8 @@
   <string name="unblock">Entsperren</string>
   <string name="save">Speichern</string>
   <string name="ok">OK</string>
-  <string name="crash_report_title">Conversations ist abgestürzt</string>
-  <string name="crash_report_message">Durch das Einsenden von Fehlerberichten hilfst du bei der stetigen Verbesserung von Conversations.\n<b>Achtung:</b> Dies wird eines deiner XMPP-Konten benutzen, um den Entwickler zu kontaktieren.</string>
+  <string name="crash_report_title">Spreedbox ist abgestürzt</string>
+  <string name="crash_report_message">Durch das Einsenden von Fehlerberichten hilfst du bei der stetigen Verbesserung von Spreedbox.\n<b>Achtung:</b> Dies wird eines deiner XMPP-Konten benutzen, um den Entwickler zu kontaktieren.</string>
   <string name="send_now">Jetzt abschicken</string>
   <string name="send_never">Nie mehr nachfragen</string>
   <string name="problem_connecting_to_account">Es gibt Probleme beim Verbindungsaufbau mit einem Konto</string>
@@ -89,16 +89,16 @@
   <string name="send_unencrypted">Unverschlüsselt senden</string>
   <string name="decryption_failed">Entschlüsselung fehlgeschlagen. Vielleicht hast du nicht den richtigen privaten Schlüssel.</string>
   <string name="openkeychain_required">OpenKeychain</string>
-  <string name="openkeychain_required_long">Conversations benutzt eine Drittanwendung namens <b>OpenKeychain</b>, um Nachrichten zu ver- und entschlüsseln und um deine Schlüssel zu verwalten.\n\nOpenKeychain ist GPLv3-lizenziert und kann über F-Droid oder Google Play bezogen werden.\n\n<small>(Bitte starte Conversations danach neu.)</small></string>
+  <string name="openkeychain_required_long">Spreedbox benutzt eine Drittanwendung namens <b>OpenKeychain</b>, um Nachrichten zu ver- und entschlüsseln und um deine Schlüssel zu verwalten.\n\nOpenKeychain ist GPLv3-lizenziert und kann über F-Droid oder Google Play bezogen werden.\n\n<small>(Bitte starte Spreedbox danach neu.)</small></string>
   <string name="restart">Neu starten</string>
   <string name="install">Installieren</string>
   <string name="openkeychain_not_installed">Bitte OpenKeychain installieren</string>
   <string name="offering">angeboten…</string>
   <string name="waiting">warten…</string>
   <string name="no_pgp_key">Kein OpenPGP-Schlüssel gefunden</string>
-  <string name="contact_has_no_pgp_key">Conversations ist nicht in der Lage, deine Nachrichten zu verschlüsseln, weil dein Kontakt seinen oder ihren Schlüssel nicht preisgibt.\n\n<small>Bitte sag deinem Kontakt, er oder sie möge OpenPGP einrichten.</small></string>
+  <string name="contact_has_no_pgp_key">Spreedbox ist nicht in der Lage, deine Nachrichten zu verschlüsseln, weil dein Kontakt seinen oder ihren Schlüssel nicht preisgibt.\n\n<small>Bitte sag deinem Kontakt, er oder sie möge OpenPGP einrichten.</small></string>
   <string name="no_pgp_keys">Keine OpenPGP-Schlüssel gefunden</string>
-  <string name="contacts_have_no_pgp_keys">Conversations ist nicht in der Lage, deine Nachrichten zu verschlüsseln, weil deine Kontakte ihre Schlüssel nicht preisgeben.\n\n<small>Bitte sage deinen Kontakten, sie mögen OpenPGP einrichten.</small></string>
+  <string name="contacts_have_no_pgp_keys">Spreedbox ist nicht in der Lage, deine Nachrichten zu verschlüsseln, weil deine Kontakte ihre Schlüssel nicht preisgeben.\n\n<small>Bitte sage deinen Kontakten, sie mögen OpenPGP einrichten.</small></string>
   <string name="pref_general">Allgemeines</string>
   <string name="pref_xmpp_resource">XMPP-Ressource</string>
   <string name="pref_xmpp_resource_summary">Der Name, mit dem sich der Client selbst identifiziert</string>
@@ -120,7 +120,7 @@
   <string name="pref_notification_grace_period_summary">Deaktiviere Benachrichtigungen für eine kurze Zeit nach Erhalt einer Nachricht, die von einem anderen deiner Clients kommt</string>
   <string name="pref_advanced_options">Erweitert</string>
   <string name="pref_never_send_crash">Niemals Absturzberichte senden</string>
-  <string name="pref_never_send_crash_summary">Wenn du Absturzberichte einschickst, hilfst du Conversations stetig zu verbessern</string>
+  <string name="pref_never_send_crash_summary">Wenn du Absturzberichte einschickst, hilfst du Spreedbox stetig zu verbessern</string>
   <string name="pref_confirm_messages">Lese- und Empfangsbestätigung senden</string>
   <string name="pref_confirm_messages_summary">Informiere deine Kontakte, wenn du eine Nachricht empfangen und gelesen hast</string>
   <string name="pref_ui_options">Benutzeroberfläche</string>
@@ -299,7 +299,7 @@
   <string name="pref_dont_save_encrypted_summary">Achtung: kann zu Nachrichtenverlust führen</string>
   <string name="pref_expert_options">Experteneinstellungen</string>
   <string name="pref_expert_options_summary">Hier bitte vorsichtig sein</string>
-  <string name="title_activity_about">Über Conversations</string>
+  <string name="title_activity_about">Über Spreedbox</string>
   <string name="pref_about_conversations_summary">Versions- und Lizenzinformationen</string>
   <string name="title_pref_quiet_hours">Ruhige Stunden</string>
   <string name="title_pref_quiet_hours_start_time">Beginn</string>
@@ -359,9 +359,9 @@
   <string name="verified">Überprüft!</string>
   <string name="smp_requested">Kontakt fordert eine Überprüfung an</string>
   <string name="no_otr_session_found">Keine gültige OTR-Sitzung gefunden!</string>
-  <string name="conversations_foreground_service">Conversations</string>
+  <string name="conversations_foreground_service">Spreedbox</string>
   <string name="pref_keep_foreground_service">Dienst im Vordergrund ausführen</string>
-  <string name="pref_keep_foreground_service_summary">Verhindert, dass Android Conversations beendet und die Verbindung unterbricht</string>
+  <string name="pref_keep_foreground_service_summary">Verhindert, dass Android Spreedbox beendet und die Verbindung unterbricht</string>
   <string name="pref_export_logs">Nachrichtenverlauf exportieren</string>
   <string name="pref_export_logs_summary">Chatverlauf auf SD-Karte schreiben</string>
   <string name="notification_export_logs_title">Chats werden auf SD-Karte geschrieben</string>
@@ -464,7 +464,7 @@
   <string name="vcard">Kontakt</string>
   <string name="received_x_file">%s empfangen</string>
   <string name="disable_foreground_service">Vordergrund-Dienst deaktivieren</string>
-  <string name="touch_to_open_conversations">Antippen, um Conversations zu öffnen</string>
+  <string name="touch_to_open_conversations">Antippen, um Spreedbox zu öffnen</string>
   <string name="avatar_has_been_published">Avatar wurde gespeichert</string>
   <string name="sending_x_file">%s wird gesendet</string>
   <string name="offering_x_file">%s wird angeboten</string>
@@ -563,9 +563,9 @@
   <string name="shared_image_with_x">Bild mit %s geteilt</string>
   <string name="shared_images_with_x">Bilder mit %s geteilt</string>
   <string name="shared_text_with_x">Text mit %s geteilt</string>
-  <string name="no_storage_permission">Conversations benötigt Zugriff auf externen Speicher</string>
+  <string name="no_storage_permission">Spreedbox benötigt Zugriff auf externen Speicher</string>
   <string name="sync_with_contacts">Mit Kontakten synchronisieren</string>
-  <string name="sync_with_contacts_long">Conversations möchte deine XMPP-Kontaktliste mit deinen Kontakten abgleichen, um deren vollständige Namen und Avatare anzuzeigen.\n\nConversations wird deine Kontakte nur lokal lesen und abgleichen und überträgt diese nicht auf den Server.\n\nDu wirst nun gefragt, ob du den Zugriff auf deine Kontakte erlauben möchtest.</string>
+  <string name="sync_with_contacts_long">Spreedbox möchte deine XMPP-Kontaktliste mit deinen Kontakten abgleichen, um deren vollständige Namen und Avatare anzuzeigen.\n\nSpreedbox wird deine Kontakte nur lokal lesen und abgleichen und überträgt diese nicht auf den Server.\n\nDu wirst nun gefragt, ob du den Zugriff auf deine Kontakte erlauben möchtest.</string>
   <string name="certificate_information">Zertifikatinformationen</string>
   <string name="certificate_subject">Betreff</string>
   <string name="certificate_issuer">Aussteller</string>
@@ -583,8 +583,8 @@
   <string name="always">Immer</string>
   <string name="automatically">Automatisch</string>
   <string name="battery_optimizations_enabled">Batterieoptimierung aktiv</string>
-  <string name="battery_optimizations_enabled_explained">Dein Telefon wendet Batterioptimierungen bei Conversations an, welche verspätete Benachrichtigungen oder Nachrichtenverlust verursachen können.\nEs ist empfehlenswert diese zu deaktivieren.</string>
-  <string name="battery_optimizations_enabled_dialog">Dein Telefon wendet Batterioptimierungen bei Conversations an, welche verspätete Benachrichtigungen oder Nachrichtenverlust verursachen können. Es ist empfehlenswert dies zu deaktivieren.</string>
+  <string name="battery_optimizations_enabled_explained">Dein Telefon wendet Batterioptimierungen bei Spreedbox an, welche verspätete Benachrichtigungen oder Nachrichtenverlust verursachen können.\nEs ist empfehlenswert diese zu deaktivieren.</string>
+  <string name="battery_optimizations_enabled_dialog">Dein Telefon wendet Batterioptimierungen bei Spreedbox an, welche verspätete Benachrichtigungen oder Nachrichtenverlust verursachen können. Es ist empfehlenswert dies zu deaktivieren.</string>
   <string name="disable">Deaktivieren</string>
   <string name="selection_too_large">Der ausgewählte Bereich ist zu groß</string>
   <string name="no_accounts">(Keine aktivierten Konten)</string>
@@ -597,8 +597,8 @@
   <string name="security_error_invalid_file_access">Sicherheitsfehler: Dateizugriff nicht erlaubt</string>
   <string name="no_application_to_share_uri">Keine Anwendung zum Teilen der URI gefunden</string>
   <string name="share_uri_with">Teile URI mit…</string>
-  <string name="welcome_text">XMPP ist ein providerunabhängiges Protokoll. Du kannst diesen Client mit jedem beliebigen XMPP-Server benutzen.\nUm es dir leicht zu machen haben wir die Möglichkeit geschaffen, ein Konto auf conversations.im¹ anzulegen. Dieser Provider ist besonders gut für Conversations geeignet. </string>
-  <string name="magic_create_text">Wir führen dich durch den Prozess der Kontoerstellung auf conversations.im.¹\nWenn du conversations.im als Provider wählst, kannst du mit Nutzern anderer Anbieter kommunizieren, indem du ihnen deine vollständige Jabber-ID gibst.</string>
+  <string name="welcome_text">XMPP ist ein providerunabhängiges Protokoll. Du kannst diesen Client mit jedem beliebigen XMPP-Server benutzen.\nUm es dir leicht zu machen haben wir die Möglichkeit geschaffen, ein Konto auf Spreedbox.im¹ anzulegen. Dieser Provider ist besonders gut für Spreedbox geeignet. </string>
+  <string name="magic_create_text">Wir führen dich durch den Prozess der Kontoerstellung auf Spreedbox.im.¹\nWenn du Spreedbox.im als Provider wählst, kannst du mit Nutzern anderer Anbieter kommunizieren, indem du ihnen deine vollständige Jabber-ID gibst.</string>
   <string name="your_full_jid_will_be">Deine vollständige Jabber ID lautet: %s</string>
   <string name="create_account">Konto erstellen</string>
   <string name="use_own_provider">Nutze eigenen Provider</string>
@@ -628,7 +628,7 @@
   <string name="gp_medium">mittel</string>
   <string name="gp_long">lang</string>
   <string name="pref_broadcast_last_activity">Letzte Benutzeraktivität veröffentlichen</string>
-  <string name="pref_broadcast_last_activity_summary">Informiere deine Kontakte, wann du Conversations nutzt</string>
+  <string name="pref_broadcast_last_activity_summary">Informiere deine Kontakte, wann du Spreedbox nutzt</string>
   <string name="pref_privacy">Privatsphäre</string>
   <string name="pref_theme_options">Design</string>
   <string name="pref_theme_options_summary">Wähle die Farbpalette aus</string>
@@ -664,6 +664,6 @@
   <string name="show_error_message">Zeige Fehlermeldung</string>
   <string name="error_message">Fehlermeldung</string>
   <string name="data_saver_enabled">Datensparmodus aktiv</string>
-  <string name="data_saver_enabled_explained">Dein Betriebssystem verbietet Conversations im Hintergrund den Zugang zum Internet. Um Benachrichtigungen erhalten zu können, solltest du Conversations den Zugang erlauben, wenn der Datensparmodus aktiv ist. Conversations wird dennoch versuchen, so viel Daten wie möglich einzusparen.</string>
-  <string name="device_does_not_support_data_saver">Dein Gerät unterstützt den Datensparmodus für Conversations nicht.</string>
+  <string name="data_saver_enabled_explained">Dein Betriebssystem verbietet Spreedbox im Hintergrund den Zugang zum Internet. Um Benachrichtigungen erhalten zu können, solltest du Spreedbox den Zugang erlauben, wenn der Datensparmodus aktiv ist. Spreedbox wird dennoch versuchen, so viel Daten wie möglich einzusparen.</string>
+  <string name="device_does_not_support_data_saver">Dein Gerät unterstützt den Datensparmodus für Spreedbox nicht.</string>
 </resources>

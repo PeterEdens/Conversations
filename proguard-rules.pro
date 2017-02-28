@@ -39,6 +39,20 @@
   public static final android.os.Parcelable$Creator *;
 }
 
+-keep class org.webrtc.**  { *; }
+
+-keep class android.media.AudioTrack.** { *; }
+
+-keep class org.appspot.apprtc.**  { *; }
+
+
+
+-keep class de.tavendo.autobahn.**  { *; }
+
+
+
+-keepclasseswithmembernames class * { native <methods>; }
+
 -dontwarn javax.jcr.**
 -dontwarn org.slf4j.**
 -dontwarn javax.servlet.**

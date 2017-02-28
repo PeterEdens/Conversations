@@ -97,8 +97,8 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     private Invite mPendingInvite = null;
     private EditText mSearchEditText;
     private AtomicBoolean mRequestedContactsPermission = new AtomicBoolean(false);
-    private final int REQUEST_SYNC_CONTACTS = 0x3b28cf;
-    private final int REQUEST_CREATE_CONFERENCE = 0x3b39da;
+    private final int REQUEST_SYNC_CONTACTS = 0x202;
+    private final int REQUEST_CREATE_CONFERENCE = 0x201;
     private final int DECODER_ACTIVITY_RESULT = 1;
     private Dialog mCurrentDialog = null;
 

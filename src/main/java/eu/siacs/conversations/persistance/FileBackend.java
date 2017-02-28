@@ -60,7 +60,7 @@ import eu.siacs.conversations.xmpp.pep.Avatar;
 public class FileBackend {
 	private static final SimpleDateFormat IMAGE_DATE_FORMAT = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US);
 
-	public static final String CONVERSATIONS_FILE_PROVIDER = "eu.siacs.conversations.files";
+	public static final String CONVERSATIONS_FILE_PROVIDER = "spreedbox.me.app.files";
 
 	private XmppConnectionService mXmppConnectionService;
 

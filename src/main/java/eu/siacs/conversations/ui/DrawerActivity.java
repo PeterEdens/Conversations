@@ -233,6 +233,7 @@ public abstract class DrawerActivity extends XmppActivity {
                 new NavigationView.OnNavigationItemSelectedListener() {
                     @Override
                     public boolean onNavigationItemSelected(MenuItem menuItem) {
+
                         mDrawerLayout.closeDrawers();
 
                         if (menuItem.getItemId() == R.id.nav_files) {

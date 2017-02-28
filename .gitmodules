@@ -1,0 +1,6 @@
+[submodule "nextcloudlib"]
+	path = nextcloudlib
+	url = https://github.com/nextcloud/android-library.git
+[submodule "SpreedboxAndroidWebrtc"]
+	path = SpreedboxAndroidWebrtc
+	url = https://github.com/PeterEdens/SpreedboxAndroidWebrtc.git

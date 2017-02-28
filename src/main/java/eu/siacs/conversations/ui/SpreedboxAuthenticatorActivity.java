@@ -98,13 +98,18 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
             } catch (final InvalidJidException e) {
                 e.printStackTrace();
             }
-            Account account = new Account(jid.toBareJid(), password);
-            account.setPort(5222);
-            account.setHostname(url.getHost());
-            account.setOption(Account.OPTION_USETLS, true);
-            account.setOption(Account.OPTION_USECOMPRESSION, true);
-            account.setOption(Account.OPTION_REGISTER, false);
-            xmppConnectionService.createAccount(account);
+
+            if (jid != null) {
+                if (xmppConnectionService.findAccountByJid(jid) == null) {
+                    Account account = new Account(jid.toBareJid(), password);
+                    account.setPort(5222);
+                    account.setHostname(url.getHost());
+                    account.setOption(Account.OPTION_USETLS, true);
+                    account.setOption(Account.OPTION_USECOMPRESSION, true);
+                    account.setOption(Account.OPTION_REGISTER, false);
+                    xmppConnectionService.createAccount(account);
+                }
+            }
         }
     }
 }
