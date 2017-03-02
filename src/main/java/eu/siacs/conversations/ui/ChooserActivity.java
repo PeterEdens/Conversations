@@ -29,6 +29,11 @@ public class ChooserActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Account account = AccountUtils.getCurrentOwnCloudAccount(this);
+        if (account == null) {
+            startActivity(new Intent(this, SpreedboxAuthenticatorActivity.class));
+        }
+
         setContentView(R.layout.activity_chooser);
 
         // Hide UI first

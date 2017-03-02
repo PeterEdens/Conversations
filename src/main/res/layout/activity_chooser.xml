@@ -38,59 +38,113 @@
             android:orientation="vertical"
             tools:ignore="UselessParent">
 
-            <TextView
-                android:id="@+id/secure_chat_label"
+            <LinearLayout
+                android:id="@+id/uppercontrols"
+                style="?metaButtonBarStyle"
                 android:layout_width="match_parent"
-                android:gravity="center"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:text="@string/secure_chat_button"/>
+                android:gravity="bottom|center_horizontal"
+                android:orientation="horizontal"
+                tools:ignore="UselessParent"
+                android:weightSum="1">
 
-            <ImageButton
-                android:id="@+id/secure_chat_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight=".3"
-                android:layout_marginBottom="10dp"
-                android:src="@drawable/secure_chat" />
-
-            <TextView
-                android:id="@+id/video_call_label"
-                android:layout_width="match_parent"
-                android:gravity="center"
+            <LinearLayout
+                android:id="@+id/chat_controls"
+                style="?metaButtonBarStyle"
+                android:layout_width="wrap_content"
+                android:layout_weight=".5"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:text="@string/video_call_button"/>
+                android:layout_gravity="bottom"
+                android:orientation="vertical"
+                tools:ignore="UselessParent"
+                android:layout_margin="5dp"
+                android:background="@color/lightblue">
 
-            <ImageButton
-                android:id="@+id/video_call_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight=".3"
-                android:layout_marginBottom="10dp"
-                android:src="@drawable/video_call" />
+                    <ImageButton
+                        android:id="@+id/secure_chat_button"
+                        style="?metaButtonBarButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight=".3"
+                        android:layout_marginBottom="10dp"
+                        android:src="@drawable/secure_chat" />
 
-            <TextView
-                android:id="@+id/files_label"
+                <TextView
+                    android:id="@+id/secure_chat_label"
+                    android:layout_width="match_parent"
+                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textAllCaps="true"
+                    android:layout_margin="5dp"
+                    android:text="@string/secure_chat_button"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/video_call_controls"
+                    style="?metaButtonBarStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_weight=".5"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:orientation="vertical"
+                    tools:ignore="UselessParent"
+                    android:layout_margin="5dp"
+                    android:background="@color/lightblue">
+
+                    <ImageButton
+                        android:id="@+id/video_call_button"
+                        style="?metaButtonBarButtonStyle"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp"
+                        android:layout_weight=".3"
+                        android:layout_marginBottom="10dp"
+                        android:src="@drawable/video_call" />
+
+                    <TextView
+                        android:id="@+id/video_call_label"
+                        android:layout_width="match_parent"
+                        android:gravity="center"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="20sp"
+                        android:textAllCaps="true"
+                        android:layout_margin="5dp"
+                        android:text="@string/video_call_button"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/files_controls"
+                style="?metaButtonBarStyle"
                 android:layout_width="match_parent"
-                android:gravity="center"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:text="@string/files_button"/>
+                android:gravity="bottom|center"
+                android:orientation="vertical"
+                tools:ignore="UselessParent"
+                android:layout_margin="5dp"
+                android:background="@color/lightblue">
 
-            <ImageButton
-                android:id="@+id/files_button"
-                style="?metaButtonBarButtonStyle"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight=".3"
-                android:src="@drawable/files" />
+                <ImageButton
+                    android:id="@+id/files_button"
+                    style="?metaButtonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_cloud_white_48dp" />
 
+                <TextView
+                    android:id="@+id/files_label"
+                    android:layout_width="match_parent"
+                    android:gravity="center"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textAllCaps="true"
+                    android:layout_margin="5dp"
+                    android:text="@string/files_button"/>
+
+            </LinearLayout>
         </LinearLayout>
     </FrameLayout>
 

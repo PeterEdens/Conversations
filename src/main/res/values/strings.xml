@@ -717,8 +717,8 @@
     <string name="action_gotofiles">Goto Files</string>
 
     <string name="title_activity_chooser">ChooserActivity</string>
-    <string name="secure_chat_button">Go to Secure Chat</string>
-    <string name="video_call_button">Go to Video Call</string>
-    <string name="files_button">Go to Files</string>
+    <string name="secure_chat_button">Chat</string>
+    <string name="video_call_button">Call</string>
+    <string name="files_button">Files</string>
     <string name="dummy_content">Spreedbox</string>
 </resources>

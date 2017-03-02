@@ -235,7 +235,7 @@
             android:id="@+id/buttonOK"
             android:theme="@style/Button.Login"
             style="@style/Button.Login"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:padding="@dimen/standard_padding"
@@ -258,7 +258,8 @@
                 android:paddingTop="@dimen/alternate_half_padding"
                 android:text="@string/auth_register"
                 android:textColor="@color/login_text_hint_color"
-                android:contentDescription="@string/auth_register"/>
+                android:contentDescription="@string/auth_register"
+                android:visibility="gone"/>
             
         </LinearLayout>
         </LinearLayout>
