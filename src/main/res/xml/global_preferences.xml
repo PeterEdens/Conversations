@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen
+        android:key="chat_screen"
+        android:title="@string/prefChatTitle"
+        android:summary="@string/chat_settings_summary">
+        <intent
+            android:action="eu.siacs.conversations.ui.SettingsActivity"/>
+    </PreferenceScreen>
+    <PreferenceScreen
+        android:key="call_screen"
+        android:title="@string/prefCallTitle"
+        android:summary="@string/call_settings_summary">
+        <intent
+            android:action="org.appspot.apprtc.SettingsActivity"/>
+    </PreferenceScreen>
+    <PreferenceScreen
+        android:key="files_screen"
+        android:title="@string/prefFilesTitle"
+        android:summary="@string/files_settings_summary">
+        <intent
+            android:action="com.owncloud.android.ui.activity.Preferences"/>
+    </PreferenceScreen>
+</PreferenceScreen>

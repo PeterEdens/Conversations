@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SharedResourcesLib</string>
+    <string name="drawer_manage_accounts">Manage accounts</string>
+</resources>

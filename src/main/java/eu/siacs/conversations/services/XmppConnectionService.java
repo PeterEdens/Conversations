@@ -964,7 +964,7 @@ public class XmppConnectionService extends Service {
 	}
 
 	private boolean keepForegroundService() {
-		return getPreferences().getBoolean(SettingsActivity.KEEP_FOREGROUND_SERVICE,false);
+		return getPreferences().getBoolean(SettingsActivity.KEEP_FOREGROUND_SERVICE,true);
 	}
 
 	@Override

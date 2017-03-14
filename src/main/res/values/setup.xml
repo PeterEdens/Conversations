@@ -13,7 +13,11 @@
     <string name ="default_display_name_for_root_folder">Spreedbox</string>
     <string name ="user_agent">Mozilla/5.0 (Android) ownCloud-android/%1$s</string>
     <string name="share_with_authority">com.nextcloud.spreedbox.android.providers.UsersAndGroupsSearchProvider</string>
-    <string name="chat_class">eu.siacs.conversations.ui.ConversationActivity</string>
+    <string name="chooser_class">eu.siacs.conversations.ui.ChooserActivity</string>
+    <string name="extra_mode">eu.siacs.conversations.ui.EXTRA_MODE</string>
+    <string name="mode_im">eu.siacs.conversations.ui.MODE_IM</string>
+    <string name="mode_video_chat">eu.siacs.conversations.ui.MODE_VIDEO_CHAT</string>
+    <string name="mode_share_files">eu.siacs.conversations.ui.MODE_SHARE_FILES</string>
 
     <!-- URLs and flags related -->
     <string name="server_url"></string>

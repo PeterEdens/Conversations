@@ -1197,14 +1197,19 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 
 	public FingerprintStatus getFingerprintStatus(Account account, String fingerprint) {
 		Cursor cursor = getIdentityKeyCursor(account, fingerprint);
-		final FingerprintStatus status;
-		if (cursor.getCount() > 0) {
-			cursor.moveToFirst();
-			status = FingerprintStatus.fromCursor(cursor);
-		} else {
-			status = null;
+		FingerprintStatus status = null;
+		try {
+			if (cursor.getCount() > 0) {
+				cursor.moveToFirst();
+				status = FingerprintStatus.fromCursor(cursor);
+			} else {
+				status = null;
+			}
+			cursor.close();
 		}
-		cursor.close();
+		catch (SQLiteCantOpenDatabaseException e) {
+			e.printStackTrace();
+		}
 		return status;
 	}
 

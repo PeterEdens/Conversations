@@ -42,6 +42,15 @@
         </receiver>
 
         <activity
+            android:name="eu.siacs.conversations.ui.GlobalSettingsActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:minHeight="300dp"
+            android:minWidth="300dp"
+            android:windowSoftInputMode="stateHidden">
+        </activity>
+
+        <activity
             android:name="eu.siacs.conversations.ui.ConversationActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
@@ -116,7 +125,12 @@
             android:windowSoftInputMode="stateHidden|adjustResize" />
         <activity
             android:name="eu.siacs.conversations.ui.SettingsActivity"
-            android:label="@string/title_activity_settings" />
+            android:label="@string/title_activity_settings" >
+            <intent-filter>
+                <action android:name="eu.siacs.conversations.ui.SettingsActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="eu.siacs.conversations.ui.ChooseContactActivity"
             android:label="@string/title_activity_choose_contact" />
@@ -260,7 +274,12 @@
         </activity>
         <activity
             android:name="com.owncloud.android.ui.activity.Preferences"
-            android:theme="@style/Theme.ownCloud"></activity>
+            android:theme="@style/Theme.ownCloud">
+            <intent-filter>
+                <action android:name="com.owncloud.android.ui.activity.Preferences" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
         <activity
             android:name="com.owncloud.android.ui.preview.PreviewImageActivity"
             android:theme="@style/Theme.ownCloud.Overlay" />
@@ -478,7 +497,11 @@
         </activity>
         <activity
             android:name="org.appspot.apprtc.SettingsActivity"
-            android:label="@string/settings_name"></activity>
+            android:label="@string/settings_name">       <intent-filter>
+            <action android:name="org.appspot.apprtc.SettingsActivity" />
+            <category android:name="android.intent.category.DEFAULT" />
+        </intent-filter>
+        </activity>
         <activity
             android:name="org.appspot.apprtc.CallActivity"
             android:launchMode="singleTask"
@@ -490,12 +513,14 @@
         <service android:name="org.appspot.apprtc.service.WebsocketService"></service>
 
         <activity android:name="org.appspot.apprtc.RoomActivity"
+            android:launchMode="singleTask"
             android:theme="@style/RoomActivityTheme"></activity>
 
         <receiver android:name="org.appspot.apprtc.receiver.CallReceiver" >
             <intent-filter>
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_DESCRIPTION" />
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_ICE_CANDIDATE" />
+                <action android:name="org.appspot.apprtc.service.ACTION_BYE" />
             </intent-filter>
         </receiver>
     </application>

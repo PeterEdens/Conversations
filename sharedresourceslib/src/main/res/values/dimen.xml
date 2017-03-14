@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="nav_drawer_width">260dp</dimen>
+    <dimen name="nav_drawer_header_height">140dp</dimen>
+    <dimen name="nav_drawer_header_avatar">56dp</dimen>
+    <!-- avatar radius needs to 1/2 of the avatar dp value -->
+    <dimen name="nav_drawer_header_avatar_radius">28dp</dimen>
+    <dimen name="nav_drawer_header_avatar_other_accounts_size">40dp</dimen>
+    <dimen name="nav_drawer_header_avatar_other_accounts_radius">20dp</dimen>
+    <!-- margin must be nav_drawer_header_avatar_other_accounts_size+16dp -->
+    <dimen name="nav_drawer_header_avatar_second_account_margin">56dp</dimen>
+    <dimen name="nav_drawer_menu_avatar_radius">12sp</dimen>
+    <dimen name="list_item_avatar_icon_radius">20dp</dimen>
+    <dimen name="file_icon_size">32dp</dimen>
+    <dimen name="file_icon_size_grid">128dp</dimen>
+    <dimen name="file_avatar_size">128dp</dimen>
+    <dimen name="standard_padding">16dp</dimen>
+    <dimen name="standard_half_padding">8dp</dimen>
+    <dimen name="standard_quarter_padding">4dp</dimen>
+    <dimen name="standard_margin">16dp</dimen>
+    <dimen name="standard_double_margin">32dp</dimen>
+    <dimen name="standard_half_margin">8dp</dimen>
+    <dimen name="zero">0dp</dimen>
+    <dimen name="drawer_header_text">14sp</dimen>
+    <dimen name="drawer_header_subtext">12sp</dimen>
+</resources>

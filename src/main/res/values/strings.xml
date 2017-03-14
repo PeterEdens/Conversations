@@ -717,8 +717,15 @@
     <string name="action_gotofiles">Goto Files</string>
 
     <string name="title_activity_chooser">ChooserActivity</string>
-    <string name="secure_chat_button">Chat</string>
-    <string name="video_call_button">Call</string>
-    <string name="files_button">Files</string>
+    <string name="secure_chat_button">Instant Messaging</string>
+    <string name="video_call_button">Voice/Video Chat</string>
+    <string name="files_button">Share Files</string>
     <string name="dummy_content">Spreedbox</string>
+    <string name="settings">Settings</string>
+    <string name="prefChatTitle">Instant Messaging Settings</string>
+    <string name="prefFilesTitle">Share Files Settings</string>
+    <string name="prefCallTitle">Voice/Video Chat Settings</string>
+    <string name="chat_settings_summary">Settings for configuring how the Instant Messaging feature works.</string>
+    <string name="call_settings_summary">Settings for configuring how the Voice/Video Chat feature works.</string>
+    <string name="files_settings_summary">Settings for configuring how the Share Files feature works.</string>
 </resources>

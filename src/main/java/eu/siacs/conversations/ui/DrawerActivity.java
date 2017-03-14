@@ -1,11 +1,8 @@
 package eu.siacs.conversations.ui;
 
 import android.accounts.Account;
-import android.accounts.AccountManager;
-import android.accounts.AccountManagerFuture;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.NavigationView;
@@ -20,7 +17,6 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.owncloud.android.MainApp;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.OwnCloudAccount;
@@ -28,16 +24,12 @@ import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.users.RemoteGetUserQuotaOperation;
-import com.owncloud.android.ui.TextDrawable;
-import com.owncloud.android.ui.activity.FileDisplayActivity;
 import com.owncloud.android.ui.activity.ManageAccountsActivity;
-import com.owncloud.android.ui.activity.ParticipateActivity;
-import com.owncloud.android.ui.activity.Preferences;
-import com.owncloud.android.ui.activity.ToolbarActivity;
-import com.owncloud.android.ui.activity.UploadListActivity;
 import com.owncloud.android.utils.DisplayUtils;
 
 import spreedbox.me.app.R;
+
+import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
 
 /**
  * Base class to handle setup of the drawer implementation including user switching and avatar fetching and fallback
@@ -236,14 +228,48 @@ public abstract class DrawerActivity extends XmppActivity {
 
                         mDrawerLayout.closeDrawers();
 
-                        if (menuItem.getItemId() == R.id.nav_files) {
-                            Intent fileDisplayIntent = new Intent(getApplicationContext(),
-                                    FileDisplayActivity.class);
-                            //fileDisplayIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                            startActivity(fileDisplayIntent);
+                        if (menuItem.getItemId() == com.owncloud.android.R.id.nav_share_files) {
+                            String className = getString(com.owncloud.android.R.string.chooser_class);
 
+                            if (className.length() != 0) {
+                                Class<?> c = null;
+                                try {
+                                    c = Class.forName(className);
+                                }
+                                catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+
+                                if (c != null) {
+                                    Intent chatIntent = new Intent(getApplicationContext(),
+                                            c);
+                                    chatIntent.putExtra(getString(com.owncloud.android.R.string.extra_mode), getString(R.string.mode_share_files));
+                                    chatIntent.addFlags(FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(chatIntent);
+                                }
+                            }
                         }
-                        else if (menuItem.getItemId() == R.id.action_settings) {
+                        else if (menuItem.getItemId() == com.owncloud.android.R.id.nav_video_chat) {
+                            String className = getString(com.owncloud.android.R.string.chooser_class);
+
+                            if (className.length() != 0) {
+                                Class<?> c = null;
+                                try {
+                                    c = Class.forName(className);
+                                }
+                                catch (ClassNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+
+                                if (c != null) {
+                                    Intent chatIntent = new Intent(getApplicationContext(),
+                                            c);
+                                    chatIntent.putExtra(getString(com.owncloud.android.R.string.extra_mode), getString(com.owncloud.android.R.string.mode_video_chat));
+                                    chatIntent.addFlags(FLAG_ACTIVITY_CLEAR_TOP);
+                                    startActivity(chatIntent);
+                                }
+                            }
+                        } if (menuItem.getItemId() == R.id.action_settings) {
                             startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                         }
                         else if (menuItem.getItemId() == R.id.action_accounts) {

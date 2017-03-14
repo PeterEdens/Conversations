@@ -1,3 +1,3 @@
-include ':libs:MemorizingTrustManager', ':nextcloud', ':qrcodereaderview', ':SpreedboxAndroidWebrtc:app'
+include ':libs:MemorizingTrustManager', ':nextcloud', ':qrcodereaderview', ':SpreedboxAndroidWebrtc:app', ':sharedresourceslib'
 
 rootProject.name = 'Conversations'
