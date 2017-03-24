@@ -523,6 +523,7 @@
                 <action android:name="org.appspot.apprtc.service.ACTION_BYE" />
             </intent-filter>
         </receiver>
+
     </application>
 
 </manifest>
