@@ -43,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.entities.Contact;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
@@ -810,15 +811,16 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
+				activity.avatarService().tryToGetNextcloudAvatar(message.getContact(), activity.getPixel(48), imageView); // try to get avatar from nextcloud
 				imageView.setBackgroundColor(UIHelper.getColorForName(UIHelper.getMessageDisplayName(message)));
 				imageView.setImageDrawable(null);
-				final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
 				final AsyncDrawable asyncDrawable = new AsyncDrawable(activity.getResources(), null, task);
 				imageView.setImageDrawable(asyncDrawable);
 				try {
 					task.execute(message);
 				} catch (final RejectedExecutionException ignored) {
-				}
+				}*/
 			}
 		}
 	}

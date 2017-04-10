@@ -19,6 +19,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
+import eu.siacs.conversations.entities.Contact;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.Message;
@@ -152,15 +153,16 @@ public class ConversationAdapter extends ArrayAdapter<Conversation> {
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
+				activity.avatarService().tryToGetNextcloudAvatar((Contact)conversation.getContact(), activity.getPixel(48), imageView); // try to get avatar from nextcloud
 				imageView.setBackgroundColor(UIHelper.getColorForName(conversation.getName()));
 				imageView.setImageDrawable(null);
-				final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
 				final AsyncDrawable asyncDrawable = new AsyncDrawable(activity.getResources(), null, task);
 				imageView.setImageDrawable(asyncDrawable);
 				try {
 					task.execute(conversation);
 				} catch (final RejectedExecutionException ignored) {
-				}
+				}*/
 			}
 		}
 	}

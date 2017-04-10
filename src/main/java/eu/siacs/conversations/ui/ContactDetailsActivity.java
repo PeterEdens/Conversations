@@ -413,6 +413,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			account = contact.getAccount().getJid().toBareJid().toString();
 		}
 		accountJidTv.setText(getString(R.string.using_account, account));
+		avatarService().tryToGetNextcloudAvatar(contact, getPixel(72), badge); // try to get avatar from nextcloud
 		badge.setImageBitmap(avatarService().get(contact, getPixel(72)));
 		badge.setOnClickListener(this.onBadgeClick);
 
