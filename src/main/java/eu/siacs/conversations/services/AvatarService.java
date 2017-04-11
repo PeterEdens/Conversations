@@ -177,6 +177,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 		final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 		task.size = size;
+		task.item = contact;
 		task.avatarService = this;
 		try {
 			task.execute(contact);

@@ -1,16 +1,24 @@
 package eu.siacs.conversations.ui;
 
+import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.IBinder;
+import android.preference.PreferenceManager;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,7 +39,9 @@ import com.owncloud.android.utils.DisplayUtils;
 import org.appspot.apprtc.ConnectActivity;
 
 import java.io.ByteArrayOutputStream;
+import java.util.List;
 
+import eu.siacs.conversations.services.XmppConnectionService;
 import spreedbox.me.app.R;
 
 /**
@@ -47,6 +57,8 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     private FileDataStorageManager mStorageManager;
     private ImageView mAvatarContainer;
     private Context mContext;
+    public XmppConnectionService xmppConnectionService;
+    public boolean xmppConnectionServiceBound = false;
 
     @Override
     public void onNewIntent(Intent intent) {
@@ -58,14 +70,77 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             String mode = intent.getStringExtra(EXTRA_MODE);
             if (mode.equals(MODE_IM)) {
                 LaunchIM();
-            }
-            else if (mode.equals(MODE_VIDEO_CHAT)) {
+            } else if (mode.equals(MODE_VIDEO_CHAT)) {
                 LaunchVideoChat();
-            }
-            else if (mode.equals(MODE_SHARE_FILES)) {
+            } else if (mode.equals(MODE_SHARE_FILES)) {
                 LaunchShareFiles();
             }
         }
+    }
+
+    protected ServiceConnection mConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            XmppConnectionService.XmppConnectionBinder binder = (XmppConnectionService.XmppConnectionBinder) service;
+            xmppConnectionService = binder.getService();
+            xmppConnectionServiceBound = true;
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            xmppConnectionServiceBound = false;
+        }
+    };
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!xmppConnectionServiceBound) {
+            connectToBackend();
+        }
+    }
+
+    public void connectToBackend() {
+        Intent intent = new Intent(this, XmppConnectionService.class);
+        intent.setAction("ui");
+        startService(intent);
+        bindService(intent, mConnection, Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (xmppConnectionServiceBound) {
+            unbindService(mConnection);
+            xmppConnectionServiceBound = false;
+        }
+    }
+
+    void logout() {
+        AccountManager am = (AccountManager) getSystemService(ACCOUNT_SERVICE);
+        // loop through all accounts to remove them
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.GET_ACCOUNTS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        Account[] accounts = am.getAccounts();
+        for (int index = 0; index < accounts.length; index++) {
+            if (accounts[index].type.equals(getString(R.string.account_type)))
+                am.removeAccount(accounts[index], null, null);
+        }
+
+        List<eu.siacs.conversations.entities.Account> xmppAccounts = xmppConnectionService.getAccounts();
+        for (eu.siacs.conversations.entities.Account acc: xmppAccounts) {
+            xmppConnectionService.deleteAccount(acc);
+        }
+        finish();
     }
 
     @Override
@@ -81,6 +156,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         }
 
         Account account = AccountUtils.getCurrentOwnCloudAccount(this);
+
         if (account == null) {
             startActivity(new Intent(this, SpreedboxAuthenticatorActivity.class));
         }
@@ -92,6 +168,13 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         if (actionBar != null) {
             actionBar.hide();
         }
+
+        findViewById(R.id.logout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                logout();
+            }
+        });
 
         findViewById(R.id.secure_chat_button).setOnClickListener(new View.OnClickListener() {
             @Override

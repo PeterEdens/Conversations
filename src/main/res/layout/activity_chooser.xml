@@ -202,6 +202,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/avatar_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:weightSum="9"
@@ -228,4 +229,14 @@
         android:src="@drawable/ic_account_circle_black_48dp"
         android:background="@drawable/white_circle"/>
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_exit_to_app_white_24dp"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="10dp"
+        android:layout_centerVertical="true"
+        android:background="@color/transparent"/>
 </RelativeLayout>

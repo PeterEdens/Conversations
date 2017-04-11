@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.IBinder;
 
 import com.owncloud.android.authentication.AuthenticatorActivity;
+import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 
 import java.net.MalformedURLException;
 import java.net.URL;
