@@ -802,7 +802,10 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 
 		if (!mInitMode) {
 			this.mAvatar.setVisibility(View.VISIBLE);
-			this.mAvatar.setImageBitmap(avatarService().get(this.mAccount, getPixel(72)));
+			//this.mAvatar.setImageBitmap(avatarService().get(this.mAccount, getPixel(72)));
+			avatarService().tryToGetNextcloudAvatar(this.mAccount.getSelfContact(), getPixel(48), this.mAvatar); // try to get avatar from nextcloud
+			this.mAvatar.setBackgroundColor(UIHelper.getColorForName(this.mAccount.getDisplayName()));
+			this.mAvatar.setImageDrawable(null);
 		} else {
 			this.mAvatar.setVisibility(View.GONE);
 		}

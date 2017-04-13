@@ -56,6 +56,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 	class NextcloudBitmapWorkerTask extends AsyncTask<Contact, Void, Bitmap> {
 		private ListItem item = null;
 		public int size = 0;
+		public MucOptions mucOptions;
 		private final WeakReference<ImageView> imageViewReference;
 		public AvatarService avatarService;
 
@@ -119,20 +120,26 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		@Override
 		protected Bitmap doInBackground(Contact... params) {
 			Contact contact = params[0];
-			Jid jid = contact.getJid();
-			final String KEY = key(contact, size);
-			String url = "https://" + jid.getDomainpart() + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
-			Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
+			if (contact != null) {
+				Jid jid = contact.getJid();
+				final String KEY = key(contact, size);
+				String url = "https://" + jid.getDomainpart() + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
+				Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
 
-			if (bitmap == null) {
-				downloadBitmap(url);
+				if (bitmap == null) {
+					bitmap = downloadBitmap(url);
+				}
+
+				if (bitmap != null) {
+					mXmppConnectionService.getBitmapCache().put(KEY, bitmap);
+				}
+				return bitmap;
 			}
-
-			if (bitmap != null) {
-				mXmppConnectionService.getBitmapCache().put(KEY, bitmap);
+			else if (mucOptions != null) {
+				Bitmap bitmap = avatarService.get(mucOptions, size, false);
+				return bitmap;
 			}
-
-			return bitmap;
+			return null;
 		}
 
 		@Override
@@ -171,6 +178,25 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		}
 		this.mXmppConnectionService.getBitmapCache().put(KEY, avatar);
 		return avatar;
+	}
+
+	public void tryToGetNextcloudAvatar(Bookmark bookmark, int size, ImageView imageView) {
+		Conversation conversation = bookmark.getConversation();
+
+		if (conversation != null) {
+			if (conversation.getMode() == Conversation.MODE_SINGLE) {
+				tryToGetNextcloudAvatar(conversation.getContact(), size, imageView);
+			} else {
+				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
+				task.size = size;
+				task.mucOptions = conversation.getMucOptions();
+				task.avatarService = this;
+				try {
+					task.execute((Contact)null);
+				} catch (final RejectedExecutionException ignored) {
+				}
+			}
+		}
 	}
 
 	public void tryToGetNextcloudAvatar(Contact contact, int size, ImageView imageView) {

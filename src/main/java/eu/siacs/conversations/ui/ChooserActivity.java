@@ -6,6 +6,7 @@ import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
@@ -20,6 +21,7 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.Handler;
@@ -118,6 +120,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     }
 
     void logout() {
+
         AccountManager am = (AccountManager) getSystemService(ACCOUNT_SERVICE);
         // loop through all accounts to remove them
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.GET_ACCOUNTS) != PackageManager.PERMISSION_GRANTED) {
@@ -172,7 +175,17 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         findViewById(R.id.logout).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                logout();
+                new AlertDialog.Builder(mContext)
+                        .setTitle(R.string.logout)
+                        .setMessage(R.string.logout_confirm)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                logout();
+                            }})
+                        .setNegativeButton(android.R.string.no, null).show();
+
             }
         });
 

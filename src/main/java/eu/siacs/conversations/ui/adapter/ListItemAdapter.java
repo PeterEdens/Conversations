@@ -22,6 +22,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 
+import eu.siacs.conversations.entities.Bookmark;
 import eu.siacs.conversations.entities.Contact;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.ListItem;
@@ -132,7 +133,12 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
-				activity.avatarService().tryToGetNextcloudAvatar((Contact)item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+				if (item instanceof Contact) {
+					activity.avatarService().tryToGetNextcloudAvatar((Contact) item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+				}
+				else {
+					activity.avatarService().tryToGetNextcloudAvatar((Bookmark)item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+				}
 				imageView.setBackgroundColor(UIHelper.getColorForName(item.getDisplayName()));
 				imageView.setImageDrawable(null);
 				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
