@@ -4,3 +4,6 @@
 [submodule "SpreedboxAndroidWebrtc"]
 	path = SpreedboxAndroidWebrtc
 	url = https://github.com/PeterEdens/SpreedboxAndroidWebrtc.git
+[submodule "android-floating-action-button"]
+	path = android-floating-action-button
+	url = https://github.com/futuresimple/android-floating-action-button.git

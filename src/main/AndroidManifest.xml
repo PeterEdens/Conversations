@@ -103,7 +103,31 @@
             android:name="eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:theme="@style/AppCompatTheme" />
+            android:theme="@style/AppCompatTheme" >
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="@string/oauth2_redirect_scheme" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.owncloud.android.workaround.accounts.CREATE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="login"
+                    android:scheme="@string/login_data_own_scheme" />
+            </intent-filter>
+            </activity>
         <activity
             android:name="eu.siacs.conversations.qr_reader.DecoderActivity"
             android:label="@string/app_name"
@@ -341,29 +365,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.ownCloud.noActionBar.Login">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="@string/oauth2_redirect_scheme" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.owncloud.android.workaround.accounts.CREATE" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="login"
-                    android:scheme="@string/login_data_own_scheme" />
-            </intent-filter>
         </activity>
 
         <service android:name="com.owncloud.android.services.OperationsService" />
@@ -521,6 +523,7 @@
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_DESCRIPTION" />
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_ICE_CANDIDATE" />
                 <action android:name="org.appspot.apprtc.service.ACTION_BYE" />
+                <action android:name="org.appspot.apprtc.service.ACTION_ADD_CONFERENCE_USER" />
             </intent-filter>
         </receiver>
 

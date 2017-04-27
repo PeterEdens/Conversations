@@ -5,7 +5,7 @@
     <string name="account_type">spreedbox</string>	<!-- better if was a domain name; but changing it now would require migrate accounts when the app is updated -->
     <string name="authority">org.nextcloud.spreedbox</string>	<!-- better if was the app package with ".provider" appended ; it identifies the provider -->
     <string name="document_provider_authority">org.nextcloud.spreedbox.documents</string>
-    <string name="file_provider_authority">org.nextcloud.spreedbox.files</string>
+    <string name="file_provider_authority">spreedbox.me.app.files</string>
     <string name ="db_file">spreedbox.db</string>
     <string name ="db_name">spreedbox</string>
     <string name ="data_folder">spreedbox</string>
@@ -14,6 +14,7 @@
     <string name ="user_agent">Mozilla/5.0 (Android) ownCloud-android/%1$s</string>
     <string name="share_with_authority">com.nextcloud.spreedbox.android.providers.UsersAndGroupsSearchProvider</string>
     <string name="chooser_class">eu.siacs.conversations.ui.ChooserActivity</string>
+    <string name="authenticator_class">eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity</string>
     <string name="extra_mode">eu.siacs.conversations.ui.EXTRA_MODE</string>
     <string name="mode_im">eu.siacs.conversations.ui.MODE_IM</string>
     <string name="mode_video_chat">eu.siacs.conversations.ui.MODE_VIDEO_CHAT</string>

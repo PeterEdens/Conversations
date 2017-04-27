@@ -229,7 +229,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         });
         DisplayUtils.setAvatar(account, this,
                 getResources()
-                        .getDimension(com.owncloud.android.R.dimen.nav_drawer_header_avatar_radius), getResources(), getStorageManager(),
+                        .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
                 mAvatarContainer);
     }
 
@@ -251,7 +251,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
             Bitmap avatar = null;
             if (mAvatarContainer != null) {
-                avatar = DrawableToBitmap(mAvatarContainer.getDrawable());
+                avatar = DrawableToBitmap(mAvatarContainer, mAvatarContainer.getDrawable());
             }
             else {
                 avatar = ThumbnailsCacheManager.getBitmapFromDiskCache("a_" + account.name);
@@ -275,7 +275,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         startActivity(startConversationActivity);
     }
 
-    private Bitmap DrawableToBitmap(Drawable drawable) {
+    private Bitmap DrawableToBitmap(ImageView container, Drawable drawable) {
         Bitmap bitmap = null;
 
         if (drawable instanceof BitmapDrawable) {
@@ -286,7 +286,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         }
 
         if(drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-            bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
+            bitmap = Bitmap.createBitmap(container.getWidth(), container.getHeight(), Bitmap.Config.ARGB_8888); // Single color bitmap will be created of 1x1 pixel
         } else {
             bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
         }
