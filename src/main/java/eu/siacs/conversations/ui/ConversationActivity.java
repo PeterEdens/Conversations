@@ -264,7 +264,9 @@ public class ConversationActivity extends DrawerActivity
 									.reInit(getSelectedConversation());
 						}
 						swipedConversation = null;
-						listView.setSelectionFromTop(index + (listView.getChildCount() < position ? 1 : 0), top);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+							listView.setSelectionFromTop(index + (listView.getChildCount() < position ? 1 : 0), top);
+						}
 					}
 
 					@Override
@@ -1196,7 +1198,10 @@ public class ConversationActivity extends DrawerActivity
 				if (Config.X509_VERIFICATION) {
 					startActivity(new Intent(this, ManageAccountActivity.class));
 				} else if (Config.MAGIC_CREATE_DOMAIN != null) {
-					startActivity(new Intent(this, SpreedboxAuthenticatorActivity.class));
+					Intent authIntent = new Intent(this, SpreedboxAuthenticatorActivity.class);
+					String serverAddress = getPreferences().getString("last_server", "");
+					authIntent.setData(Uri.parse("cloud://login/server:" + serverAddress));
+					startActivity(authIntent);
 				} else {
 					Intent editAccount = new Intent(this, EditAccountActivity.class);
 					editAccount.putExtra("init",true);

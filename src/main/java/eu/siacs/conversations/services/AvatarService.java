@@ -8,6 +8,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.util.Log;
 import android.widget.ImageView;
 
@@ -109,8 +110,8 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			}
 			else {
 				Bitmap bitmap = avatarService.get(item, size);
+				return bitmap;
 			}
-			return null;
 		}
 
 		public NextcloudBitmapWorkerTask(ImageView imageView) {
@@ -183,6 +184,14 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 	public void tryToGetNextcloudAvatar(Bookmark bookmark, int size, ImageView imageView) {
 		Conversation conversation = bookmark.getConversation();
 
+		Bitmap bitmap = get(bookmark, size, true);
+
+		if (bitmap != null) {
+			imageView.setImageBitmap(bitmap);
+			imageView.setBackgroundColor(0x00000000);
+			return;
+		}
+
 		if (conversation != null) {
 			if (conversation.getMode() == Conversation.MODE_SINGLE) {
 				tryToGetNextcloudAvatar(conversation.getContact(), size, imageView);
@@ -192,7 +201,13 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				task.mucOptions = conversation.getMucOptions();
 				task.avatarService = this;
 				try {
-					task.execute((Contact)null);
+
+					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+					}
+					else {
+						task.execute((Contact)null);
+					}
 				} catch (final RejectedExecutionException ignored) {
 				}
 			}
@@ -206,7 +221,12 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		task.item = contact;
 		task.avatarService = this;
 		try {
-			task.execute(contact);
+			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, contact);
+			}
+			else {
+				task.execute(contact);
+			}
 		} catch (final RejectedExecutionException ignored) {
 		}
 	}

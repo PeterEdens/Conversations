@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.IBinder;
+import android.preference.PreferenceManager;
 
 import com.owncloud.android.authentication.AuthenticatorActivity;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
@@ -93,6 +94,9 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
         }
 
         if (url != null) {
+            // save the last server
+            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("last_server", url.getHost()).commit();
+
             Jid jid = null;
             try {
                 jid = Jid.fromString(username + "@" + url.getHost());

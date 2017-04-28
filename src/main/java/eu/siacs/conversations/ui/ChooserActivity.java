@@ -17,6 +17,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
@@ -61,6 +62,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     private Context mContext;
     public XmppConnectionService xmppConnectionService;
     public boolean xmppConnectionServiceBound = false;
+    private Account mAccount;
 
     @Override
     public void onNewIntent(Intent intent) {
@@ -158,10 +160,14 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             handleIntent(intent);
         }
 
-        Account account = AccountUtils.getCurrentOwnCloudAccount(this);
+        mAccount = AccountUtils.getCurrentOwnCloudAccount(this);
 
-        if (account == null) {
-            startActivity(new Intent(this, SpreedboxAuthenticatorActivity.class));
+        if (mAccount == null) {
+
+            Intent authIntent = new Intent(this, SpreedboxAuthenticatorActivity.class);
+            String serverAddress = PreferenceManager.getDefaultSharedPreferences(this).getString("last_server", "");
+            authIntent.setData(Uri.parse("cloud://login/server:" + serverAddress));
+            startActivity(authIntent);
         }
 
         setContentView(R.layout.activity_chooser);
@@ -227,10 +233,27 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 startActivity(intent);
             }
         });
-        DisplayUtils.setAvatar(account, this,
-                getResources()
-                        .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
-                mAvatarContainer);
+
+        if (mAccount != null) {
+            DisplayUtils.setAvatar(mAccount, this,
+                    getResources()
+                            .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
+                    mAvatarContainer);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        // Check if the account has been updated
+        mAccount = AccountUtils.getCurrentOwnCloudAccount(this);
+        if (mAccount != null) {
+            DisplayUtils.setAvatar(mAccount, this,
+                    getResources()
+                            .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
+                    mAvatarContainer);
+        }
     }
 
     private void LaunchShareFiles() {
@@ -254,7 +277,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 avatar = DrawableToBitmap(mAvatarContainer, mAvatarContainer.getDrawable());
             }
             else {
-                avatar = ThumbnailsCacheManager.getBitmapFromDiskCache("a_" + account.name);
+                avatar = ThumbnailsCacheManager.getBitmapFromDiskCache("squ_" + account.name);
             }
 
             if (avatar != null) {
