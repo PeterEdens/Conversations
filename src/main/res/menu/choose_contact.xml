@@ -7,6 +7,7 @@
         app:actionLayout="@layout/actionview_search"
         android:icon="?attr/icon_search"
         app:showAsAction="collapseActionView|always"
+        app:actionViewClass="android.support.v7.widget.SearchView"
         android:title="@string/search"/>
 
     <item

@@ -30,8 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:padding="@dimen/standard_padding"
-        android:visibility="gone">
+        android:padding="@dimen/standard_padding">
 
         <FrameLayout
             android:id="@+id/drawer_user_avatars"

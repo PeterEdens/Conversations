@@ -56,14 +56,14 @@
             android:launchMode="singleTask"
             android:minHeight="300dp"
             android:minWidth="300dp"
-            android:theme="@style/AppCompatTheme"
+            android:theme="@style/AppCompatThemeNoActionBar"
             android:windowSoftInputMode="stateHidden">
         </activity>
         <activity
             android:name="eu.siacs.conversations.ui.StartConversationActivity"
             android:label="@string/title_activity_start_conversation"
             android:launchMode="singleTask"
-            android:theme="@style/AppCompatTheme">
+            android:theme="@style/AppCompatThemeNoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.SENDTO" />
 
@@ -103,7 +103,7 @@
             android:name="eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity"
             android:label="@string/app_name"
             android:launchMode="singleTask"
-            android:theme="@style/AppCompatTheme" >
+            android:theme="@style/ConversationsTheme" >
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -262,7 +262,7 @@
         <!-- nextcloud activities -->
         <activity
             android:name="com.owncloud.android.ui.activity.FileDisplayActivity"
-            android:label="@string/app_name"
+            android:label="@string/files_button"
             android:theme="@style/Theme.ownCloud.Toolbar.Drawer"></activity>
         <activity
             android:name="com.owncloud.android.ui.activity.ManageAccountsActivity"
@@ -481,21 +481,8 @@
         <!-- webrtc -->
         <activity
             android:name="org.appspot.apprtc.ConnectActivity"
-            android:label="@string/app_name"
-            android:windowSoftInputMode="adjustPan">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="appr.tc"
-                    android:scheme="https" />
-                <data
-                    android:host="appr.tc"
-                    android:scheme="http" />
-            </intent-filter>
+            android:label="@string/video_call_button"
+            android:theme="@style/RoomActivityTheme">
         </activity>
         <activity
             android:name="org.appspot.apprtc.SettingsActivity"
@@ -508,13 +495,19 @@
             android:name="org.appspot.apprtc.CallActivity"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize"
-            android:label="@string/app_name"
+            android:label="@string/video_call_button"
             android:screenOrientation="fullUser"
             android:theme="@style/CallActivityTheme"></activity>
 
         <service android:name="org.appspot.apprtc.service.WebsocketService"></service>
 
         <activity android:name="org.appspot.apprtc.RoomActivity"
+            android:label="@string/video_call_button"
+            android:launchMode="singleTask"
+            android:theme="@style/RoomActivityTheme"></activity>
+
+        <activity android:name="org.appspot.apprtc.UserActivity"
+            android:label="@string/video_call_button"
             android:launchMode="singleTask"
             android:theme="@style/RoomActivityTheme"></activity>
 

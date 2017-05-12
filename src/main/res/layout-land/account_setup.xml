@@ -22,15 +22,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 	android:padding="@dimen/standard_padding"
-	android:background="@color/lightblue"
-    >
+	android:background="@drawable/background_gradient">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottom_block"
         android:layout_alignParentTop="true"
-        android:orientation="horizontal" >
+        android:orientation="horizontal"
+		android:background="@drawable/white_rounded_rectangle" >
 
 		<ImageView
 			android:id="@+id/thumbnail"

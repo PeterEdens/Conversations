@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="ConversationsTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <item name="android:actionBarStyle">@style/ConversationsActionBar</item>
-        <item name="android:actionBarWidgetTheme">@style/ConversationsActionBarWidget</item>
-        <item name="android:actionBarTabStyle">@style/ConversationsActionBarTabs</item>
+    <style name="ConversationsTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="TextSizeInfo">12sp</item>
         <item name="TextSizeBody">14sp</item>
         <item name="TextSizeHeadline">20sp</item>
@@ -188,4 +187,13 @@
         <item name="TextSizeHeadline">20sp</item>
     </style>
 
+    <!-- inherit from the AppCompat theme -->
+    <style name="AppCompatThemeNoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+
+        <item name="android:windowActionBar">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="TextSizeInfo">12sp</item>
+        <item name="TextSizeBody">14sp</item>
+        <item name="TextSizeHeadline">20sp</item>
+    </style>
 </resources>

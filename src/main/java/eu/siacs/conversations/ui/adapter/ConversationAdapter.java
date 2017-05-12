@@ -146,25 +146,25 @@ public class ConversationAdapter extends ArrayAdapter<Conversation> {
 	}
 
 	public void loadAvatar(Conversation conversation, ImageView imageView) {
-		if (cancelPotentialWork(conversation, imageView)) {
+		imageView.setImageDrawable(null);
+		activity.avatarService().tryToGetNextcloudAvatar(conversation, activity.getPixel(56), imageView); // try to get avatar from nextcloud
+		/*if (cancelPotentialWork(conversation, imageView)) {
 			final Bitmap bm = activity.avatarService().get(conversation, activity.getPixel(56), true);
 			if (bm != null) {
 				cancelPotentialWork(conversation, imageView);
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
-				activity.avatarService().tryToGetNextcloudAvatar((Contact)conversation.getContact(), activity.getPixel(48), imageView); // try to get avatar from nextcloud
-				imageView.setBackgroundColor(UIHelper.getColorForName(conversation.getName()));
-				imageView.setImageDrawable(null);
-				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+
+				final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
 				final AsyncDrawable asyncDrawable = new AsyncDrawable(activity.getResources(), null, task);
 				imageView.setImageDrawable(asyncDrawable);
 				try {
 					task.execute(conversation);
 				} catch (final RejectedExecutionException ignored) {
-				}*/
+				}
 			}
-		}
+		}*/
 	}
 
 	public static boolean cancelPotentialWork(Conversation conversation, ImageView imageView) {

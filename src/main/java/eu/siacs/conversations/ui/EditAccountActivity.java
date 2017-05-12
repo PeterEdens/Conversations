@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -254,6 +255,7 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 	private String mSavedInstanceAccount;
 	private boolean mSavedInstanceInit = false;
 	private Button mClearDevicesButton;
+	private Toolbar toolbar;
 
 	public void refreshUiReal() {
 		invalidateOptionsMenu();
@@ -467,6 +469,9 @@ public class EditAccountActivity extends OmemoActivity implements OnAccountUpdat
 			this.mSavedInstanceInit = savedInstanceState.getBoolean("initMode", false);
 		}
 		setContentView(R.layout.activity_edit_account);
+		toolbar = (Toolbar)findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+
 		this.mAccountJid = (AutoCompleteTextView) findViewById(R.id.account_jid);
 		this.mAccountJid.addTextChangedListener(this.mTextWatcher);
 		this.mAccountJidLabel = (TextView) findViewById(R.id.account_jid_label);

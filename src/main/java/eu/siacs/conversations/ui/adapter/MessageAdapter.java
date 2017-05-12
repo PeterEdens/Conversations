@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.support.v4.content.FileProvider;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -641,13 +642,16 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 			} else if (message.bodyIsHeart()) {
 				displayHeartMessage(viewHolder, message.getBody().trim());
 			} else if (message.treatAsDownloadable() == Message.Decision.MUST) {
+				String body = message.getBody();
+				if (body.startsWith("<a ")) {
+					body = Html.fromHtml(body).toString();
+				}
 				try {
-					URL url = new URL(message.getBody());
+					URL url = new URL(body);
 					displayDownloadableMessage(viewHolder,
 							message,
-							activity.getString(R.string.check_x_filesize_on_host,
-									UIHelper.getFileDescriptionString(activity, message),
-									url.getHost()));
+							activity.getString(R.string.download_x_file,
+									UIHelper.getFileDescriptionString(activity, message)));
 				} catch (Exception e) {
 					displayDownloadableMessage(viewHolder,
 							message,
@@ -804,25 +808,28 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 	}
 
 	public void loadAvatar(Message message, ImageView imageView) {
-		if (cancelPotentialWork(message, imageView)) {
+
+		imageView.setImageDrawable(null);
+		activity.avatarService().tryToGetNextcloudAvatar(message, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+		/*if (cancelPotentialWork(message, imageView)) {
 			final Bitmap bm = activity.avatarService().get(message, activity.getPixel(48), true);
 			if (bm != null) {
 				cancelPotentialWork(message, imageView);
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
-				activity.avatarService().tryToGetNextcloudAvatar(message.getContact(), activity.getPixel(48), imageView); // try to get avatar from nextcloud
-				imageView.setBackgroundColor(UIHelper.getColorForName(UIHelper.getMessageDisplayName(message)));
 				imageView.setImageDrawable(null);
+				imageView.setBackgroundColor(UIHelper.getColorForName(UIHelper.getMessageDisplayName(message)));
+				activity.avatarService().tryToGetNextcloudAvatar(message, activity.getPixel(48), imageView); // try to get avatar from nextcloud
 				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
 				final AsyncDrawable asyncDrawable = new AsyncDrawable(activity.getResources(), null, task);
 				imageView.setImageDrawable(asyncDrawable);
 				try {
 					task.execute(message);
 				} catch (final RejectedExecutionException ignored) {
-				}*/
+				}
 			}
-		}
+		}*/
 	}
 
 	public static boolean cancelPotentialWork(Message message, ImageView imageView) {

@@ -18,6 +18,24 @@
 -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <!--
+      account list placeholder
+      all items in this group MUST have orderInCategory="2" set
+      all accounts are dynamically added with orderInCategory="1" set
+    -->
+    <group android:id="@+id/drawer_menu_accounts">
+        <item
+            android:orderInCategory="2"
+            android:id="@+id/drawer_menu_account_add"
+            android:icon="@drawable/ic_account_plus"
+            android:title="@string/prefs_add_account"/>
+        <item
+            android:orderInCategory="2"
+            android:id="@+id/drawer_menu_account_manage"
+            android:icon="@drawable/ic_settings"
+            android:title="@string/drawer_manage_accounts"/>
+    </group>
+
+    <!--
       standard menu
       all items in this group MUST have orderInCategory="0" set
     -->
@@ -25,9 +43,9 @@
 
         <item
             android:orderInCategory="3"
-            android:id="@+id/action_accounts"
-            android:title="@string/action_accounts"
-            android:icon="@drawable/ic_account_circle_white_18dp"/>
+            android:id="@+id/drawer_menu_contacts"
+            android:title="@string/contacts"
+            android:icon="@drawable/ic_action_group"/>
         <item
             android:orderInCategory="3"
             android:id="@+id/action_settings"

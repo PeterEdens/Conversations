@@ -13,6 +13,7 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Intents;
+import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -156,6 +157,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			}
 		}
 	};
+	private Toolbar toolbar;
 
 	@Override
 	public void onRosterUpdate() {
@@ -190,6 +192,8 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+
 		if (getIntent().getAction().equals(ACTION_VIEW_CONTACT)) {
 			try {
 				this.accountJid = Jid.fromString(getIntent().getExtras().getString(EXTRA_ACCOUNT));
@@ -202,6 +206,9 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 		}
 		this.messageFingerprint = getIntent().getStringExtra("fingerprint");
 		setContentView(R.layout.activity_contact_details);
+
+		toolbar = (Toolbar)findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
 
 		contactJidTv = (TextView) findViewById(R.id.details_contactjid);
 		accountJidTv = (TextView) findViewById(R.id.details_account);
@@ -320,7 +327,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			return;
 		}
 		invalidateOptionsMenu();
-		setTitle(contact.getDisplayName());
+		getSupportActionBar().setTitle(contact.getDisplayName());
 		if (contact.showInRoster()) {
 			send.setVisibility(View.VISIBLE);
 			receive.setVisibility(View.VISIBLE);

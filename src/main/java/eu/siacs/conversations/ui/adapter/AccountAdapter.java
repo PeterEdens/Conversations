@@ -46,9 +46,9 @@ public class AccountAdapter extends ArrayAdapter<Account> {
 		TextView statusView = (TextView) view.findViewById(R.id.account_status);
 		ImageView imageView = (ImageView) view.findViewById(R.id.account_image);
 		//imageView.setImageBitmap(activity.avatarService().get(account, activity.getPixel(48)));
+		imageView.setImageDrawable(null);
 		activity.avatarService().tryToGetNextcloudAvatar(account.getSelfContact(), activity.getPixel(48), imageView); // try to get avatar from nextcloud
 		imageView.setBackgroundColor(UIHelper.getColorForName(account.getDisplayName()));
-		imageView.setImageDrawable(null);
 
 		statusView.setText(getContext().getString(account.getStatus().getReadableId()));
 		switch (account.getStatus()) {

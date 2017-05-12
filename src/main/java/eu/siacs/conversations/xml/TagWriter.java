@@ -82,6 +82,9 @@ public class TagWriter {
 				catch (OutOfMemoryError e) {
 					e.printStackTrace();
 				}
+				catch (InternalError e) {
+					e.printStackTrace();
+				}
 			}
 			writeQueue.add(stanza);
 			return this;

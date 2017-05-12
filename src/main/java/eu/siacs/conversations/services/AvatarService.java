@@ -1,11 +1,17 @@
 package eu.siacs.conversations.services;
 
+import android.accounts.AccountManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.TransitionDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -38,6 +44,9 @@ import eu.siacs.conversations.utils.UIHelper;
 import eu.siacs.conversations.xmpp.OnAdvancedStreamFeaturesLoaded;
 import eu.siacs.conversations.xmpp.XmppConnection;
 import eu.siacs.conversations.xmpp.jid.Jid;
+import spreedbox.me.app.R;
+
+import static org.bouncycastle.asn1.ua.DSTU4145NamedCurves.params;
 
 public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
@@ -56,10 +65,24 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 	class NextcloudBitmapWorkerTask extends AsyncTask<Contact, Void, Bitmap> {
 		private ListItem item = null;
+		private Contact mContact = null;
 		public int size = 0;
 		public MucOptions mucOptions;
+		public Account account;
 		private final WeakReference<ImageView> imageViewReference;
 		public AvatarService avatarService;
+
+		public Contact getContact() {
+			return mContact;
+		}
+
+		public Account getAccount() {
+			return account;
+		}
+
+		public MucOptions getMucOptions() {
+			return mucOptions;
+		}
 
 		private Bitmap downloadBitmap(String url) {
 			HttpURLConnection connection = null;
@@ -91,6 +114,9 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			catch (NullPointerException e) {
+				e.printStackTrace();
+			}
 			if (responseCode > 400) {
 				responseStream = connection.getErrorStream();
 			}
@@ -103,13 +129,39 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			}
 
 			String responseType = connection.getContentType();
-			if (responseType != null && responseType.startsWith("image/")) {
+			if (responseType != null && responseType.startsWith("image/") && responseStream != null) {
 				Bitmap bitmap = BitmapFactory.decodeStream(responseStream);
+				try {
+					responseStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				connection.disconnect();
 				avatarService.mXmppConnectionService.getBitmapCache().put(url, bitmap);
+				return bitmap;
+			}
+			else if (account != null) {
+				Bitmap bitmap = avatarService.get(account, size);
+
+				try {
+                    if (responseStream != null)
+					responseStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				connection.disconnect();
 				return bitmap;
 			}
 			else {
 				Bitmap bitmap = avatarService.get(item, size);
+				try {
+					if (responseStream != null) {
+						responseStream.close();
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				connection.disconnect();
 				return bitmap;
 			}
 		}
@@ -118,13 +170,42 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			imageViewReference = new WeakReference<>(imageView);
 		}
 
+		String checkServer(String address) {
+			if (imageViewReference != null && imageViewReference.get() != null) {
+				android.accounts.Account[] accounts = AccountManager.get(imageViewReference.get().getContext()).getAccountsByType(imageViewReference.get().getResources().getString(R.string.account_type));
+				for (android.accounts.Account account : accounts) {
+					AccountManager ama = AccountManager.get(imageViewReference.get().getContext());
+					String baseurl = ama.getUserData(account, "oc_base_url");
+					if (baseurl.contains(address)) {
+						return baseurl;
+					}
+				}
+			}
+			return "https://" + address;
+		}
+
 		@Override
 		protected Bitmap doInBackground(Contact... params) {
-			Contact contact = params[0];
-			if (contact != null) {
-				Jid jid = contact.getJid();
-				final String KEY = key(contact, size);
-				String url = "https://" + jid.getDomainpart() + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
+			mContact = params != null ? params[0] : null;
+			if (mContact != null) {
+				Jid jid = mContact.getJid();
+				final String KEY = key(mContact, size);
+				String url = checkServer(jid.getDomainpart()) + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
+				Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
+
+				if (bitmap == null) {
+					bitmap = downloadBitmap(url);
+				}
+
+				if (bitmap != null) {
+					mXmppConnectionService.getBitmapCache().put(KEY, bitmap);
+				}
+				return bitmap;
+			}
+			else if (account != null) {
+				Jid jid = account.getJid();
+				final String KEY = key(account, size);
+				String url = checkServer(jid.getDomainpart()) + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
 				Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
 
 				if (bitmap == null) {
@@ -138,6 +219,10 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			}
 			else if (mucOptions != null) {
 				Bitmap bitmap = avatarService.get(mucOptions, size, false);
+				if (bitmap != null) {
+					final String KEY = key(mucOptions, size);
+					mXmppConnectionService.getBitmapCache().put(KEY, bitmap);
+				}
 				return bitmap;
 			}
 			return null;
@@ -148,8 +233,30 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			if (bitmap != null && !isCancelled()) {
 				final ImageView imageView = imageViewReference.get();
 				if (imageView != null) {
-					imageView.setImageBitmap(bitmap);
-					imageView.setBackgroundColor(0x00000000);
+					NextcloudBitmapWorkerTask task = (NextcloudBitmapWorkerTask) imageView.getTag();
+					if (task == this) {
+						/*Drawable current = imageView.getDrawable();
+						if (current == null) {
+							current = new ColorDrawable(Color.TRANSPARENT);
+						}
+						// Transition drawable with a transparent drwabale and the final bitmap
+						Drawable[] drawables = new Drawable[]{
+								current,
+								new BitmapDrawable(imageView.getResources(), bitmap)
+						};
+
+						final TransitionDrawable td =
+								new TransitionDrawable(drawables);
+
+						// Set background to loading bitmap
+						imageView.setBackgroundDrawable(
+								new BitmapDrawable(imageView.getResources(), bitmap));
+
+						imageView.setImageDrawable(td);
+						td.setCrossFadeEnabled(true);
+						td.startTransition(2000);*/
+						imageView.setImageBitmap(bitmap);
+					}
 				}
 			}
 		}
@@ -181,6 +288,48 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		return avatar;
 	}
 
+	boolean cancelPotentialWork(ImageView imageView, Contact contact) {
+		if (imageView.getTag() != null) {
+			NextcloudBitmapWorkerTask task = (NextcloudBitmapWorkerTask) imageView.getTag();
+			if (task.getContact() == null || task.getContact() != contact) {
+				task.cancel(false);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	boolean cancelPotentialWork(ImageView imageView, Account account) {
+		if (imageView.getTag() != null) {
+			NextcloudBitmapWorkerTask task = (NextcloudBitmapWorkerTask) imageView.getTag();
+			if (task.getAccount() == null || task.getAccount() != account) {
+				task.cancel(false);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	boolean cancelPotentialWork(ImageView imageView, MucOptions mucOptions) {
+		if (imageView.getTag() != null) {
+			NextcloudBitmapWorkerTask task = (NextcloudBitmapWorkerTask) imageView.getTag();
+			if (task.getMucOptions() == null || task.getMucOptions() != mucOptions) {
+				task.cancel(false);
+				return true;
+			}
+			else {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public void tryToGetNextcloudAvatar(Bookmark bookmark, int size, ImageView imageView) {
 		Conversation conversation = bookmark.getConversation();
 
@@ -189,45 +338,133 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		if (bitmap != null) {
 			imageView.setImageBitmap(bitmap);
 			imageView.setBackgroundColor(0x00000000);
+			imageView.setTag(null);
 			return;
 		}
+
+		tryToGetNextcloudAvatar(conversation, size, imageView);
+	}
+
+	public void tryToGetNextcloudAvatar(Conversation conversation, int size, ImageView imageView) {
 
 		if (conversation != null) {
 			if (conversation.getMode() == Conversation.MODE_SINGLE) {
 				tryToGetNextcloudAvatar(conversation.getContact(), size, imageView);
 			} else {
-				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
-				task.size = size;
-				task.mucOptions = conversation.getMucOptions();
-				task.avatarService = this;
-				try {
+				if (cancelPotentialWork(imageView, conversation.getMucOptions())) {
+					final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
+					task.size = size;
+					task.mucOptions = conversation.getMucOptions();
+					task.avatarService = this;
+					imageView.setTag(task);
+					try {
 
-					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-						task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+						if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+							task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
+						} else {
+							task.execute((Contact) null);
+						}
+					} catch (final RejectedExecutionException ignored) {
 					}
-					else {
-						task.execute((Contact)null);
-					}
-				} catch (final RejectedExecutionException ignored) {
 				}
 			}
 		}
 	}
 
-	public void tryToGetNextcloudAvatar(Contact contact, int size, ImageView imageView) {
+	public void tryToGetNextcloudAvatar(Message message, int size, ImageView imageView) {
+		final Conversation conversation = message.getConversation();
+		if (message.getStatus() == Message.STATUS_RECEIVED) {
+			Contact c = message.getContact();
+			if (c != null) {
+				tryToGetNextcloudAvatar(c, size, imageView);
+			} else if (message.getConversation().getMode() == Conversation.MODE_MULTI){
+				tryToGetNextcloudAvatar(conversation, size, imageView);
+			}
+		} else  {
+			final String KEY = key(conversation.getAccount(), size);
 
-		final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
-		task.size = size;
-		task.item = contact;
-		task.avatarService = this;
-		try {
-			if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-				task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, contact);
+			Bitmap bitmap = mXmppConnectionService.getBitmapCache().get(KEY);
+
+			if (bitmap != null) {
+				imageView.setImageBitmap(bitmap);
+				imageView.setBackgroundColor(0x00000000);
+				imageView.setTag(null);
+				return;
 			}
-			else {
-				task.execute(contact);
+			if (cancelPotentialWork(imageView, conversation.getAccount())) {
+				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
+				task.size = size;
+				task.account = conversation.getAccount();
+				task.avatarService = this;
+				imageView.setTag(task);
+				try {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
+					} else {
+						task.execute((Contact) null);
+					}
+				} catch (final RejectedExecutionException ignored) {
+				}
 			}
-		} catch (final RejectedExecutionException ignored) {
+		}
+
+	}
+	public void tryToGetNextcloudAvatar(Contact contact, int size, ImageView imageView) {
+		if (contact.isSelf()) {
+			final String KEY = key(contact.getAccount(), size);
+
+			Bitmap bitmap = mXmppConnectionService.getBitmapCache().get(KEY);
+
+			if (bitmap != null) {
+				imageView.setImageBitmap(bitmap);
+				imageView.setBackgroundColor(0x00000000);
+				imageView.setTag(null);
+				return;
+			}
+			if (cancelPotentialWork(imageView, contact.getAccount())) {
+				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
+				task.size = size;
+				task.account = contact.getAccount();
+				task.avatarService = this;
+				imageView.setTag(task);
+				try {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, null);
+					} else {
+						task.execute((Contact) null);
+					}
+				} catch (final RejectedExecutionException ignored) {
+				}
+			}
+		}
+		else {
+			final String KEY = key(contact, size);
+
+			Bitmap bitmap = mXmppConnectionService.getBitmapCache().get(KEY);
+			if (bitmap != null) {
+				imageView.setImageBitmap(bitmap);
+				imageView.setBackgroundColor(0x00000000);
+				imageView.setTag(null);
+				return;
+			}
+
+			if (cancelPotentialWork(imageView, contact)) {
+				imageView.setImageResource(R.drawable.user_icon);
+				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
+				task.size = size;
+				task.item = contact;
+				task.avatarService = this;
+				imageView.setTag(task);
+				try {
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+						task.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR, contact);
+					} else {
+						task.execute(contact);
+					}
+				} catch (final RejectedExecutionException ignored) {
+
+				}
+			}
 		}
 	}
 

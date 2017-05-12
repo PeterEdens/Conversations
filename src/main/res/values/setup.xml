@@ -10,7 +10,7 @@
     <string name ="db_name">spreedbox</string>
     <string name ="data_folder">spreedbox</string>
     <string name ="log_name">spreedbox</string>
-    <string name ="default_display_name_for_root_folder">Spreedbox</string>
+    <string name ="default_display_name_for_root_folder">SecureFileShare</string>
     <string name ="user_agent">Mozilla/5.0 (Android) ownCloud-android/%1$s</string>
     <string name="share_with_authority">com.nextcloud.spreedbox.android.providers.UsersAndGroupsSearchProvider</string>
     <string name="chooser_class">eu.siacs.conversations.ui.ChooserActivity</string>
@@ -38,7 +38,7 @@
     
     
     <!-- Colors -->
-    <color name="login_text_color">@color/white</color>
+    <color name="login_text_color">#888</color>
     <color name="login_text_hint_color">#7fC0E3</color>
     <color name="login_background_color">#FFFFFF</color>
     <color name="login_logo_background_color">#FFFFFF</color>
@@ -46,7 +46,7 @@
     <color name="actionbar_start_color">#ff0091ea</color>
     <color name="actionbar_end_color">#ff0091ff</color>
     <color name="primary_button_background_color">@color/accent</color>
-    <color name="primary_button_text_color">@color/white</color>
+    <color name="primary_button_text_color">#888</color>
     <color name="secondary_button_background_color">#D6D7D7</color>
     <color name="secondary_button_text_color">@color/black</color>
     <color name="drawer_header_color">@color/owncloud_blue_accent</color>

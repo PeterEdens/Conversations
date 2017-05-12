@@ -17,7 +17,21 @@ public class MessagePacket extends AbstractAcknowledgeableStanza {
 	}
 
 	public String getBody() {
-		return findChildContent("body");
+		String body = findChildContent("body");
+		if (body == null) {
+			Element html = findChild("html");
+			if (html != null) {
+				Element bodyElem = html.findChild("body");
+				if (bodyElem != null) {
+					body = bodyElem.getContent();
+					if (body == null) {
+						Element linkElem = bodyElem.findChild("a"); // http-upload message
+						body = linkElem.toString();
+					}
+				}
+			}
+		}
+		return body;
 	}
 
 	public void setBody(String text) {

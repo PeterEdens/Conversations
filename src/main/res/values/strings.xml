@@ -714,9 +714,7 @@
     <string name="pref_blind_trust_before_verification_summary">Automatically trust all new devices from contacts that haven’t been verified before.</string>
     <string name="blindly_trusted_omemo_keys">Blindly trusted OMEMO keys</string>
 
-    <string name="action_gotofiles">Goto Files</string>
 
-    <string name="title_activity_chooser">ChooserActivity</string>
     <string name="secure_chat_button">SecureIM</string>
     <string name="video_call_button">SecureMeet</string>
     <string name="files_button">SecureFileShare</string>

@@ -20,6 +20,7 @@ import android.provider.Settings;
 import android.support.v4.widget.SlidingPaneLayout;
 import android.support.v4.widget.SlidingPaneLayout.PanelSlideListener;
 import android.support.v7.app.ActionBar;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -126,6 +127,7 @@ public class ConversationActivity extends DrawerActivity
 	private AtomicBoolean mRedirected = new AtomicBoolean(false);
 	private Pair<Integer, Intent> mPostponedActivityResult;
 	private boolean mUnprocessedNewIntent = false;
+	private Toolbar toolbar;
 
 	public Conversation getSelectedConversation() {
 		return this.mSelectedConversation;
@@ -205,6 +207,9 @@ public class ConversationActivity extends DrawerActivity
 		this.listAdapter = new ConversationAdapter(this, conversationList);
 		listView.setAdapter(this.listAdapter);
 
+		toolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+		
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 			getSupportActionBar().setHomeButtonEnabled(true);
@@ -367,7 +372,7 @@ public class ConversationActivity extends DrawerActivity
 			} else {
 				//ab.setDisplayHomeAsUpEnabled(false);
 				//ab.setHomeButtonEnabled(false);
-				ab.setTitle(R.string.app_name);
+				ab.setTitle(R.string.drawer_chat);
 			}
 		}
 	}

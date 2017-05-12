@@ -1,6 +1,7 @@
 package eu.siacs.conversations.http;
 
 import android.os.PowerManager;
+import android.text.Html;
 import android.util.Log;
 
 import java.io.BufferedInputStream;
@@ -72,7 +73,11 @@ public class HttpDownloadConnection implements Transferable {
 			if (message.hasFileOnRemoteHost()) {
 				mUrl = message.getFileParams().url;
 			} else {
-				mUrl = new URL(message.getBody());
+				String body = message.getBody();
+				if (body.startsWith("<a ")) {
+					body = Html.fromHtml(body).toString();
+				}
+				mUrl = new URL(body);
 			}
 			String[] parts = mUrl.getPath().toLowerCase().split("\\.");
 			String lastPart = parts.length >= 1 ? parts[parts.length - 1] : null;

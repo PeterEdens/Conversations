@@ -2,6 +2,7 @@ package eu.siacs.conversations;
 
 
 import com.owncloud.android.MainApp;
+import com.squareup.leakcanary.LeakCanary;
 
 
 import android.app.Application;
@@ -13,6 +14,10 @@ public class SpreedboxApplication extends MainApp {
  
     public void onCreate() {
         super.onCreate();
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            return;
+        }
+        LeakCanary.install(this);
     }
 
 }

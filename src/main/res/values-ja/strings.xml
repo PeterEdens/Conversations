@@ -663,4 +663,36 @@
   <string name="data_saver_enabled">データセーバーを有効にしました</string>
   <string name="data_saver_enabled_explained">お使いのオペレーティングシステムは、Conversationsがバックグラウンドのときにインターネットにアクセスすることを制限しています。新しいメッセージの通知を受信するには、データセーバーがオンになっているとき、Conversationsに無制限のアクセスを許可する必要があります。\nConversationsは可能なときにデータを保存するための努力をします。</string>
   <string name="device_does_not_support_data_saver">お使いのデバイスは、Conversationsのデータセーバーを無効にすることはできません。</string>
+  <string name="add_account_details">Add Account Details</string>
+  <string name="error_unable_to_create_temporary_file">Unable to create temporary file</string>
+  <string name="this_device_has_been_verified">This device has been verified</string>
+  <string name="copy_fingerprint">Copy fingerprint</string>
+  <string name="all_omemo_keys_have_been_verified">All OMEMO keys have been verified</string>
+  <string name="barcode_does_not_contain_fingerprints_for_this_conversation">Barcode does not contain fingerprints for this conversation.</string>
+  <string name="verified_fingerprints">Verified fingerprints</string>
+  <string name="use_camera_icon_to_scan_barcode">Use the camera to scan a contacts barcode</string>
+  <string name="please_wait_for_keys_to_be_fetched">Please wait for keys to be fetched</string>
+  <string name="share_as_barcode">Share as Barcode</string>
+  <string name="share_as_uri">Share as XMPP URI</string>
+  <string name="share_as_http">Share as HTTP link</string>
+  <string name="pref_blind_trust_before_verification">Blind Trust Before Verification</string>
+  <string name="pref_blind_trust_before_verification_summary">Automatically trust all new devices from contacts that haven’t been verified before.</string>
+  <string name="blindly_trusted_omemo_keys">Blindly trusted OMEMO keys</string>
+
+
+  <string name="secure_chat_button">SecureIM</string>
+  <string name="video_call_button">SecureMeet</string>
+  <string name="files_button">SecureFileShare</string>
+  <string name="dummy_content">Spreedbox</string>
+  <string name="settings">Settings</string>
+  <string name="prefChatTitle">SecureIM Settings</string>
+  <string name="prefFilesTitle">SecureFileShare Settings</string>
+  <string name="prefCallTitle">SecureMeet Settings</string>
+  <string name="chat_settings_summary">Settings for configuring how the Instant Messaging feature works.</string>
+  <string name="call_settings_summary">Settings for configuring how the Voice/Video Chat feature works.</string>
+  <string name="files_settings_summary">Settings for configuring how the Share Files feature works.</string>
+  <string name="pref_force_relogin">Require login when starting the app</string>
+  <string name="pref_force_relogin_summary">Prompt for username and password each time you start the app</string>
+  <string name="logout">Logout</string>
+  <string name="logout_confirm">Are you sure you want to Logout and Exit?</string>
 </resources>

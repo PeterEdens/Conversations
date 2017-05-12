@@ -8,15 +8,48 @@ android:layout_height="match_parent"
 android:fitsSystemWindows="true"
 android:clickable="true" >
 
-<!-- The main content view -->
-    <android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/start_conversation_view_pager"
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?attr/color_background_primary" >
+        android:layout_height="match_parent">
 
-    </android.support.v4.view.ViewPager>
+    <android.support.design.widget.AppBarLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:theme="@style/ThemeOverlay.AppCompat.Light">
 
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary"
+            android:titleTextColor="@color/white"
+            android:subtitleTextColor="@color/white"
+            app:layout_scrollFlags="scroll|enterAlways"
+            app:theme="@style/ToolBarStyle"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+        <android.support.design.widget.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:tabMode="fixed"
+            app:tabGravity="fill"
+            app:tabTextColor="@color/white70"
+            app:tabSelectedTextColor="@color/white"/>
+    </android.support.design.widget.AppBarLayout>
+    <!-- The main content view -->
+        <android.support.v4.view.ViewPager xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/start_conversation_view_pager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/color_background_primary"
+            android:layout_below="@+id/appbar">
+
+        </android.support.v4.view.ViewPager>
+    </RelativeLayout>
 
 <include
     layout="@layout/conversation_drawer"

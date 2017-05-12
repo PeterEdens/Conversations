@@ -647,6 +647,9 @@ public class Message extends AbstractEntity {
 	}
 
 	public Decision treatAsDownloadable() {
+		if (body.startsWith("<a ")) {
+			return Decision.MUST;
+		}
 		if (body.trim().contains(" ")) {
 			return Decision.NEVER;
 		}

@@ -724,8 +724,13 @@ public class DatabaseBackend extends SQLiteOpenHelper {
 	public void updateMessage(Message message) {
 		SQLiteDatabase db = this.getWritableDatabase();
 		String[] args = {message.getUuid()};
-		db.update(Message.TABLENAME, message.getContentValues(), Message.UUID
-				+ "=?", args);
+		try {
+			db.update(Message.TABLENAME, message.getContentValues(), Message.UUID
+					+ "=?", args);
+		}
+		catch (SQLiteCantOpenDatabaseException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void updateMessage(Message message, String uuid) {

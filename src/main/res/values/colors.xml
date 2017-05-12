@@ -22,6 +22,8 @@
     <color name="orange500">#ffff9800</color>
     <color name="green500">#ff259b24</color>
     <color name="lightblue">#67c7e3</color>
+    <color name="homepage_button_normal">#dddddd</color>
+    <color name="homepage_button_pressed">#88d8f4</color>
 
     <color name="black_overlay">#66000000</color>
 </resources>

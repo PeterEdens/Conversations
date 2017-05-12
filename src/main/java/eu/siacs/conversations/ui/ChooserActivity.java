@@ -178,7 +178,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             actionBar.hide();
         }
 
-        findViewById(R.id.logout).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new AlertDialog.Builder(mContext)
@@ -195,21 +195,21 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         });
 
-        findViewById(R.id.secure_chat_button).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.chat_controls).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 LaunchIM();
             }
         });
 
-        findViewById(R.id.video_call_button).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.video_call_controls).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 LaunchVideoChat();
             }
         });
 
-        findViewById(R.id.files_button).setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.files_controls).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 LaunchShareFiles();
@@ -264,7 +264,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
     private void LaunchVideoChat() {
         Intent connectActivity = new Intent(mContext, ConnectActivity.class);
-        Account account = AccountUtils.getCurrentOwnCloudAccount(mContext);
+        /*Account account = AccountUtils.getCurrentOwnCloudAccount(mContext);
         if (account != null) {
             AccountManager accountMgr = AccountManager.get(mContext);
             String serverUrl = accountMgr.getUserData(account, com.owncloud.android.lib.common.accounts.AccountUtils.Constants.KEY_OC_BASE_URL);
@@ -282,13 +282,13 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
             if (avatar != null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                avatar.compress(Bitmap.CompressFormat.JPEG, 100, baos); //bm is the bitmap object
+                avatar.compress(Bitmap.CompressFormat.PNG, 100, baos); //bm is the bitmap object
                 byte[] byteArrayImage = baos.toByteArray();
 
                 String encodedImage = Base64.encodeToString(byteArrayImage, Base64.DEFAULT);
                 connectActivity.putExtra(ConnectActivity.EXTRA_AVATAR, encodedImage);
             }
-        }
+        }*/
         startActivity(connectActivity);
     }
 
@@ -316,7 +316,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
         Canvas canvas = new Canvas(bitmap);
         Paint paint2 = new Paint();
-        paint2.setColor(Color.WHITE);
+        paint2.setColor(Color.TRANSPARENT);
         paint2.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint2);
         drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());

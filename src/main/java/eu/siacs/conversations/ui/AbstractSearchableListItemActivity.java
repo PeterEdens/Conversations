@@ -3,6 +3,8 @@ package eu.siacs.conversations.ui;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
@@ -65,14 +67,15 @@ public abstract class AbstractSearchableListItemActivity extends XmppActivity {
 
 		@Override
 		public void beforeTextChanged(final CharSequence s, final int start, final int count,
-				final int after) {
+									  final int after) {
 		}
 
 		@Override
 		public void onTextChanged(final CharSequence s, final int start, final int before,
-				final int count) {
+								  final int count) {
 		}
 	};
+	private Toolbar toolbar;
 
 	public ListView getListView() {
 		return mListView;
@@ -94,6 +97,10 @@ public abstract class AbstractSearchableListItemActivity extends XmppActivity {
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_choose_contact);
+
+		toolbar = (Toolbar)findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+		
 		mListView = (ListView) findViewById(R.id.choose_contact_list);
 		mListView.setFastScrollEnabled(true);
 		mListItemsAdapter = new ListItemAdapter(this, listItems);
@@ -104,9 +111,9 @@ public abstract class AbstractSearchableListItemActivity extends XmppActivity {
 	public boolean onCreateOptionsMenu(final Menu menu) {
 		getMenuInflater().inflate(R.menu.choose_contact, menu);
 		final MenuItem menuSearchView = menu.findItem(R.id.action_search);
-		final View mSearchView = menuSearchView.getActionView();
+		SearchView mSearchView = (SearchView) MenuItemCompat.getActionView(menuSearchView);
 		mSearchEditText = (EditText) mSearchView
-			.findViewById(R.id.search_field);
+				.findViewById(android.support.v7.appcompat.R.id.search_src_text);
 		mSearchEditText.addTextChangedListener(mSearchTextWatcher);
 		MenuItemCompat.setOnActionExpandListener(menuSearchView, mOnActionExpandListener);
 		return true;

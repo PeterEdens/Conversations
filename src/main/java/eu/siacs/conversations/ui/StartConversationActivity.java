@@ -22,12 +22,14 @@ import android.nfc.NfcAdapter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.design.widget.TabLayout;
 import android.support.v13.app.FragmentPagerAdapter;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -150,9 +152,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     private ViewPager.SimpleOnPageChangeListener mOnPageChangeListener = new ViewPager.SimpleOnPageChangeListener() {
         @Override
         public void onPageSelected(int position) {
-            if (getSupportActionBar() != null) {
-                getSupportActionBar().setSelectedNavigationItem(position);
-            }
+
             onTabChanged();
         }
     };
@@ -176,7 +176,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     private TextView.OnEditorActionListener mSearchDone = new TextView.OnEditorActionListener() {
         @Override
         public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-            int pos = getSupportActionBar().getSelectedNavigationIndex();
+            int pos = tabLayout.getSelectedTabPosition();
             if (pos == 0) {
                 if (contacts.size() == 1) {
                     openConversationForContact((Contact) contacts.get(0));
@@ -235,6 +235,8 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         }
     };
     private Toast mToast;
+    private Toolbar toolbar;
+    private TabLayout tabLayout;
 
     protected void hideToast() {
         if (mToast != null) {
@@ -258,8 +260,9 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_start_conversation);
         mViewPager = (ViewPager) findViewById(R.id.start_conversation_view_pager);
-        ActionBar actionBar = getSupportActionBar();
-        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -267,22 +270,32 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
             setupDrawer();
         }
 
-        mContactsTab = actionBar.newTab().setText(R.string.contacts)
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
+
+        /*mContactsTab = actionBar.newTab().setText(R.string.contacts)
                 .setTabListener(mTabListener);
         mConferencesTab = actionBar.newTab().setText(R.string.conferences)
                 .setTabListener(mTabListener);
         actionBar.addTab(mContactsTab);
-        actionBar.addTab(mConferencesTab);
+        actionBar.addTab(mConferencesTab);*/
 
         mViewPager.setOnPageChangeListener(mOnPageChangeListener);
         mListPagerAdapter = new ListPagerAdapter(getFragmentManager());
         mViewPager.setAdapter(mListPagerAdapter);
 
+        tabLayout.setupWithViewPager(mViewPager);
+        setupTabLabels();
         mConferenceAdapter = new ListItemAdapter(this, conferences);
         mContactsAdapter = new ListItemAdapter(this, contacts);
         ((ListItemAdapter) mContactsAdapter).setOnTagClickedListener(this.mOnTagClickedListener);
         this.mHideOfflineContacts = getPreferences().getBoolean("hide_offline", false);
 
+    }
+
+    private void setupTabLabels() {
+
+        tabLayout.getTabAt(0).setText(R.string.contacts);
+        tabLayout.getTabAt(1).setText(R.string.conferences);
     }
 
     @Override
@@ -608,7 +621,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         mSearchEditText.setOnEditorActionListener(mSearchDone);
 
         mSearchView.setOnQueryTextListener(this);
-        if (getSupportActionBar().getSelectedNavigationIndex() == 0) {
+        if (tabLayout.getSelectedTabPosition() == 0) {
             menuCreateConference.setVisible(false);
         } else {
             menuCreateContact.setVisible(false);
@@ -966,7 +979,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
 
     @Override
     public boolean onQueryTextSubmit(String query) {
-        int pos = getSupportActionBar().getSelectedNavigationIndex();
+        int pos = tabLayout.getSelectedTabPosition();
         if (pos == 0) {
             if (contacts.size() == 1) {
                 openConversationForContact((Contact) contacts.get(0));

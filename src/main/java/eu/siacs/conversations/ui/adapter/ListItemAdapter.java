@@ -126,30 +126,29 @@ public class ListItemAdapter extends ArrayAdapter<ListItem> {
 	}
 
 	public void loadAvatar(ListItem item, ImageView imageView) {
-		if (cancelPotentialWork(item, imageView)) {
+		imageView.setImageDrawable(null);
+		if (item instanceof Contact) {
+			activity.avatarService().tryToGetNextcloudAvatar((Contact) item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+		}
+		else {
+			activity.avatarService().tryToGetNextcloudAvatar((Bookmark)item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
+		}
+		/*if (cancelPotentialWork(item, imageView)) {
 			final Bitmap bm = activity.avatarService().get(item,activity.getPixel(48),true);
 			if (bm != null) {
 				cancelPotentialWork(item, imageView);
 				imageView.setImageBitmap(bm);
 				imageView.setBackgroundColor(0x00000000);
 			} else {
-				if (item instanceof Contact) {
-					activity.avatarService().tryToGetNextcloudAvatar((Contact) item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
-				}
-				else {
-					activity.avatarService().tryToGetNextcloudAvatar((Bookmark)item, activity.getPixel(48), imageView); // try to get avatar from nextcloud
-				}
-				imageView.setBackgroundColor(UIHelper.getColorForName(item.getDisplayName()));
-				imageView.setImageDrawable(null);
-				/*final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
+				final BitmapWorkerTask task = new BitmapWorkerTask(imageView);
 				final AsyncDrawable asyncDrawable = new AsyncDrawable(activity.getResources(), null, task);
 				imageView.setImageDrawable(asyncDrawable);
 				try {
 					task.execute(item);
 				} catch (final RejectedExecutionException ignored) {
-				}*/
+				}
 			}
-		}
+		}*/
 	}
 
 	public static boolean cancelPotentialWork(ListItem item, ImageView imageView) {

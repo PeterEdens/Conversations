@@ -1,10 +1,16 @@
 package eu.siacs.conversations.ui;
 
 import android.accounts.Account;
+import android.accounts.AccountManager;
+import android.accounts.AccountManagerCallback;
+import android.accounts.AccountManagerFuture;
+import android.accounts.OperationCanceledException;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -17,13 +23,17 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.owncloud.android.MainApp;
 import com.owncloud.android.authentication.AccountUtils;
+import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
 import com.owncloud.android.lib.common.OwnCloudAccount;
 import com.owncloud.android.lib.common.operations.RemoteOperation;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.common.utils.Log_OC;
 import com.owncloud.android.lib.resources.users.RemoteGetUserQuotaOperation;
+import com.owncloud.android.ui.TextDrawable;
+import com.owncloud.android.ui.activity.BaseActivity;
 import com.owncloud.android.ui.activity.ManageAccountsActivity;
 import com.owncloud.android.utils.DisplayUtils;
 
@@ -35,13 +45,28 @@ import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
  * Base class to handle setup of the drawer implementation including user switching and avatar fetching and fallback
  * generation.
  */
-public abstract class DrawerActivity extends XmppActivity {
+public abstract class DrawerActivity extends XmppActivity implements DisplayUtils.AvatarGenerationListener {
     private static final String TAG = DrawerActivity.class.getSimpleName();
     private static final String KEY_IS_ACCOUNT_CHOOSER_ACTIVE = "IS_ACCOUNT_CHOOSER_ACTIVE";
     private static final String KEY_CHECKED_MENU_ITEM = "CHECKED_MENU_ITEM";
     private static final int ACTION_MANAGE_ACCOUNTS = 101;
     private static final int MENU_ORDER_ACCOUNT = 1;
     private static final int MENU_ORDER_ACCOUNT_FUNCTION = 2;
+
+    /**
+     * Flag to signal that the activity will is finishing to enforce the creation of an ownCloud {@link Account}.
+     */
+    private boolean mRedirectingToSetupAccount = false;
+
+    /**
+     * Flag to signal when the value of mAccount was set.
+     */
+    protected boolean mAccountWasSet;
+
+    /**
+     * Flag to signal when the value of mAccount was restored from a saved state.
+     */
+    protected boolean mAccountWasRestored;
 
     /**
      * menu account avatar radius.
@@ -117,6 +142,8 @@ public abstract class DrawerActivity extends XmppActivity {
      * text view of the quota view.
      */
     private TextView mQuotaTextView;
+    private FileDataStorageManager mStorageManager;
+    private Account mCurrentAccount;
 
     /**
      * Initializes the drawer, its content and highlights the menu item with the given id.
@@ -188,6 +215,10 @@ public abstract class DrawerActivity extends XmppActivity {
         mIsAccountChooserActive = false;
         mAccountMiddleAccountAvatar = (ImageView) findNavigationViewChildById(R.id.drawer_account_middle);
         mAccountEndAccountAvatar = (ImageView) findNavigationViewChildById(R.id.drawer_account_end);
+        Account current = AccountUtils.getCurrentOwnCloudAccount(this);
+        if (current != null) {
+            mCurrentAccount = current;
+        }
 
         findNavigationViewChildById(R.id.drawer_active_user)
                 .setOnClickListener(new View.OnClickListener() {
@@ -272,8 +303,18 @@ public abstract class DrawerActivity extends XmppActivity {
                         } if (menuItem.getItemId() == R.id.action_settings) {
                             startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                         }
-                        else if (menuItem.getItemId() == R.id.action_accounts) {
-                                startActivity(new Intent(getApplicationContext(), ManageAccountActivity.class));
+                        else if (menuItem.getItemId() == R.id.drawer_menu_account_manage) {
+                                startActivity(new Intent(getApplicationContext(), ManageAccountsActivity.class));
+                        }
+                        else if (menuItem.getItemId() == R.id.drawer_menu_account_add) {
+                            createAccount(false);
+                        }
+                        else if (menuItem.getItemId() == R.id.drawer_menu_contacts) {
+                            startActivity(new Intent(getApplicationContext(), StartConversationActivity.class));
+                        }
+                        else if (menuItem.getItemId() == Menu.NONE) {
+                            // account clicked
+                            accountClicked(menuItem.getTitle().toString());
                         }
                         else {
                                 Log_OC.i(TAG, "Unknown drawer menu item clicked: " + menuItem.getTitle());
@@ -286,6 +327,125 @@ public abstract class DrawerActivity extends XmppActivity {
 
     }
 
+    /**
+     * Tries to swap the current ownCloud {@link Account} for other valid and existing.
+     *
+     * If no valid ownCloud {@link Account} exists, the the user is requested
+     * to create a new ownCloud {@link Account}.
+     *
+     * POSTCONDITION: updates {@link #mAccountWasSet} and {@link #mAccountWasRestored}.
+     */
+    protected void swapToDefaultAccount() {
+        // default to the most recently used account
+        Account newAccount = AccountUtils.getCurrentOwnCloudAccount(getApplicationContext());
+        if (newAccount == null) {
+            /// no account available: force account creation
+            createAccount(true);
+            mRedirectingToSetupAccount = true;
+            mAccountWasSet = false;
+            mAccountWasRestored = false;
+
+        } else {
+            mAccountWasSet = true;
+            mAccountWasRestored = (newAccount.equals(mCurrentAccount));
+            mCurrentAccount = newAccount;
+        }
+    }
+
+    /**
+     * Sets and validates the ownCloud {@link Account} associated to the Activity.
+     *
+     * If not valid, tries to swap it for other valid and existing ownCloud {@link Account}.
+     *
+     * POSTCONDITION: updates {@link #mAccountWasSet} and {@link #mAccountWasRestored}.
+     *
+     * @param account      New {@link Account} to set.
+     * @param savedAccount When 'true', account was retrieved from a saved instance state.
+     */
+    protected void setAccount(Account account, boolean savedAccount) {
+        Account oldAccount = mCurrentAccount;
+        boolean validAccount =
+                (account != null && AccountUtils.setCurrentOwnCloudAccount(getApplicationContext(),
+                        account.name));
+        if (validAccount) {
+            mCurrentAccount = account;
+            mAccountWasSet = true;
+            mAccountWasRestored = (savedAccount || mCurrentAccount.equals(oldAccount));
+
+        } else {
+            swapToDefaultAccount();
+        }
+    }
+
+    /**
+     * Helper class handling a callback from the {@link AccountManager} after the creation of
+     * a new ownCloud {@link Account} finished, successfully or not.
+     */
+    public class AccountCreationCallback implements AccountManagerCallback<Bundle> {
+
+        boolean mMandatoryCreation;
+
+        /**
+         * Constuctor
+         *
+         * @param mandatoryCreation     When 'true', if an account was not created, the app is closed.
+         */
+        public AccountCreationCallback(boolean mandatoryCreation) {
+            mMandatoryCreation = mandatoryCreation;
+        }
+
+        @Override
+        public void run(AccountManagerFuture<Bundle> future) {
+            DrawerActivity.this.mRedirectingToSetupAccount = false;
+            boolean accountWasSet = false;
+            if (future != null) {
+                try {
+                    Bundle result;
+                    result = future.getResult();
+                    String name = result.getString(AccountManager.KEY_ACCOUNT_NAME);
+                    String type = result.getString(AccountManager.KEY_ACCOUNT_TYPE);
+                    if (AccountUtils.setCurrentOwnCloudAccount(getApplicationContext(), name)) {
+                        setAccount(new Account(name, type), false);
+                        accountWasSet = true;
+                    }
+
+                    onAccountCreationSuccessful(future);
+                } catch (OperationCanceledException e) {
+                    Log_OC.d(TAG, "Account creation canceled");
+
+                } catch (Exception e) {
+                    Log_OC.e(TAG, "Account creation finished in exception: ", e);
+                }
+
+            } else {
+                Log_OC.e(TAG, "Account creation callback with null bundle");
+            }
+            if (mMandatoryCreation && !accountWasSet) {
+                moveTaskToBack(true);
+            }
+        }
+    }
+
+    protected void onAccountCreationSuccessful(AccountManagerFuture<Bundle> future) {
+        updateAccountList();
+    }
+
+    /**
+     * Launches the account creation activity.
+     *
+     * @param mandatoryCreation     When 'true', if an account is not created by the user, the app will be closed.
+     *                              To use when no ownCloud account is available.
+     */
+    protected void createAccount(boolean mandatoryCreation) {
+        AccountManager am = AccountManager.get(getApplicationContext());
+        am.addAccount(MainApp.getAccountType(),
+                null,
+                null,
+                null,
+                this,
+                new AccountCreationCallback(mandatoryCreation),
+                new Handler());
+    }
 
     /**
      * sets the new/current account and restarts. In case the given account equals the actual/current account the
@@ -306,7 +466,7 @@ public abstract class DrawerActivity extends XmppActivity {
      * @param view the clicked ImageView
      */
     public void onAccountDrawerClick(View view) {
-        //accountClicked(view.getContentDescription().toString());
+        accountClicked(view.getContentDescription().toString());
     }
 
     /**
@@ -363,7 +523,56 @@ public abstract class DrawerActivity extends XmppActivity {
      * updates the account list in the drawer.
      */
     public void updateAccountList() {
+        Account[] accounts = AccountManager.get(this).getAccountsByType(MainApp.getAccountType());
+        if (mNavigationView != null && mDrawerLayout != null) {
+            if (accounts.length > 0) {
+                repopulateAccountList(accounts);
+                setAccountInDrawer(AccountUtils.getCurrentOwnCloudAccount(this));
+                populateDrawerOwnCloudAccounts();
 
+                // activate second/end account avatar
+                if (mAvatars[1] != null) {
+                    DisplayUtils.setAvatar(mAvatars[1], this,
+                            mOtherAccountAvatarRadiusDimension, getResources(), getStorageManager(),
+                            findNavigationViewChildById(com.owncloud.android.R.id.drawer_account_end));
+                    mAccountEndAccountAvatar.setVisibility(View.VISIBLE);
+                } else {
+                    mAccountEndAccountAvatar.setVisibility(View.GONE);
+                }
+
+                // activate third/middle account avatar
+                if (mAvatars[2] != null) {
+                    DisplayUtils.setAvatar(mAvatars[2], this,
+                            mOtherAccountAvatarRadiusDimension, getResources(), getStorageManager(),
+                            findNavigationViewChildById(com.owncloud.android.R.id.drawer_account_middle));
+                    mAccountMiddleAccountAvatar.setVisibility(View.VISIBLE);
+                } else {
+                    mAccountMiddleAccountAvatar.setVisibility(View.GONE);
+                }
+            } else {
+                mAccountEndAccountAvatar.setVisibility(View.GONE);
+                mAccountMiddleAccountAvatar.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private FileDataStorageManager getStorageManager() {
+        if (mStorageManager == null) {
+            Account current = AccountUtils.getCurrentOwnCloudAccount(this);
+            mStorageManager = new FileDataStorageManager(current, getContentResolver());
+        }
+        return mStorageManager;
+    }
+
+    /**
+     * Getter for the ownCloud {@link Account} where the main {@link OCFile} handled by the activity
+     * is located.
+     *
+     * @return OwnCloud {@link Account} where the main {@link OCFile} handled by the activity
+     * is located.
+     */
+    public Account getAccount() {
+        return mCurrentAccount;
     }
 
     /**
@@ -372,7 +581,46 @@ public abstract class DrawerActivity extends XmppActivity {
      * @param accounts list of accounts
      */
     private void repopulateAccountList(Account[] accounts) {
+        // remove all accounts from list
+        mNavigationView.getMenu().removeGroup(R.id.drawer_menu_accounts);
 
+        // add all accounts to list
+        for (int i = 0; i < accounts.length; i++) {
+            try {
+                // show all accounts except the currently active one
+                if (!getAccount().name.equals(accounts[i].name)) {
+                    MenuItem accountMenuItem = mNavigationView.getMenu().add(
+                            R.id.drawer_menu_accounts,
+                            Menu.NONE,
+                            MENU_ORDER_ACCOUNT,
+                            accounts[i].name)
+                            .setIcon(TextDrawable.createAvatar(
+                                    accounts[i].name,
+                                    mMenuAccountAvatarRadiusDimension)
+                            );
+                    DisplayUtils.setAvatar(accounts[i], this, mMenuAccountAvatarRadiusDimension, getResources(), getStorageManager(), accountMenuItem);
+                }
+            } catch (Exception e) {
+                Log_OC.e(TAG, "Error calculating RGB value for account menu item.", e);
+                mNavigationView.getMenu().add(
+                        R.id.drawer_menu_accounts,
+                        Menu.NONE,
+                        MENU_ORDER_ACCOUNT,
+                        accounts[i].name)
+                        .setIcon(R.drawable.ic_user);
+            }
+        }
+
+        // re-add add-account and manage-accounts
+        mNavigationView.getMenu().add(R.id.drawer_menu_accounts, R.id.drawer_menu_account_add,
+                MENU_ORDER_ACCOUNT_FUNCTION,
+                getResources().getString(R.string.prefs_add_account)).setIcon(R.drawable.ic_account_plus);
+        mNavigationView.getMenu().add(R.id.drawer_menu_accounts, R.id.drawer_menu_account_manage,
+                MENU_ORDER_ACCOUNT_FUNCTION,
+                getResources().getString(R.string.drawer_manage_accounts)).setIcon(R.drawable.ic_settings);
+
+        // adding sets menu group back to visible, so safety check and setting invisible
+        showMenu();
     }
 
     /**
@@ -404,6 +652,10 @@ public abstract class DrawerActivity extends XmppActivity {
             }
 
 
+            DisplayUtils.setAvatar(account, this,
+                    mCurrentAccountAvatarRadiusDimension, getResources(), getStorageManager(),
+                    findNavigationViewChildById(R.id.drawer_current_account));
+
             // check and show quota info if available
             getAndDisplayUserQuota();
         }
@@ -422,7 +674,17 @@ public abstract class DrawerActivity extends XmppActivity {
      */
     private void showMenu() {
         if (mNavigationView != null) {
-            mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_standard, true);
+            if (mIsAccountChooserActive) {
+                mAccountChooserToggle.setImageResource(R.drawable.ic_up);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_accounts, true);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_standard, false);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_navigation, false);
+            } else {
+                mAccountChooserToggle.setImageResource(R.drawable.ic_down);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_accounts, false);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_standard, true);
+                mNavigationView.getMenu().setGroupVisible(R.id.drawer_menu_navigation, true);
+            }
         }
     }
 
@@ -637,7 +899,19 @@ public abstract class DrawerActivity extends XmppActivity {
      * always the current account.
      */
     private void populateDrawerOwnCloudAccounts() {
+        mAvatars = new Account[3];
+        Account[] accountsAll = AccountManager.get(this).getAccountsByType
+                (MainApp.getAccountType());
+        Account currentAccount = AccountUtils.getCurrentOwnCloudAccount(this);
 
+        mAvatars[0] = currentAccount;
+        int j = 0;
+        for (int i = 1; i <= 2 && i < accountsAll.length && j < accountsAll.length; j++) {
+            if (!currentAccount.equals(accountsAll[j])) {
+                mAvatars[i] = accountsAll[j];
+                i++;
+            }
+        }
     }
 
 
@@ -653,5 +927,28 @@ public abstract class DrawerActivity extends XmppActivity {
         } else {
             Log_OC.e(TAG, "Drawer layout not ready to add drawer listener");
         }
+    }
+
+    @Override
+    public void avatarGenerated(Drawable avatarDrawable, Object callContext) {
+        if (callContext instanceof MenuItem) {
+            MenuItem mi = (MenuItem)callContext;
+            mi.setIcon(avatarDrawable);
+        } else if (callContext instanceof ImageView) {
+            ImageView iv = (ImageView)callContext;
+            iv.setImageDrawable(avatarDrawable);
+        }
+    }
+
+    @Override
+    public boolean shouldCallGeneratedCallback(String tag, Object callContext) {
+        if (callContext instanceof MenuItem) {
+            MenuItem mi = (MenuItem)callContext;
+            return String.valueOf(mi.getTitle()).equals(tag);
+        } else if (callContext instanceof ImageView) {
+            ImageView iv = (ImageView)callContext;
+            return String.valueOf(iv.getTag()).equals(tag);
+        }
+        return false;
     }
 }

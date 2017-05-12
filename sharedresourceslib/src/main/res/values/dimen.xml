@@ -23,4 +23,6 @@
     <dimen name="zero">0dp</dimen>
     <dimen name="drawer_header_text">14sp</dimen>
     <dimen name="drawer_header_subtext">12sp</dimen>
+    <dimen name="avatar_size_small">64dp</dimen>
+    <dimen name="avatar_size_large">96dp</dimen>
 </resources>

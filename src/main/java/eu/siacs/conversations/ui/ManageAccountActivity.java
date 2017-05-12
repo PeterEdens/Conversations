@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.security.KeyChain;
 import android.security.KeyChainAliasCallback;
+import android.support.v7.widget.Toolbar;
 import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -49,6 +50,7 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
 	protected AtomicBoolean mInvokedAddAccount = new AtomicBoolean(false);
 
 	protected Pair<Integer, Intent> mPostponedActivityResult = null;
+	private Toolbar toolbar;
 
 	@Override
 	public void onAccountUpdate() {
@@ -76,6 +78,8 @@ public class ManageAccountActivity extends XmppActivity implements OnAccountUpda
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.manage_accounts);
+		toolbar = (Toolbar)findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
 
 		if (savedInstanceState != null) {
 			String jid = savedInstanceState.getString(STATE_SELECTED_ACCOUNT);
