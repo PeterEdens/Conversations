@@ -19,6 +19,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:id="@+id/scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
 	android:padding="@dimen/standard_padding"
@@ -27,33 +28,67 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_block"
         android:layout_alignParentTop="true"
         android:orientation="horizontal"
 		android:background="@drawable/white_rounded_rectangle" >
 
-		<ImageView
-			android:id="@+id/thumbnail"
-			android:layout_width="0dp"
+		<LinearLayout
+			android:id="@+id/left_block"
+			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:layout_weight="1"
 			android:layout_gravity="center"
-			android:src="@drawable/spreedbox_logo"
-            android:contentDescription="@string/app_name"
-			/>
-		
-		<ScrollView
-		    android:layout_width="0dp"
-		    android:layout_height="match_parent"
-		    android:layout_weight="1"
-		    android:id="@+id/scroll"
-		    android:fillViewport="true"
-		    android:orientation="vertical" >
+			android:layout_alignParentBottom="true"
+			android:orientation="vertical"
+			android:paddingTop="@dimen/standard_half_padding">
+
+			<ImageView
+				android:id="@+id/thumbnail"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:layout_weight="1"
+				android:layout_gravity="center"
+				android:src="@drawable/spreedbox_logo"
+				android:contentDescription="@string/app_name"
+				/>
+
+			<android.support.v7.widget.AppCompatButton
+				android:id="@+id/buttonOK"
+				android:theme="@style/Button.Login"
+				style="@style/Button.Login"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:padding="@dimen/standard_padding"
+				android:layout_gravity="center_horizontal"
+				android:enabled="false"
+				android:text="@string/setup_btn_connect"
+				android:contentDescription="@string/setup_btn_connect"/>
 
 			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:gravity="center|bottom">
+
+				<Button
+					android:id="@+id/welcome_link"
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_gravity="center_horizontal"
+					android:background="@android:color/transparent"
+					android:onClick="onRegisterClick"
+					android:paddingTop="@dimen/alternate_half_padding"
+					android:text="@string/auth_register"
+					android:textColor="@color/login_text_hint_color"
+					android:contentDescription="@string/auth_register"
+					android:visibility="gone"/>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+		<LinearLayout
 			    android:id="@+id/LinearLayout1"
 			    android:layout_width="match_parent"
-			    android:layout_height="wrap_content"
+			    android:layout_height="match_parent"
 			    android:gravity="center"
 			    android:orientation="vertical"
 			    android:padding="@dimen/standard_half_padding" >
@@ -241,50 +276,7 @@
 					/>
 
 			</LinearLayout>
-		</ScrollView>
-						           
-	</LinearLayout>
-       
-    <LinearLayout
-        android:id="@id/bottom_block"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-        android:orientation="vertical"
-        android:paddingTop="@dimen/standard_half_padding">
-        
-		<android.support.v7.widget.AppCompatButton
-		    android:id="@+id/buttonOK"
-			android:theme="@style/Button.Login"
-			style="@style/Button.Login"
-		    android:layout_width="match_parent"
-		    android:layout_height="wrap_content"
-			android:padding="@dimen/standard_padding"
-		    android:layout_gravity="center_horizontal"
-		    android:enabled="false"
-		    android:text="@string/setup_btn_connect"
-            android:contentDescription="@string/setup_btn_connect"/>
-
-		<LinearLayout
-			android:layout_width="match_parent"
-			android:layout_height="match_parent"
-			android:gravity="center|bottom">
-
-			<Button
-				android:id="@+id/welcome_link"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:layout_gravity="center_horizontal"
-				android:background="@android:color/transparent"
-				android:onClick="onRegisterClick"
-				android:paddingTop="@dimen/alternate_half_padding"
-				android:text="@string/auth_register"
-				android:textColor="@color/login_text_hint_color"
-				android:contentDescription="@string/auth_register"
-				android:visibility="gone"/>
-
-		</LinearLayout>
 
 	</LinearLayout>
-		
+
 </RelativeLayout>

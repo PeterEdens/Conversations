@@ -988,7 +988,7 @@ public class ConversationActivity extends DrawerActivity
 		if (!isConversationsOverviewVisable()) {
 			showConversationsOverview();
 		} else {
-			super.onBackPressed();
+			startActivity(new Intent(this, StartConversationActivity.class));
 		}
 	}
 

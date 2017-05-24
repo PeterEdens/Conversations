@@ -794,6 +794,13 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     }
 
     @Override
+    public void onBackPressed() {
+        Intent intent = new Intent(this, ChooserActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+    }
+
+    @Override
     protected void onBackendConnected() {
         if (mPostponedActivityResult != null) {
             onActivityResult(mPostponedActivityResult.first, RESULT_OK, mPostponedActivityResult.second);

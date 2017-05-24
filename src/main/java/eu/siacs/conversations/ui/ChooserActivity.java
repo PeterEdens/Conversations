@@ -44,6 +44,7 @@ import org.appspot.apprtc.ConnectActivity;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 
+import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.XmppConnectionService;
 import spreedbox.me.app.R;
 
@@ -148,6 +149,14 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         finish();
     }
 
+    private void changePresence() {
+        Intent intent;
+
+        intent = new Intent(this, SetPresenceActivity.class);
+        intent.putExtra(SetPresenceActivity.EXTRA_ACCOUNT, mAccount.name);
+        startActivity(intent);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -170,7 +179,12 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             startActivity(authIntent);
         }
 
-        setContentView(R.layout.activity_chooser);
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("use_dark_chooser", false)) {
+            setContentView(R.layout.activity_chooser_dark);
+        }
+        else {
+            setContentView(R.layout.activity_chooser);
+        }
 
         // Hide UI first
         ActionBar actionBar = getSupportActionBar();

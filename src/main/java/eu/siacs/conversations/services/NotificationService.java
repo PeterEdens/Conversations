@@ -563,7 +563,7 @@ public class NotificationService {
 		mBuilder.setContentIntent(createOpenConversationsIntent());
 		mBuilder.setWhen(0);
 		mBuilder.setPriority(Config.SHOW_CONNECTED_ACCOUNTS ? NotificationCompat.PRIORITY_DEFAULT : NotificationCompat.PRIORITY_MIN);
-		mBuilder.setSmallIcon(R.drawable.ic_link_white_24dp);
+		mBuilder.setSmallIcon(R.drawable.ic_textsms_white_24dp);
 		if (Config.SHOW_DISABLE_FOREGROUND) {
 			final int cancelIcon;
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

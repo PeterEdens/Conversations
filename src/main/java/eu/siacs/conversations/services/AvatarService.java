@@ -70,7 +70,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 		public MucOptions mucOptions;
 		public Account account;
 		private final WeakReference<ImageView> imageViewReference;
-		public AvatarService avatarService;
+		public WeakReference<AvatarService> avatarService;
 
 		public Contact getContact() {
 			return mContact;
@@ -137,11 +137,11 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 					e.printStackTrace();
 				}
 				connection.disconnect();
-				avatarService.mXmppConnectionService.getBitmapCache().put(url, bitmap);
+				avatarService.get().mXmppConnectionService.getBitmapCache().put(url, bitmap);
 				return bitmap;
 			}
 			else if (account != null) {
-				Bitmap bitmap = avatarService.get(account, size);
+				Bitmap bitmap = avatarService.get().get(account, size);
 
 				try {
                     if (responseStream != null)
@@ -153,7 +153,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				return bitmap;
 			}
 			else {
-				Bitmap bitmap = avatarService.get(item, size);
+				Bitmap bitmap = avatarService.get().get(item, size);
 				try {
 					if (responseStream != null) {
 						responseStream.close();
@@ -191,7 +191,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				Jid jid = mContact.getJid();
 				final String KEY = key(mContact, size);
 				String url = checkServer(jid.getDomainpart()) + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
-				Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
+				Bitmap bitmap = avatarService.get().mXmppConnectionService.getBitmapCache().get(url);
 
 				if (bitmap == null) {
 					bitmap = downloadBitmap(url);
@@ -206,7 +206,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				Jid jid = account.getJid();
 				final String KEY = key(account, size);
 				String url = checkServer(jid.getDomainpart()) + "/index.php/avatar/" + jid.getLocalpart() + "/" + size;
-				Bitmap bitmap = avatarService.mXmppConnectionService.getBitmapCache().get(url);
+				Bitmap bitmap = avatarService.get().mXmppConnectionService.getBitmapCache().get(url);
 
 				if (bitmap == null) {
 					bitmap = downloadBitmap(url);
@@ -218,7 +218,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				return bitmap;
 			}
 			else if (mucOptions != null) {
-				Bitmap bitmap = avatarService.get(mucOptions, size, false);
+				Bitmap bitmap = avatarService.get().get(mucOptions, size, false);
 				if (bitmap != null) {
 					final String KEY = key(mucOptions, size);
 					mXmppConnectionService.getBitmapCache().put(KEY, bitmap);
@@ -355,7 +355,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 					final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 					task.size = size;
 					task.mucOptions = conversation.getMucOptions();
-					task.avatarService = this;
+					task.avatarService = new WeakReference<AvatarService>(this);
 					imageView.setTag(task);
 					try {
 
@@ -395,7 +395,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 				task.size = size;
 				task.account = conversation.getAccount();
-				task.avatarService = this;
+				task.avatarService = new WeakReference<AvatarService>(this);
 				imageView.setTag(task);
 				try {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -425,7 +425,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 				task.size = size;
 				task.account = contact.getAccount();
-				task.avatarService = this;
+				task.avatarService = new WeakReference<AvatarService>(this);
 				imageView.setTag(task);
 				try {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
@@ -453,7 +453,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 				task.size = size;
 				task.item = contact;
-				task.avatarService = this;
+				task.avatarService = new WeakReference<AvatarService>(this);
 				imageView.setTag(task);
 				try {
 					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {

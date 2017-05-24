@@ -26,6 +26,7 @@
     <application
         android:name="eu.siacs.conversations.SpreedboxApplication"
         android:allowBackup="true"
+        android:hardwareAccelerated="false"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/ConversationsTheme"
@@ -468,7 +469,7 @@
 
         <activity
             android:name="eu.siacs.conversations.ui.ChooserActivity"
-            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:configChanges="keyboardHidden|screenSize"
             android:label="@string/app_name"
             android:theme="@style/FullscreenTheme">
             <intent-filter>

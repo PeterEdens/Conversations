@@ -71,6 +71,7 @@ public class ExceptionHelper {
 			try {
 				packageInfo = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNATURES);
 				report.append("Version: " + packageInfo.versionName + '\n');
+				report.append("Build: " + packageInfo.versionCode + '\n');
 				report.append("Last Update: " + DATE_FORMATs.format(new Date(packageInfo.lastUpdateTime)) + '\n');
 				Signature[] signatures = packageInfo.signatures;
 				if (signatures != null && signatures.length >= 1) {
