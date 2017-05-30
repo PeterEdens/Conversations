@@ -31,6 +31,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
@@ -42,6 +43,7 @@ import com.owncloud.android.utils.DisplayUtils;
 import org.appspot.apprtc.ConnectActivity;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 import eu.siacs.conversations.entities.Message;
@@ -142,19 +144,11 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 am.removeAccount(accounts[index], null, null);
         }
 
-        List<eu.siacs.conversations.entities.Account> xmppAccounts = xmppConnectionService.getAccounts();
+        List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
         for (eu.siacs.conversations.entities.Account acc: xmppAccounts) {
             xmppConnectionService.deleteAccount(acc);
         }
         finish();
-    }
-
-    private void changePresence() {
-        Intent intent;
-
-        intent = new Intent(this, SetPresenceActivity.class);
-        intent.putExtra(SetPresenceActivity.EXTRA_ACCOUNT, mAccount.name);
-        startActivity(intent);
     }
 
     @Override
@@ -175,11 +169,13 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
             Intent authIntent = new Intent(this, SpreedboxAuthenticatorActivity.class);
             String serverAddress = PreferenceManager.getDefaultSharedPreferences(this).getString("last_server", "");
-            authIntent.setData(Uri.parse("cloud://login/server:" + serverAddress));
+            if (serverAddress.length() != 0) {
+                authIntent.setData(Uri.parse("cloud://login/server:" + serverAddress));
+            }
             startActivity(authIntent);
         }
 
-        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("use_dark_chooser", false)) {
+        if (PreferenceManager.getDefaultSharedPreferences(this).getBoolean("use_dark_chooser", true)) {
             setContentView(R.layout.activity_chooser_dark);
         }
         else {
@@ -191,6 +187,9 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         if (actionBar != null) {
             actionBar.hide();
         }
+
+        TextView sublabel = (TextView) findViewById(R.id.avatar_sublabel);
+        sublabel.setText(mAccount.name);
 
         findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -243,7 +242,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         mAvatarContainer.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), ManageAccountsActivity.class);
+                Intent intent = new Intent(getApplicationContext(), SpreedboxManageAccountsActivity.class);
                 startActivity(intent);
             }
         });

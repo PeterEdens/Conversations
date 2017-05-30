@@ -1185,6 +1185,8 @@ public class ConversationActivity extends DrawerActivity
 
 	@Override
 	void onBackendConnected() {
+		super.onBackendConnected();
+
 		this.xmppConnectionService.getNotificationService().setIsInForeground(true);
 		updateConversationList();
 

@@ -190,6 +190,7 @@ public abstract class XmppActivity extends AppCompatActivity {
 				registerListeners();
 				registeredListeners = true;
 			}
+
 			onBackendConnected();
 		}
 

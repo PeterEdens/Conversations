@@ -39,7 +39,7 @@
 			android:layout_gravity="center"
 			android:layout_alignParentBottom="true"
 			android:orientation="vertical"
-			android:paddingTop="@dimen/standard_half_padding">
+			android:padding="@dimen/standard_half_padding">
 
 			<ImageView
 				android:id="@+id/thumbnail"
@@ -59,7 +59,6 @@
 				android:layout_height="wrap_content"
 				android:padding="@dimen/standard_padding"
 				android:layout_gravity="center_horizontal"
-				android:enabled="false"
 				android:text="@string/setup_btn_connect"
 				android:contentDescription="@string/setup_btn_connect"/>
 

@@ -16,7 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
     <!--
       account list placeholder
       all items in this group MUST have orderInCategory="2" set
@@ -33,6 +34,19 @@
             android:id="@+id/drawer_menu_account_manage"
             android:icon="@drawable/ic_settings"
             android:title="@string/drawer_manage_accounts"/>
+    </group>
+
+    <group android:id="@+id/drawer_menu_status" android:checkableBehavior="none">
+
+    <item
+        android:id="@+id/action_change_presence"
+        android:title=""
+        app:actionLayout="@layout/presence_spinner"/>
+    <item
+        android:id="@+id/action_change_message"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title=""
+        app:actionLayout="@layout/message_layout"/>
     </group>
 
     <!--
@@ -58,7 +72,7 @@
         <item
             android:orderInCategory="3"
             android:id="@+id/nav_chat"
-            android:icon="@drawable/ic_chat_bubble_black_24dp"
+            android:icon="@drawable/ic_textsms_black_48dp"
             android:title="@string/drawer_chat"/>
         <item
             android:orderInCategory="3"

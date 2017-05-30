@@ -15,6 +15,7 @@
     <string name="share_with_authority">com.nextcloud.spreedbox.android.providers.UsersAndGroupsSearchProvider</string>
     <string name="chooser_class">eu.siacs.conversations.ui.ChooserActivity</string>
     <string name="authenticator_class">eu.siacs.conversations.ui.SpreedboxAuthenticatorActivity</string>
+    <string name="manage_accounts_class">eu.siacs.conversations.ui.SpreedboxManageAccountsActivity</string>
     <string name="extra_mode">eu.siacs.conversations.ui.EXTRA_MODE</string>
     <string name="mode_im">eu.siacs.conversations.ui.MODE_IM</string>
     <string name="mode_video_chat">eu.siacs.conversations.ui.MODE_VIDEO_CHAT</string>

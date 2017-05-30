@@ -5,24 +5,34 @@ import android.accounts.AccountManager;
 import android.accounts.AccountManagerCallback;
 import android.accounts.AccountManagerFuture;
 import android.accounts.OperationCanceledException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.preference.PreferenceManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.example.sharedresourceslib.IconSpinnerAdapter;
 import com.owncloud.android.MainApp;
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
@@ -37,6 +47,9 @@ import com.owncloud.android.ui.activity.BaseActivity;
 import com.owncloud.android.ui.activity.ManageAccountsActivity;
 import com.owncloud.android.utils.DisplayUtils;
 
+import eu.siacs.conversations.entities.Presence;
+import eu.siacs.conversations.xmpp.jid.InvalidJidException;
+import eu.siacs.conversations.xmpp.jid.Jid;
 import spreedbox.me.app.R;
 
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP;
@@ -144,6 +157,8 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
     private TextView mQuotaTextView;
     private FileDataStorageManager mStorageManager;
     private Account mCurrentAccount;
+    private Spinner statusSpinner;
+    private EditText messageEditText;
 
     /**
      * Initializes the drawer, its content and highlights the menu item with the given id.
@@ -154,6 +169,12 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
     protected void setupDrawer(int menuItemId) {
         setupDrawer();
         setDrawerMenuItemChecked(menuItemId);
+    }
+
+    @Override
+    void onBackendConnected() {
+
+        setupStatus(statusSpinner);
     }
 
     /**
@@ -239,17 +260,141 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
         DisplayUtils.colorPreLollipopHorizontalProgressBar(mQuotaProgressBar);
     }
 
+    private void executeChangePresence(Spinner spinner, int position) {
+        Presence.Status status = getStatusFromSpinner(spinner);
+        Account account = AccountUtils.getCurrentOwnCloudAccount(getApplicationContext());
+        eu.siacs.conversations.entities.Account imAccount = null;
+
+        if (account != null && xmppConnectionService != null) {
+            try {
+                imAccount = xmppConnectionService.findAccountByJid(Jid.fromString(account.name));
+            } catch (InvalidJidException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (imAccount != null) {
+            String statusMessage = messageEditText.getText().toString();
+            PreferenceManager.getDefaultSharedPreferences(this).edit().putString(getString(R.string.pref_status_key), statusMessage);
+            xmppConnectionService.changeStatus(imAccount, status, statusMessage, true);
+        }
+
+
+    }
+
+    private Presence.Status getStatusFromSpinner(Spinner spinner) {
+        switch (spinner.getSelectedItemPosition()) {
+            case 0:
+                return Presence.Status.CHAT;
+            case 2:
+                return Presence.Status.AWAY;
+            case 3:
+                return Presence.Status.XA;
+            case 4:
+                return Presence.Status.DND;
+            default:
+                return Presence.Status.ONLINE;
+        }
+    }
+
+    private void setStatusInSpinner(Spinner spinner, Presence.Status status) {
+        switch(status) {
+            case AWAY:
+                spinner.setSelection(2);
+                break;
+            case XA:
+                spinner.setSelection(3);
+                break;
+            case CHAT:
+                spinner.setSelection(0);
+                break;
+            case DND:
+                spinner.setSelection(4);
+                break;
+            default:
+                spinner.setSelection(1);
+                break;
+        }
+    }
+
+    void setupStatus(Spinner spinner) {
+        Account account = AccountUtils.getCurrentOwnCloudAccount(getApplicationContext());
+        eu.siacs.conversations.entities.Account imAccount = null;
+
+        if (account != null) {
+            try {
+                imAccount = xmppConnectionService.findAccountByJid(Jid.fromString(account.name));
+            } catch (InvalidJidException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (imAccount != null) {
+            setStatusInSpinner(spinner, imAccount.getPresenceStatus());
+            String message = imAccount.getPresenceStatusMessage();
+            if (messageEditText.getText().length() == 0 && message != null) {
+                messageEditText.append(message);
+            }
+        }
+    }
+
     /**
      * setup drawer content, basically setting the item selected listener.
      *
      * @param navigationView the drawers navigation view
      */
-    protected void setupDrawerMenu(NavigationView navigationView) {
+    protected void setupDrawerMenu(final NavigationView navigationView) {
         // on pre lollipop the light theme adds a black tint to icons with white coloring
         // ruining the generic avatars, so tinting for icons is deactivated pre lollipop
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            navigationView.setItemIconTintList(null);
+            //navigationView.setItemIconTintList(null);
         }
+
+        messageEditText = (EditText) navigationView.getMenu().findItem(R.id.action_change_message).getActionView();
+        messageEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    executeChangePresence(statusSpinner, statusSpinner.getSelectedItemPosition());
+                    InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(textView.getWindowToken(), 0);
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        LinearLayout layout = (LinearLayout) navigationView.getMenu().findItem(R.id.action_change_presence).getActionView();
+        statusSpinner = (Spinner) layout.findViewById(R.id.online_status);
+        final int[] icons = {
+                R.drawable.ic_chat_black_24dp, // free to chat
+                R.drawable.ic_check_circle_black_24dp, // online
+                R.drawable.ic_schedule_black_24dp, // away
+                R.drawable.ic_cancel_black_24dp, // not available
+                R.drawable.ic_do_not_disturb_on_black_24dp // do not disturb
+        };
+
+        ArrayAdapter adapter = ArrayAdapter.createFromResource(this,
+                R.array.presence_show_options,
+                R.layout.simple_list_item);
+        statusSpinner.setAdapter(adapter);
+        statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //
+                try {
+                    navigationView.getMenu().findItem(R.id.action_change_presence).setIcon(icons[position]);
+                }
+                catch (IllegalStateException e) {
+                    e.printStackTrace();
+                }
+                executeChangePresence(statusSpinner, position);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+
 
         // setup actions for drawer menu items
         navigationView.setNavigationItemSelectedListener(
@@ -300,7 +445,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
                                     startActivity(chatIntent);
                                 }
                             }
-                        } if (menuItem.getItemId() == R.id.action_settings) {
+                        } else if (menuItem.getItemId() == R.id.action_settings) {
                             startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                         }
                         else if (menuItem.getItemId() == R.id.drawer_menu_account_manage) {
@@ -325,6 +470,15 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
                 });
 
 
+    }
+
+    private void changePresence() {
+        Intent intent;
+        Account account = AccountUtils.getCurrentOwnCloudAccount(getApplicationContext());
+
+        intent = new Intent(this, SetPresenceActivity.class);
+        intent.putExtra(SetPresenceActivity.EXTRA_ACCOUNT, account.name);
+        startActivity(intent);
     }
 
     /**

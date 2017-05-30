@@ -95,7 +95,11 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
 
         if (url != null) {
             // save the last server
-            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("last_server", url.getHost()).commit();
+            String last_server = url.getHost();
+            if (url.getPort() != -1) {
+                last_server += ":" + url.getPort();
+            }
+            PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("last_server", last_server).commit();
 
             Jid jid = null;
             try {

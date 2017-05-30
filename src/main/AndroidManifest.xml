@@ -266,7 +266,7 @@
             android:label="@string/files_button"
             android:theme="@style/Theme.ownCloud.Toolbar.Drawer"></activity>
         <activity
-            android:name="com.owncloud.android.ui.activity.ManageAccountsActivity"
+            android:name="eu.siacs.conversations.ui.SpreedboxManageAccountsActivity"
             android:theme="@style/Theme.ownCloud.Toolbar" />
         <activity
             android:name="com.owncloud.android.ui.activity.ParticipateActivity"

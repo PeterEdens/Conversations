@@ -239,7 +239,6 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:padding="@dimen/standard_padding"
-            android:enabled="false"
             android:text="@string/setup_btn_connect"
             android:contentDescription="@string/setup_btn_connect"/>
 

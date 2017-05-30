@@ -189,7 +189,6 @@
 
     <!-- inherit from the AppCompat theme -->
     <style name="AppCompatThemeNoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
-
         <item name="android:windowActionBar">false</item>
         <item name="android:windowNoTitle">true</item>
         <item name="TextSizeInfo">12sp</item>

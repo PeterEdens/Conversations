@@ -20,7 +20,8 @@
   License along with this program. If not, see <http://www.gnu.org/licenses/>.
   -->
 <merge xmlns:android="http://schemas.android.com/apk/res/android"
-       xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:android.support.design="http://schemas.android.com/tools">
 
     <android.support.design.widget.NavigationView
         android:id="@+id/nav_view"
@@ -30,8 +31,9 @@
         android:layout_weight="1"
         android:fitsSystemWindows="true"
         app:headerLayout="@layout/conversation_drawer_header"
-        app:menu="@menu/conversations_drawer_menu"
-        app:theme="@style/NavigationView_ItemTextAppearance">
+        app:theme="@style/NavigationView_ItemTextAppearance"
+        app:itemIconTint="@color/menu_item_color"
+        app:menu="@menu/conversations_drawer_menu">
 
         <LinearLayout
             android:id="@+id/drawer_quota"
