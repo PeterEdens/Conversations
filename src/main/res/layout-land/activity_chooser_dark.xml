@@ -3,15 +3,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#302e2f"
-    android:padding="@dimen/standard_padding"
     tools:context="eu.siacs.conversations.ui.ChooserActivity">
 
 
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/menu_items"
+        android:src="#151010"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_above="@+id/bottom_layout"
-        android:scaleType="fitXY"
+        android:scaleType="fitCenter"
         android:src="@drawable/secure_header"
         android:tintMode="src_over"
         android:tint="#cc302e2f"/>
@@ -21,10 +26,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_margin="5dp"
+        android:layout_margin="10dp"
         android:src="@drawable/spreedbox_logo_small" />
 
     <LinearLayout
+        android:id="@+id/menu_items"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -47,13 +53,13 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:orientation="vertical"
+                android:padding="@dimen/chooser_avatar_margin"
                 android:background="@drawable/ring">
 
                 <ImageView
                     android:id="@+id/avatar_container"
                     android:layout_width="@dimen/chooser_avatar_size"
                     android:layout_height="@dimen/chooser_avatar_size"
-                    android:layout_margin="16dp"
                     android:scaleType="fitCenter"
                     android:src="@drawable/ic_account_circle_black_48dp"
                     android:background="@drawable/white_circle"/>
@@ -67,7 +73,6 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/avatar_layout"
                 android:layout_alignTop="@+id/avatar_layout"
                 android:layout_alignBottom="@+id/avatar_layout"
@@ -82,7 +87,8 @@
                 android:textSize="@dimen/chooser_subtext_size"
                 android:paddingLeft="5dp"
                 android:paddingBottom="5dp"
-                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="end"
                 android:layout_toRightOf="@+id/avatar_layout"
                 android:layout_alignBottom="@+id/avatar_layout"
                 android:text="user@spreedbox.domain.com"/>
@@ -96,16 +102,17 @@
                 android:orientation="vertical"
                 android:background="@drawable/ring"
                 android:layout_below="@+id/avatar_layout"
-                android:paddingTop="10dp"
+                android:layout_marginTop="15dp"
+                android:padding="@dimen/chooser_item_margin"
                 tools:ignore="UselessParent">
 
                 <ImageView
                     android:id="@+id/secure_chat_button"
                     android:layout_width="@dimen/chooser_item_size"
                     android:layout_height="@dimen/chooser_item_size"
-                    android:layout_margin="20dp"
                     android:layout_centerInParent="true"
                     android:tint="#00afce"
+                    android:background="@drawable/ic_chat_bubble_white_48dp"
                     android:src="@drawable/ic_textsms_black_48dp"/>
 
             </RelativeLayout>
@@ -118,11 +125,23 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/chat_controls"
                 android:layout_alignTop="@+id/chat_controls"
                 android:layout_alignBottom="@+id/chat_controls"
                 android:text="@string/secure_chat_button"/>
+
+            <TextView
+                android:id="@+id/chat_sublabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/chat_controls"
+                android:layout_toRightOf="@+id/chat_controls"
+                android:gravity="left"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:text="1 new message"
+                android:textColor="@color/white"
+                android:textSize="@dimen/chooser_subtext_size" />
 
         </RelativeLayout>
 
@@ -131,7 +150,7 @@
             android:layout_width="0dp"
             android:layout_weight=".5"
             android:layout_height="match_parent"
-            android:paddingLeft="20dp"
+            android:paddingLeft="@dimen/chooser_item_margin"
             android:id="@+id/column2"
             android:layout_toRightOf="@+id/column1"
             android:layout_below="@+id/chooser_logo"
@@ -143,16 +162,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/ring"
+                android:padding="@dimen/chooser_item_margin"
                 tools:ignore="UselessParent">
 
                 <ImageView
                     android:id="@+id/files_button"
                     android:layout_width="@dimen/chooser_item_size"
                     android:layout_height="@dimen/chooser_item_size"
-                    android:layout_margin="20dp"
                     android:layout_centerInParent="true"
                     android:tint="#00afce"
-                    android:src="@drawable/ic_cloud_white_48dp" />
+                    android:background="@drawable/ic_cloud_white_48dp"
+                    android:src="@drawable/ic_cloud_download_white_48dp"  />
 
             </RelativeLayout>
 
@@ -164,7 +184,6 @@
                 android:textColor="@color/white"
                 android:textSize="20sp"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/files_controls"
                 android:layout_alignTop="@+id/files_controls"
                 android:layout_alignBottom="@+id/files_controls"
@@ -177,7 +196,8 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/files_controls"
                 android:background="@drawable/ring"
-                android:paddingTop="10dp"
+                android:layout_marginTop="15dp"
+                android:padding="@dimen/chooser_item_margin"
                 tools:ignore="UselessParent">
 
                 <ImageView
@@ -185,7 +205,7 @@
                     android:layout_width="@dimen/chooser_item_size"
                     android:layout_height="@dimen/chooser_item_size"
                     android:layout_centerInParent="true"
-                    android:layout_margin="20dp"
+                    android:background="@drawable/ic_chat_bubble_white_48dp"
                     android:src="@drawable/ic_voice_chat_black_48dp"
                     android:tint="#00afce" />
 
@@ -199,7 +219,6 @@
                 android:textColor="@color/white"
                 android:textSize="@dimen/chooser_text_size"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/video_call_controls"
                 android:layout_alignTop="@+id/video_call_controls"
                 android:layout_alignBottom="@+id/video_call_controls"
@@ -213,6 +232,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_marginBottom="10dp"
         android:layout_centerHorizontal="true">
 
         <RelativeLayout
@@ -230,6 +250,7 @@
                 android:layout_width="@dimen/chooser_subitem_size"
                 android:layout_height="@dimen/chooser_subitem_size"
                 android:layout_margin="8dp"
+                android:layout_centerVertical="true"
                 android:tint="#00afce"
                 android:src="@drawable/ic_settings_white_48dp" />
 
@@ -243,7 +264,6 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             android:paddingLeft="5dp"
-            android:textStyle="bold"
             android:layout_toRightOf="@+id/settings_controls"
             android:layout_alignTop="@+id/settings_controls"
             android:layout_alignBottom="@+id/settings_controls"
@@ -264,6 +284,7 @@
                 android:layout_width="@dimen/chooser_subitem_size"
                 android:layout_height="@dimen/chooser_subitem_size"
                 android:layout_margin="8dp"
+                android:layout_centerVertical="true"
                 android:tint="#00afce"
                 android:src="@drawable/ic_exit_to_app_white_24dp"
                 android:layout_marginRight="10dp"
@@ -279,7 +300,6 @@
             android:textColor="@color/white"
             android:textSize="@dimen/chooser_subtext_size"
             android:paddingLeft="5dp"
-            android:textStyle="bold"
             android:layout_toRightOf="@+id/logout_layout"
             android:layout_alignTop="@+id/logout_layout"
             android:layout_alignBottom="@+id/logout_layout"

@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -38,6 +39,7 @@ import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
 import net.java.otr4j.session.SessionStatus;
 
+import org.appspot.apprtc.service.WebsocketService;
 import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
@@ -130,6 +132,10 @@ import eu.siacs.conversations.xmpp.stanzas.MessagePacket;
 import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 import me.leolin.shortcutbadger.ShortcutBadger;
 
+import static com.example.sharedresourceslib.BroadcastTypes.ACTION_PRESENCE_CHANGED;
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_ACCOUNT_NAME;
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_PRESENCE;
+
 public class XmppConnectionService extends Service {
 
 	public static final String ACTION_REPLY_TO_CONVERSATION = "reply_to_conversations";
@@ -149,6 +155,14 @@ public class XmppConnectionService extends Service {
 	private final IqGenerator mIqGenerator = new IqGenerator(this);
 	private final List<String> mInProgressAvatarFetches = new ArrayList<>();
 	private final HashSet<Jid> mLowPingTimeoutMode = new HashSet<>();
+
+
+	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			handleBroadcast(intent);
+		}
+	};
 
 	private long mLastActivity = 0;
 
@@ -376,6 +390,7 @@ public class XmppConnectionService extends Service {
 	private EventReceiver mEventReceiver = new EventReceiver();
 
 	private boolean mRestoredFromDatabase = false;
+	private IntentFilter mIntentFilter;
 
 	private static String generateFetchKey(Account account, final Avatar avatar) {
 		return account.getJid().toBareJid() + "_" + avatar.owner + "_" + avatar.sha1sum;
@@ -919,6 +934,10 @@ public class XmppConnectionService extends Service {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 			registerReceiver(this.mEventReceiver,new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 		}
+
+		mIntentFilter = new IntentFilter();
+		mIntentFilter.addAction(ACTION_PRESENCE_CHANGED);
+		registerReceiver(mReceiver, mIntentFilter);
 	}
 
 	@Override
@@ -938,6 +957,7 @@ public class XmppConnectionService extends Service {
 			//ignored
 		}
 		fileObserver.stopWatching();
+		unregisterReceiver(mReceiver);
 		super.onDestroy();
 	}
 
@@ -3757,6 +3777,28 @@ public class XmppConnectionService extends Service {
 	public class XmppConnectionBinder extends Binder {
 		public XmppConnectionService getService() {
 			return XmppConnectionService.this;
+		}
+	}
+
+	private void handleBroadcast(Intent intent) {
+		if (intent.getAction().equals(ACTION_PRESENCE_CHANGED)) {
+			Presence.Status status = Presence.Status.ONLINE;
+			status = status.fromShowString(intent.getStringExtra(EXTRA_PRESENCE));
+			String accountName = intent.getStringExtra(EXTRA_ACCOUNT_NAME);
+
+			eu.siacs.conversations.entities.Account imAccount = null;
+
+			try {
+				imAccount = findAccountByJid(Jid.fromString(accountName));
+			} catch (InvalidJidException e) {
+				e.printStackTrace();
+			}
+
+			if (imAccount != null) {
+				String statusMessage = "";//messageEditText.getText().toString();
+				PreferenceManager.getDefaultSharedPreferences(this).edit().putString(getString(R.string.pref_status_key), statusMessage).commit();
+				changeStatus(imAccount, status, statusMessage, true);
+			}
 		}
 	}
 }

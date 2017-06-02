@@ -14,6 +14,8 @@ import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.support.v7.widget.Toolbar;
+import android.view.View;
 import android.widget.Toast;
 
 import java.security.KeyStoreException;
@@ -43,15 +45,30 @@ public class SettingsActivity extends XmppActivity implements
 
 	public static final int REQUEST_WRITE_LOGS = 0xbf8701;
 	private SettingsFragment mSettingsFragment;
+	private Toolbar toolbar;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.global_settings_layout);
+
+
+		toolbar = (Toolbar) findViewById(R.id.toolbar);
+		setSupportActionBar(toolbar);
+		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+		toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View view) {
+				finish();
+			}
+		});
+
 		FragmentManager fm = getFragmentManager();
 		mSettingsFragment = (SettingsFragment) fm.findFragmentById(android.R.id.content);
 		if (mSettingsFragment == null || !mSettingsFragment.getClass().equals(SettingsFragment.class)) {
 			mSettingsFragment = new SettingsFragment();
-			fm.beginTransaction().replace(android.R.id.content, mSettingsFragment).commit();
+			fm.beginTransaction().replace(R.id.content, mSettingsFragment).commit();
 		}
 
 		this.mTheme = findTheme();

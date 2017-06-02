@@ -48,7 +48,13 @@ import java.util.List;
 
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.XmppConnectionService;
+import eu.siacs.conversations.xmpp.jid.InvalidJidException;
+import eu.siacs.conversations.xmpp.jid.Jid;
 import spreedbox.me.app.R;
+
+import static com.example.sharedresourceslib.BroadcastTypes.ACTION_PRESENCE_CHANGED;
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_ACCOUNT_NAME;
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_PRESENCE;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -92,6 +98,8 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             XmppConnectionService.XmppConnectionBinder binder = (XmppConnectionService.XmppConnectionBinder) service;
             xmppConnectionService = binder.getService();
             xmppConnectionServiceBound = true;
+            updateUnread();
+            updateStatus();
         }
 
         @Override
@@ -151,6 +159,47 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         finish();
     }
 
+    private void updateStatus() {
+        eu.siacs.conversations.entities.Account imAccount = null;
+
+        if (mAccount != null) {
+            try {
+                imAccount = xmppConnectionService.findAccountByJid(Jid.fromString(mAccount.name));
+            } catch (InvalidJidException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (imAccount != null) {
+            Intent broadcastIntent = new Intent();
+            broadcastIntent.setAction(ACTION_PRESENCE_CHANGED);
+            broadcastIntent.putExtra(EXTRA_PRESENCE, imAccount.getPresenceStatus().toShowString());
+            broadcastIntent.putExtra(EXTRA_ACCOUNT_NAME, mAccount.name);
+            sendBroadcast(broadcastIntent);
+        }
+    }
+
+    private void updateUnread() {
+        if (xmppConnectionService == null) {
+            return;
+        }
+
+        TextView imSublabel = (TextView) findViewById(R.id.chat_sublabel);
+        if (imSublabel != null) {
+            String messageTxt = "";
+
+            int unread = xmppConnectionService.unreadCount();
+            if (unread == 0) {
+                messageTxt = getString(R.string.no_new_messages);
+            } else if (unread == 1) {
+                messageTxt = getString(R.string.unread_message);
+            } else {
+                messageTxt = String.format(getString(R.string.unread_messages), unread);
+            }
+            imSublabel.setText(messageTxt);
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -188,10 +237,30 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             actionBar.hide();
         }
 
-        TextView sublabel = (TextView) findViewById(R.id.avatar_sublabel);
-        sublabel.setText(mAccount.name);
+        if (mAccount != null) {
+            TextView sublabel = (TextView) findViewById(R.id.avatar_sublabel);
+            sublabel.setText(mAccount.name);
+        }
+        updateUnread();
 
         findViewById(R.id.logout_layout).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                new AlertDialog.Builder(mContext)
+                        .setTitle(R.string.logout)
+                        .setMessage(R.string.logout_confirm)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                            public void onClick(DialogInterface dialog, int whichButton) {
+                                logout();
+                            }})
+                        .setNegativeButton(android.R.string.no, null).show();
+
+            }
+        });
+
+        findViewById(R.id.logout_label).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 new AlertDialog.Builder(mContext)
@@ -215,6 +284,13 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         });
 
+        findViewById(R.id.secure_chat_label).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LaunchIM();
+            }
+        });
+
         findViewById(R.id.video_call_controls).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -222,7 +298,21 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         });
 
+        findViewById(R.id.video_call_label).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LaunchVideoChat();
+            }
+        });
+
         findViewById(R.id.files_controls).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LaunchShareFiles();
+            }
+        });
+
+        findViewById(R.id.files_label).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 LaunchShareFiles();
@@ -237,9 +327,26 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         });
 
+        findViewById(R.id.settings_label).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent globalSettingsIntent = new Intent(getApplicationContext(), GlobalSettingsActivity.class);
+                startActivity(globalSettingsIntent);
+            }
+        });
+
         mAvatarContainer = (ImageView) findViewById(R.id.avatar_container);
 
         mAvatarContainer.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(), SpreedboxManageAccountsActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        TextView avatarLabel = (TextView)findViewById(R.id.avatar_label);
+        avatarLabel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(), SpreedboxManageAccountsActivity.class);
@@ -259,6 +366,8 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     public void onResume() {
         super.onResume();
 
+        updateUnread();
+
         // Check if the account has been updated
         mAccount = AccountUtils.getCurrentOwnCloudAccount(this);
         if (mAccount != null) {
@@ -277,6 +386,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
     private void LaunchVideoChat() {
         Intent connectActivity = new Intent(mContext, ConnectActivity.class);
+
         /*Account account = AccountUtils.getCurrentOwnCloudAccount(mContext);
         if (account != null) {
             AccountManager accountMgr = AccountManager.get(mContext);

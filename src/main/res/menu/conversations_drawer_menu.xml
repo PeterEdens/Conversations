@@ -42,11 +42,11 @@
         android:id="@+id/action_change_presence"
         android:title=""
         app:actionLayout="@layout/presence_spinner"/>
-    <item
+    <!--<item
         android:id="@+id/action_change_message"
         android:icon="@android:drawable/ic_menu_info_details"
         android:title=""
-        app:actionLayout="@layout/message_layout"/>
+        app:actionLayout="@layout/message_layout"/>-->
     </group>
 
     <!--

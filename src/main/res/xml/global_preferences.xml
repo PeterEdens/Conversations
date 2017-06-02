@@ -22,9 +22,5 @@
         <intent
             android:action="com.owncloud.android.ui.activity.Preferences"/>
     </PreferenceScreen>
-    <CheckBoxPreference
-        android:defaultValue="false"
-        android:key="use_dark_chooser"
-        android:title="Use Dark theme chooser"
-        />
+
 </PreferenceScreen>

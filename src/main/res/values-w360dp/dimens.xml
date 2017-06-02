@@ -1,3 +1,10 @@
 <resources>
 	<dimen name="conversations_overview_width">304dp</dimen>
+	<dimen name="chooser_avatar_radius">28dp</dimen>
+	<dimen name="chooser_text_size">20sp</dimen>
+	<dimen name="chooser_subtext_size">14sp</dimen>
+	<dimen name="chooser_item_margin">14dp</dimen>
+	<dimen name="chooser_item_size">40dp</dimen>
+	<dimen name="chooser_avatar_size">56dp</dimen>
+	<dimen name="chooser_subitem_size">28dp</dimen>
 </resources>

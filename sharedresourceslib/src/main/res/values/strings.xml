@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">SharedResourcesLib</string>
     <string name="drawer_manage_accounts">Manage accounts</string>
+    <string name="presence_chat">Free for Chat</string>
+    <string name="presence_online">Online</string>
+    <string name="presence_away">Away</string>
+    <string name="presence_xa">Not Available</string>
+    <string name="presence_dnd">Busy</string>
 </resources>

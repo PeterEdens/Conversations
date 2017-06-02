@@ -8,8 +8,14 @@
     <ImageView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_above="@+id/menu_items"
+        android:src="#151010"/>
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
         android:layout_above="@+id/bottom_layout"
-        android:scaleType="fitXY"
+        android:scaleType="fitStart"
         android:src="@drawable/secure_header"
         android:tintMode="src_over"
         android:tint="#cc302e2f"/>
@@ -23,11 +29,13 @@
         android:src="@drawable/spreedbox_logo_small" />
 
     <RelativeLayout
+        android:id="@+id/menu_items"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:paddingLeft="40dp"
         android:layout_below="@+id/chooser_logo"
+        android:layout_marginTop="10dp"
         android:orientation="vertical">
 
 
@@ -37,13 +45,13 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:orientation="vertical"
+            android:padding="@dimen/chooser_avatar_margin"
             android:background="@drawable/ring">
 
             <ImageView
                 android:id="@+id/avatar_container"
                 android:layout_width="@dimen/chooser_avatar_size"
                 android:layout_height="@dimen/chooser_avatar_size"
-                android:layout_margin="16dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_account_circle_black_48dp"
                 android:background="@drawable/white_circle"/>
@@ -57,7 +65,6 @@
             android:textColor="@color/white"
             android:textSize="@dimen/chooser_text_size"
             android:paddingLeft="5dp"
-            android:textStyle="bold"
             android:layout_toRightOf="@+id/avatar_layout"
             android:layout_alignTop="@+id/avatar_layout"
             android:layout_alignBottom="@+id/avatar_layout"
@@ -66,16 +73,15 @@
         <TextView
             android:id="@+id/avatar_sublabel"
             android:layout_width="wrap_content"
-            android:gravity="left"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:textSize="@dimen/chooser_subtext_size"
-            android:paddingLeft="5dp"
-            android:paddingBottom="5dp"
-            android:textStyle="bold"
-            android:layout_toRightOf="@+id/avatar_layout"
             android:layout_alignBottom="@+id/avatar_layout"
-            android:text="user@domain.com"/>
+            android:layout_toRightOf="@+id/avatar_layout"
+            android:gravity="left"
+            android:paddingBottom="5dp"
+            android:paddingLeft="5dp"
+            android:text="user@spreedbox.domain.com"
+            android:textColor="@color/white"
+            android:textSize="@dimen/chooser_subtext_size" />
 
         <RelativeLayout
                 android:id="@+id/chat_controls"
@@ -86,16 +92,17 @@
                 android:orientation="vertical"
                 android:background="@drawable/ring"
                 android:layout_below="@+id/avatar_layout"
-                android:paddingTop="10dp"
+                android:layout_marginTop="15dp"
+                android:padding="@dimen/chooser_item_margin"
                 tools:ignore="UselessParent">
 
                 <ImageView
                     android:id="@+id/secure_chat_button"
                     android:layout_width="@dimen/chooser_item_size"
                     android:layout_height="@dimen/chooser_item_size"
-                    android:layout_margin="20dp"
                     android:layout_centerInParent="true"
                     android:tint="#00afce"
+                    android:background="@drawable/ic_chat_bubble_white_48dp"
                     android:src="@drawable/ic_textsms_black_48dp"/>
 
             </RelativeLayout>
@@ -108,11 +115,23 @@
                 android:textColor="@color/white"
                 android:textSize="@dimen/chooser_text_size"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/chat_controls"
                 android:layout_alignTop="@+id/chat_controls"
                 android:layout_alignBottom="@+id/chat_controls"
                 android:text="@string/secure_chat_button"/>
+
+            <TextView
+                android:id="@+id/chat_sublabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/chat_controls"
+                android:layout_toRightOf="@+id/chat_controls"
+                android:gravity="left"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:text="1 new message"
+                android:textColor="@color/white"
+                android:textSize="@dimen/chooser_subtext_size" />
 
             <RelativeLayout
                 android:id="@+id/files_controls"
@@ -121,17 +140,18 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/ring"
                 android:layout_below="@+id/chat_controls"
-                android:paddingTop="10dp"
+                android:layout_marginTop="15dp"
+                android:padding="@dimen/chooser_item_margin"
                 tools:ignore="UselessParent">
 
                 <ImageView
                     android:id="@+id/files_button"
                     android:layout_width="@dimen/chooser_item_size"
                     android:layout_height="@dimen/chooser_item_size"
-                    android:layout_margin="20dp"
                     android:layout_centerInParent="true"
                     android:tint="#00afce"
-                    android:src="@drawable/ic_cloud_white_48dp" />
+                    android:background="@drawable/ic_cloud_white_48dp"
+                    android:src="@drawable/ic_cloud_download_white_48dp" />
 
             </RelativeLayout>
 
@@ -143,7 +163,6 @@
                 android:textColor="@color/white"
                 android:textSize="@dimen/chooser_text_size"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/files_controls"
                 android:layout_alignTop="@+id/files_controls"
                 android:layout_alignBottom="@+id/files_controls"
@@ -156,7 +175,8 @@
             android:layout_height="wrap_content"
             android:layout_below="@+id/files_controls"
             android:background="@drawable/ring"
-            android:paddingTop="10dp"
+            android:layout_marginTop="15dp"
+            android:padding="@dimen/chooser_item_margin"
             tools:ignore="UselessParent">
 
             <ImageView
@@ -164,7 +184,7 @@
                 android:layout_width="@dimen/chooser_item_size"
                 android:layout_height="@dimen/chooser_item_size"
                 android:layout_centerInParent="true"
-                android:layout_margin="20dp"
+                android:background="@drawable/ic_chat_bubble_white_48dp"
                 android:src="@drawable/ic_voice_chat_black_48dp"
                 android:tint="#00afce" />
 
@@ -178,7 +198,6 @@
                 android:textColor="@color/white"
                 android:textSize="@dimen/chooser_text_size"
                 android:paddingLeft="5dp"
-                android:textStyle="bold"
                 android:layout_toRightOf="@+id/video_call_controls"
                 android:layout_alignTop="@+id/video_call_controls"
                 android:layout_alignBottom="@+id/video_call_controls"
@@ -190,14 +209,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15dp"
         android:layout_centerHorizontal="true">
         <RelativeLayout
             android:id="@+id/settings_controls"
-            style="?metaButtonBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="30dp"
-            android:layout_marginBottom="5dp"
             android:clickable="true"
             android:background="@drawable/ring">
 
@@ -206,6 +223,7 @@
                 android:layout_width="@dimen/chooser_subitem_size"
                 android:layout_height="@dimen/chooser_subitem_size"
                 android:layout_margin="10dp"
+                android:layout_centerVertical="true"
                 android:tint="#00afce"
                 android:src="@drawable/ic_settings_white_48dp" />
 
@@ -219,7 +237,6 @@
             android:textColor="@color/white"
             android:textSize="@dimen/chooser_subtext_size"
             android:paddingLeft="5dp"
-            android:textStyle="bold"
             android:layout_toRightOf="@+id/settings_controls"
             android:layout_alignTop="@+id/settings_controls"
             android:layout_alignBottom="@+id/settings_controls"
@@ -230,7 +247,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="30dp"
-            android:layout_marginBottom="5dp"
             android:clickable="true"
             android:layout_toRightOf="@+id/settings_label"
             android:background="@drawable/ring">
@@ -241,8 +257,8 @@
                 android:layout_height="@dimen/chooser_subitem_size"
                 android:layout_margin="10dp"
                 android:tint="#00afce"
-                android:src="@drawable/ic_exit_to_app_white_24dp"
-                android:layout_marginRight="10dp"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_exit_to_app_white_48dp"
                 android:background="@color/transparent"/>
 
         </RelativeLayout>
@@ -255,7 +271,6 @@
             android:textColor="@color/white"
             android:textSize="@dimen/chooser_subtext_size"
             android:paddingLeft="5dp"
-            android:textStyle="bold"
             android:layout_toRightOf="@+id/logout_layout"
             android:layout_alignTop="@+id/logout_layout"
             android:layout_alignBottom="@+id/logout_layout"

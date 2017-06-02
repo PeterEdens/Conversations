@@ -158,7 +158,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
     private FileDataStorageManager mStorageManager;
     private Account mCurrentAccount;
     private Spinner statusSpinner;
-    private EditText messageEditText;
+    //private EditText messageEditText;
 
     /**
      * Initializes the drawer, its content and highlights the menu item with the given id.
@@ -274,7 +274,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
         }
 
         if (imAccount != null) {
-            String statusMessage = messageEditText.getText().toString();
+            String statusMessage = "";//messageEditText.getText().toString();
             PreferenceManager.getDefaultSharedPreferences(this).edit().putString(getString(R.string.pref_status_key), statusMessage);
             xmppConnectionService.changeStatus(imAccount, status, statusMessage, true);
         }
@@ -332,9 +332,9 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
         if (imAccount != null) {
             setStatusInSpinner(spinner, imAccount.getPresenceStatus());
             String message = imAccount.getPresenceStatusMessage();
-            if (messageEditText.getText().length() == 0 && message != null) {
-                messageEditText.append(message);
-            }
+            //if (messageEditText.getText().length() == 0 && message != null) {
+            //    messageEditText.append(message);
+            //}
         }
     }
 
@@ -350,8 +350,8 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
             //navigationView.setItemIconTintList(null);
         }
 
-        messageEditText = (EditText) navigationView.getMenu().findItem(R.id.action_change_message).getActionView();
-        messageEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        //messageEditText = (EditText) navigationView.getMenu().findItem(R.id.action_change_message).getActionView();
+        /*messageEditText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
                 if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -362,7 +362,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
                 }
                 return false;
             }
-        });
+        });*/
 
         LinearLayout layout = (LinearLayout) navigationView.getMenu().findItem(R.id.action_change_presence).getActionView();
         statusSpinner = (Spinner) layout.findViewById(R.id.online_status);

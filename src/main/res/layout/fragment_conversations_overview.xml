@@ -13,13 +13,11 @@ android:clickable="true" >
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@+id/content_view_spl"
-            android:scaleType="fitXY"
-            android:src="@drawable/secure_header_solid"
-            android:tint="#cc302e2f"/>
+    <include
+        layout="@layout/spreedbox_header"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/content_view_spl"/>
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
