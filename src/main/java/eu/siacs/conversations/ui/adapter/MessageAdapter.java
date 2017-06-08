@@ -35,6 +35,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.appspot.apprtc.ConnectActivity;
+import org.appspot.apprtc.RoomActivity;
+
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.List;
@@ -302,12 +305,122 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 		if (viewHolder.download_button != null) {
 			viewHolder.download_button.setVisibility(View.GONE);
 		}
+		if (viewHolder.roomButton != null) {
+			viewHolder.roomButton.setVisibility(View.GONE);
+		}
 		viewHolder.image.setVisibility(View.GONE);
 		viewHolder.messageBody.setVisibility(View.VISIBLE);
 		viewHolder.messageBody.setIncludeFontPadding(true);
 		if (message.getBody() != null) {
 			final String nick = UIHelper.getMessageDisplayName(message);
 			SpannableStringBuilder body = message.getMergedBody();
+			boolean hasMeCommand = message.hasMeCommand();
+			if (hasMeCommand) {
+				body = body.replace(0, Message.ME_COMMAND.length(), nick + " ");
+			}
+			if (body.length() > Config.MAX_DISPLAY_MESSAGE_CHARS) {
+				body = new SpannableStringBuilder(body, 0, Config.MAX_DISPLAY_MESSAGE_CHARS);
+				body.append("\u2026");
+			}
+			Message.MergeSeparator[] mergeSeparators = body.getSpans(0, body.length(), Message.MergeSeparator.class);
+			for (Message.MergeSeparator mergeSeparator : mergeSeparators) {
+				int start = body.getSpanStart(mergeSeparator);
+				int end = body.getSpanEnd(mergeSeparator);
+				body.setSpan(new RelativeSizeSpan(0.3f), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			}
+			if (message.getType() != Message.TYPE_PRIVATE) {
+				if (hasMeCommand) {
+					body.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 0, nick.length(),
+							Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				}
+			} else {
+				String privateMarker;
+				if (message.getStatus() <= Message.STATUS_RECEIVED) {
+					privateMarker = activity.getString(R.string.private_message);
+				} else {
+					final String to;
+					if (message.getCounterpart() != null) {
+						to = message.getCounterpart().getResourcepart();
+					} else {
+						to = "";
+					}
+					privateMarker = activity.getString(R.string.private_message_to, to);
+				}
+				body.insert(0, privateMarker);
+				int privateMarkerIndex = privateMarker.length();
+				body.insert(privateMarkerIndex, " ");
+				body.setSpan(new ForegroundColorSpan(getMessageTextColor(darkBackground, false)),
+						0, privateMarkerIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				body.setSpan(new StyleSpan(Typeface.BOLD),
+						0, privateMarkerIndex, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				if (hasMeCommand) {
+					body.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), privateMarkerIndex + 1,
+							privateMarkerIndex + 1 + nick.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+				}
+			}
+			Linkify.addLinks(body, Linkify.WEB_URLS);
+			Linkify.addLinks(body, XMPP_PATTERN, "xmpp");
+			Linkify.addLinks(body, GeoHelper.GEO_URI, "geo");
+			viewHolder.messageBody.setAutoLinkMask(0);
+			viewHolder.messageBody.setText(body);
+			viewHolder.messageBody.setTextIsSelectable(true);
+			viewHolder.messageBody.setMovementMethod(ClickableMovementMethod.getInstance());
+			listSelectionManager.onUpdate(viewHolder.messageBody, message);
+		} else {
+			viewHolder.messageBody.setText("");
+			viewHolder.messageBody.setTextIsSelectable(false);
+		}
+		viewHolder.messageBody.setTextColor(this.getMessageTextColor(darkBackground, true));
+		viewHolder.messageBody.setLinkTextColor(this.getMessageTextColor(darkBackground, true));
+		viewHolder.messageBody.setHighlightColor(activity.getResources().getColor(darkBackground ? (type == SENT || !mUseGreenBackground ? R.color.black26 : R.color.grey800) : R.color.grey500));
+		viewHolder.messageBody.setTypeface(null, Typeface.NORMAL);
+	}
+
+	private void displayRoomMessage(final ViewHolder viewHolder, final Message message, boolean darkBackground, int type) {
+		if (viewHolder.download_button != null) {
+			viewHolder.download_button.setVisibility(View.GONE);
+		}
+		String bodyString = message.getBody();
+		if (viewHolder.roomButton != null) {
+			viewHolder.roomButton.setVisibility(View.VISIBLE);
+			String server = "";
+			String room = "";
+			Pattern p = Pattern.compile("https://(.+?)/apps/spreedme.*");
+			Matcher m = p.matcher(bodyString);
+			if(m.matches()) {
+				server = m.group(1);
+			}
+			p = Pattern.compile("https://.+?/apps/spreedme#(.+?)\\b");
+			m = p.matcher(bodyString);
+			if (m.matches()) {
+				room = m.group(1);
+				viewHolder.roomButton.setText(room);
+			}
+			else {
+				viewHolder.roomButton.setText(R.string.default_room);
+			}
+
+			final String roomServer = server;
+			final String roomName = room;
+			viewHolder.roomButton.setOnClickListener(new OnClickListener() {
+				@Override
+				public void onClick(View view) {
+					Intent intent = new Intent(view.getContext(), ConnectActivity.class);
+					intent.putExtra(RoomActivity.EXTRA_SERVER_NAME, roomServer);
+					intent.putExtra(RoomActivity.EXTRA_ROOM_NAME, roomName);
+					view.getContext().startActivity(intent);
+				}
+			});
+
+			bodyString = bodyString.replaceFirst("https://.+?/apps/spreedme(#.+\\b)*", "");
+		}
+
+		viewHolder.image.setVisibility(View.GONE);
+		viewHolder.messageBody.setVisibility(View.VISIBLE);
+		viewHolder.messageBody.setIncludeFontPadding(true);
+		if (message.getBody() != null) {
+			final String nick = UIHelper.getMessageDisplayName(message);
+			SpannableStringBuilder body = message.getMergedBody(bodyString);
 			boolean hasMeCommand = message.hasMeCommand();
 			if (hasMeCommand) {
 				body = body.replace(0, Message.ME_COMMAND.length(), nick + " ");
@@ -482,6 +595,7 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 						.findViewById(R.id.message_box);
 					viewHolder.contact_picture = (ImageView) view
 						.findViewById(R.id.message_photo);
+					viewHolder.roomButton = (TextView) view.findViewById(R.id.roomButton);
 					viewHolder.download_button = (Button) view
 						.findViewById(R.id.download_button);
 					viewHolder.indicator = (ImageView) view
@@ -503,6 +617,7 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 						.findViewById(R.id.message_box);
 					viewHolder.contact_picture = (ImageView) view
 						.findViewById(R.id.message_photo);
+					viewHolder.roomButton = (TextView) view.findViewById(R.id.roomButton);
 					viewHolder.download_button = (Button) view
 						.findViewById(R.id.download_button);
 					viewHolder.indicator = (ImageView) view
@@ -658,7 +773,10 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 							activity.getString(R.string.check_x_filesize,
 									UIHelper.getFileDescriptionString(activity, message)));
 				}
-			} else {
+			} else if (containsRoomlink(message.getBody())) {
+				displayRoomMessage(viewHolder, message, darkBackground, type);
+			}
+			else {
 				displayTextMessage(viewHolder, message, darkBackground, type);
 			}
 		}
@@ -683,6 +801,14 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 		displayStatus(viewHolder, message, type, darkBackground);
 
 		return view;
+	}
+
+	boolean containsRoomlink(String body) {
+		boolean ret = false;
+		if (body.contains("/apps/spreedme")) {
+			ret = true;
+		}
+		return ret;
 	}
 
 	@Override
@@ -780,6 +906,7 @@ public class MessageAdapter extends ArrayAdapter<Message> implements CopyTextVie
 		protected TextView encryption;
 		public Button load_more_messages;
 		public ImageView edit_indicator;
+		public TextView roomButton;
 	}
 
 	class BitmapWorkerTask extends AsyncTask<Message, Void, Bitmap> {

@@ -526,6 +526,22 @@ public class Message extends AbstractEntity {
 		return body;
 	}
 
+	public SpannableStringBuilder getMergedBody(String bodyString) {
+		SpannableStringBuilder body = new SpannableStringBuilder(bodyString.trim());
+		Message current = this;
+		while (current.mergeable(current.next())) {
+			current = current.next();
+			if (current == null) {
+				break;
+			}
+			body.append("\n\n");
+			body.setSpan(new MergeSeparator(), body.length() - 2, body.length(),
+					SpannableStringBuilder.SPAN_EXCLUSIVE_EXCLUSIVE);
+			body.append(current.getBody().trim());
+		}
+		return body;
+	}
+
 	public boolean hasMeCommand() {
 		return this.body.trim().startsWith(ME_COMMAND);
 	}

@@ -82,7 +82,7 @@
         <item
             android:orderInCategory="3"
             android:id="@+id/nav_share_files"
-            android:icon="@drawable/ic_cloud_black_24dp"
+            android:icon="@drawable/ic_cloud_download_white_48dp"
             android:title="@string/drawer_share_files"/>
     </group>
 

@@ -41,6 +41,8 @@ import com.owncloud.android.ui.activity.ManageAccountsActivity;
 import com.owncloud.android.utils.DisplayUtils;
 
 import org.appspot.apprtc.ConnectActivity;
+import org.appspot.apprtc.entities.Presence;
+import org.appspot.apprtc.service.WebsocketService;
 
 import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
@@ -72,6 +74,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     public XmppConnectionService xmppConnectionService;
     public boolean xmppConnectionServiceBound = false;
     private Account mAccount;
+    private TextView videoCallSublabel;
 
     @Override
     public void onNewIntent(Intent intent) {
@@ -90,6 +93,39 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         }
     }
+
+    private WebsocketService mWebsocketService;
+
+    private boolean mWebsocketServiceBound;
+
+    /** Defines callbacks for service binding, passed to bindService() */
+    private ServiceConnection mWebsocketConnection = new ServiceConnection() {
+
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       IBinder service) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            WebsocketService.WebsocketBinder binder = (WebsocketService.WebsocketBinder) service;
+            mWebsocketService = binder.getService();
+            mWebsocketServiceBound = true;
+
+            if (!mWebsocketService.getIsConnected()) {
+                if (videoCallSublabel != null) {
+                    videoCallSublabel.setText(R.string.disconnected);
+                }
+            } else {
+                if (videoCallSublabel != null) {
+                    videoCallSublabel.setText(R.string.connected);
+                }
+            }
+
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mWebsocketServiceBound = false;
+        }
+    };
 
     protected ServiceConnection mConnection = new ServiceConnection() {
 
@@ -111,6 +147,12 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     @Override
     protected void onStart() {
         super.onStart();
+
+        // Bind to LocalService
+        Intent intent = new Intent(this, WebsocketService.class);
+        startService(intent);
+        bindService(intent, mWebsocketConnection, Context.BIND_AUTO_CREATE);
+
         if (!xmppConnectionServiceBound) {
             connectToBackend();
         }
@@ -126,6 +168,12 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     @Override
     protected void onStop() {
         super.onStop();
+        // Unbind from the service
+        if (mWebsocketServiceBound) {
+            unbindService(mWebsocketConnection);
+            mWebsocketServiceBound = false;
+        }
+
         if (xmppConnectionServiceBound) {
             unbindService(mConnection);
             xmppConnectionServiceBound = false;
@@ -195,6 +243,19 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 messageTxt = getString(R.string.unread_message);
             } else {
                 messageTxt = String.format(getString(R.string.unread_messages), unread);
+            }
+
+            List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
+            for (eu.siacs.conversations.entities.Account acc: xmppAccounts) {
+                if (mAccount.name.equals(acc.getJid().toBareJid().toString())) {
+                    if (acc.isOnlineAndConnected()) {
+                        messageTxt = getString(R.string.account_status_online) + " - " + messageTxt;
+                    }
+                    else {
+                        messageTxt = getString(R.string.account_status_offline) + " - " + messageTxt;
+                    }
+                    break;
+                }
             }
             imSublabel.setText(messageTxt);
         }
@@ -305,6 +366,8 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             }
         });
 
+        videoCallSublabel = (TextView)findViewById(R.id.video_call_sublabel);
+
         findViewById(R.id.files_controls).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -368,6 +431,8 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
         updateUnread();
 
+        updateConnectionStatus();
+
         // Check if the account has been updated
         mAccount = AccountUtils.getCurrentOwnCloudAccount(this);
         if (mAccount != null) {
@@ -375,6 +440,22 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                     getResources()
                             .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
                     mAvatarContainer);
+        }
+    }
+
+    private void updateConnectionStatus() {
+        if (mWebsocketService == null) {
+            return;
+        }
+
+        if (!mWebsocketService.getIsConnected()) {
+            if (videoCallSublabel != null) {
+                videoCallSublabel.setText(R.string.disconnected);
+            }
+        } else {
+            if (videoCallSublabel != null) {
+                videoCallSublabel.setText(R.string.connected);
+            }
         }
     }
 
@@ -416,7 +497,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
     }
 
     private void LaunchIM() {
-        Intent startConversationActivity = new Intent(mContext, StartConversationActivity.class);
+        Intent startConversationActivity = new Intent(mContext, ConversationActivity.class);
         startConversationActivity.putExtra("init", true);
         startActivity(startConversationActivity);
     }

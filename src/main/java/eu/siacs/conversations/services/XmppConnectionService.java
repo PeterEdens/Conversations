@@ -873,7 +873,7 @@ public class XmppConnectionService extends Service {
 	@SuppressLint("TrulyRandom")
 	@Override
 	public void onCreate() {
-		ExceptionHelper.init(getApplicationContext());
+		//ExceptionHelper.init(getApplicationContext());
 		PRNGFixes.apply();
 		this.mRandom = new SecureRandom();
 		updateMemorizingTrustmanager();
@@ -984,7 +984,7 @@ public class XmppConnectionService extends Service {
 	}
 
 	private boolean keepForegroundService() {
-		return getPreferences().getBoolean(SettingsActivity.KEEP_FOREGROUND_SERVICE,true);
+		return getPreferences().getBoolean(SettingsActivity.KEEP_FOREGROUND_SERVICE,false);
 	}
 
 	@Override

@@ -99,7 +99,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
     /**
      * Reference to the drawer layout.
      */
-    private DrawerLayout mDrawerLayout;
+    protected DrawerLayout mDrawerLayout;
 
     /**
      * Reference to the drawer toggle.
@@ -374,16 +374,17 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
                 R.drawable.ic_do_not_disturb_on_black_24dp // do not disturb
         };
 
-        ArrayAdapter adapter = ArrayAdapter.createFromResource(this,
+        IconSpinnerAdapter adapter = new IconSpinnerAdapter(this, icons, getResources().getStringArray(R.array.presence_show_options));
+        /*ArrayAdapter adapter = ArrayAdapter.createFromResource(this,
                 R.array.presence_show_options,
-                R.layout.simple_list_item);
+                R.layout.simple_list_item);*/
         statusSpinner.setAdapter(adapter);
         statusSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 //
                 try {
-                    navigationView.getMenu().findItem(R.id.action_change_presence).setIcon(icons[position]);
+                    navigationView.getMenu().findItem(R.id.action_change_presence).setIcon(null);
                 }
                 catch (IllegalStateException e) {
                     e.printStackTrace();

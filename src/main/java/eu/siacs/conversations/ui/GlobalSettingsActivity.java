@@ -50,6 +50,7 @@ public class GlobalSettingsActivity extends AppCompatActivity {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle(R.string.settings);
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override

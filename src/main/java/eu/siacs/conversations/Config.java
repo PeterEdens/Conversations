@@ -36,7 +36,7 @@ public final class Config {
 
 	public static final String LOGTAG = "spreedboxchat";
 
-	public static final String BUG_REPORTS = "peter@spreedbox.ddns.net";
+	public static final String BUG_REPORTS = null;
 
 
 	public static final String DOMAIN_LOCK = null; //only allow account creation for this domain

@@ -25,7 +25,7 @@
     android:fillViewport="true"
     android:orientation="vertical"
     android:id="@+id/scroll"
-    android:background="@drawable/background_gradient">
+    android:background="#302e2f">
 
     <LinearLayout
         android:layout_width="match_parent"

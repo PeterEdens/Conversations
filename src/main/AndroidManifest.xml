@@ -27,6 +27,7 @@
         android:name="eu.siacs.conversations.SpreedboxApplication"
         android:allowBackup="true"
         android:hardwareAccelerated="false"
+        android:largeHeap="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/ConversationsTheme"

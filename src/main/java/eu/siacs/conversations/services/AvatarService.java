@@ -1,6 +1,7 @@
 package eu.siacs.conversations.services;
 
 import android.accounts.AccountManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -172,9 +173,10 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 		String checkServer(String address) {
 			if (imageViewReference != null && imageViewReference.get() != null) {
-				android.accounts.Account[] accounts = AccountManager.get(imageViewReference.get().getContext()).getAccountsByType(imageViewReference.get().getResources().getString(R.string.account_type));
+				Context context = imageViewReference.get().getContext();
+				android.accounts.Account[] accounts = AccountManager.get(context).getAccountsByType(imageViewReference.get().getResources().getString(R.string.account_type));
 				for (android.accounts.Account account : accounts) {
-					AccountManager ama = AccountManager.get(imageViewReference.get().getContext());
+					AccountManager ama = AccountManager.get(context);
 					String baseurl = ama.getUserData(account, "oc_base_url");
 					if (baseurl.contains(address)) {
 						return baseurl;

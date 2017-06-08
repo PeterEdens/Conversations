@@ -61,6 +61,15 @@
                 android:textColorHighlight="@color/grey500"
                 android:textSize="?attr/TextSizeBody" />
 
+            <TextView
+                android:id="@+id/roomButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:drawableLeft="@drawable/ic_supervisor_account_white_48dp"
+                android:text="room name"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:visibility="gone"/>
+
             <Button
                 android:id="@+id/download_button"
                 style="?android:attr/buttonStyleSmall"
