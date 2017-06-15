@@ -731,9 +731,9 @@ public class XmppConnection implements Runnable {
 	private void processIq(final Tag currentTag) throws XmlPullParserException, IOException {
 		final IqPacket packet = (IqPacket) processPacket(currentTag, PACKET_IQ);
 
-		if (packet.getId() == null) {
-			return; // an iq packet without id is definitely invalid
-		}
+		//if (packet.getId() == null) {
+		//	return; // an iq packet without id is definitely invalid
+		//}
 
 		if (packet instanceof JinglePacket) {
 			if (this.jingleListener != null) {

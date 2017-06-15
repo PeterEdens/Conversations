@@ -450,7 +450,7 @@ public abstract class DrawerActivity extends XmppActivity implements DisplayUtil
                             startActivity(new Intent(getApplicationContext(), SettingsActivity.class));
                         }
                         else if (menuItem.getItemId() == R.id.drawer_menu_account_manage) {
-                                startActivity(new Intent(getApplicationContext(), ManageAccountsActivity.class));
+                                startActivity(new Intent(getApplicationContext(), SpreedboxManageAccountsActivity.class));
                         }
                         else if (menuItem.getItemId() == R.id.drawer_menu_account_add) {
                             createAccount(false);

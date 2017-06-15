@@ -269,7 +269,7 @@ public class NotificationService {
 		mBuilder.setGroupSummary(true);
 		mBuilder.setGroup(CONVERSATIONS_GROUP);
 		mBuilder.setDeleteIntent(createDeleteIntent(null));
-		mBuilder.setSmallIcon(R.drawable.ic_notification);
+		mBuilder.setSmallIcon(R.drawable.ic_textsms_white_24dp);
 		return mBuilder;
 	}
 

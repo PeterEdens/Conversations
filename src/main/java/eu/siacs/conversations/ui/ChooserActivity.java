@@ -127,6 +127,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         }
     };
 
+    private XmppConnectionService.OnAccountUpdate mAccountListener;
     protected ServiceConnection mConnection = new ServiceConnection() {
 
         @Override
@@ -134,6 +135,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             XmppConnectionService.XmppConnectionBinder binder = (XmppConnectionService.XmppConnectionBinder) service;
             xmppConnectionService = binder.getService();
             xmppConnectionServiceBound = true;
+            xmppConnectionService.setOnAccountListChangedListener(mAccountListener);
             updateUnread();
             updateStatus();
         }
@@ -175,6 +177,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         }
 
         if (xmppConnectionServiceBound) {
+            xmppConnectionService.removeOnAccountListChangedListener();
             unbindService(mConnection);
             xmppConnectionServiceBound = false;
         }
@@ -245,19 +248,20 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 messageTxt = String.format(getString(R.string.unread_messages), unread);
             }
 
-            List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
-            for (eu.siacs.conversations.entities.Account acc: xmppAccounts) {
-                if (mAccount.name.equals(acc.getJid().toBareJid().toString())) {
-                    if (acc.isOnlineAndConnected()) {
-                        messageTxt = getString(R.string.account_status_online) + " - " + messageTxt;
+            if (mAccount != null) {
+                List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
+                for (eu.siacs.conversations.entities.Account acc : xmppAccounts) {
+                    if (mAccount.name.equals(acc.getJid().toBareJid().toString())) {
+                        if (acc.isOnlineAndConnected()) {
+                            messageTxt = getString(R.string.account_status_online) + " - " + messageTxt;
+                        } else {
+                            messageTxt = getString(R.string.account_status_offline) + " - " + messageTxt;
+                        }
+                        break;
                     }
-                    else {
-                        messageTxt = getString(R.string.account_status_offline) + " - " + messageTxt;
-                    }
-                    break;
                 }
+                imSublabel.setText(messageTxt);
             }
-            imSublabel.setText(messageTxt);
         }
     }
 
@@ -423,6 +427,19 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                             .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
                     mAvatarContainer);
         }
+
+        mAccountListener = new XmppConnectionService.OnAccountUpdate() {
+            @Override
+            public void onAccountUpdate() {
+                runOnUiThread(new Runnable() {
+
+                    @Override
+                    public void run() {
+                        updateUnread();
+                    }
+                });
+            }
+        };
     }
 
     @Override

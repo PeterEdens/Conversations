@@ -447,10 +447,10 @@ public class MemorizingTrustManager implements X509TrustManager {
 		return defaultTrustManager.getAcceptedIssuers();
 	}
 
-	private int createDecisionId(MTMDecision d) {
+	private int createDecisionId(String message, MTMDecision d) {
 		int myId;
 		synchronized(openDecisions) {
-			myId = decisionId;
+			myId = message.hashCode();
 			openDecisions.put(myId, d);
 			decisionId += 1;
 		}
@@ -580,28 +580,38 @@ public class MemorizingTrustManager implements X509TrustManager {
 
 	int interact(final String message, final int titleId) {
 		/* prepare the MTMDecision blocker object */
-		MTMDecision choice = new MTMDecision();
-		final int myId = createDecisionId(choice);
+		MTMDecision choice = null;
+		int myId = 0;
+		synchronized(openDecisions) {
+			myId = message.hashCode();
+			choice = openDecisions.get(myId);
+		}
 
-		masterHandler.post(new Runnable() {
-			public void run() {
-				Intent ni = new Intent(master, MemorizingActivity.class);
-				ni.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-				ni.setData(Uri.parse(MemorizingTrustManager.class.getName() + "/" + myId));
-				ni.putExtra(DECISION_INTENT_ID, myId);
-				ni.putExtra(DECISION_INTENT_CERT, message);
-				ni.putExtra(DECISION_TITLE_ID, titleId);
+		if (choice == null) {
+			choice = new MTMDecision();
+			myId = createDecisionId(message, choice);
+			final int notId = myId;
 
-				// we try to directly start the activity and fall back to
-				// making a notification
-				try {
-					getUI().startActivity(ni);
-				} catch (Exception e) {
-					LOGGER.log(Level.FINE, "startActivity(MemorizingActivity)", e);
-					startActivityNotification(ni, myId, message);
+			masterHandler.post(new Runnable() {
+				public void run() {
+					Intent ni = new Intent(master, MemorizingActivity.class);
+					ni.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					ni.setData(Uri.parse(MemorizingTrustManager.class.getName() + "/" + notId));
+					ni.putExtra(DECISION_INTENT_ID, notId);
+					ni.putExtra(DECISION_INTENT_CERT, message);
+					ni.putExtra(DECISION_TITLE_ID, titleId);
+
+					// we try to directly start the activity and fall back to
+					// making a notification
+					try {
+						getUI().startActivity(ni);
+					} catch (Exception e) {
+						LOGGER.log(Level.FINE, "startActivity(MemorizingActivity)", e);
+						startActivityNotification(ni, notId, message);
+					}
 				}
-			}
-		});
+			});
+		}
 
 		LOGGER.log(Level.FINE, "openDecisions: " + openDecisions + ", waiting on " + myId);
 		try {
@@ -650,7 +660,7 @@ public class MemorizingTrustManager implements X509TrustManager {
 		}
 		synchronized(d) {
 			d.state = choice;
-			d.notify();
+			d.notifyAll();
 		}
 	}
 	

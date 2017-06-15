@@ -1153,7 +1153,7 @@ public class XmppConnectionService extends Service {
 							break;
 						}
 						if (message.needsUploading()) {
-							mJingleConnectionManager.createNewConnection(message);
+							this.sendFileMessage(message, delay);
 						} else {
 							packet = mMessageGenerator.generateOtrChat(message);
 						}

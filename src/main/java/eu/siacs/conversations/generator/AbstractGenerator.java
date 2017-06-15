@@ -34,7 +34,12 @@ public abstract class AbstractGenerator {
 			"http://jabber.org/protocol/nick+notify",
 			"urn:xmpp:ping",
 			"jabber:iq:version",
-			"http://jabber.org/protocol/chatstates"
+			"http://jabber.org/protocol/chatstates",
+            "urn:xmpp:jingle:apps:rtp:1",
+            "urn:xmpp:jingle:apps:rtp:audio",
+            "urn:xmpp:jingle:apps:rtp:video",
+            "urn:xmpp:jingle:transports:ice-udp:1",
+            "urn:xmpp:jingle:apps:dtls:0"
 	};
 	private final String[] MESSAGE_CONFIRMATION_FEATURES = {
 			"urn:xmpp:chat-markers:0",

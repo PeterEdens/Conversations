@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListView android:id="@id/android:list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/color_background_primary"
+        android:layout_weight="1"
+        android:drawSelectorOnTop="false"/>
+
+    <RelativeLayout
+        android:id="@+id/emptyView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextView
+            android:id="@+id/emptyContacts"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:text="@string/contacts_empty"
+            android:padding="40dp"
+            android:gravity="center"
+            android:textSize="20sp"/>
+
+        <ImageView
+            android:id="@+id/add_contact_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@+id/emptyContacts"
+            android:src="@drawable/ic_person_add_black_48dp"
+            android:tint="#888"/>
+    </RelativeLayout>
+</RelativeLayout>

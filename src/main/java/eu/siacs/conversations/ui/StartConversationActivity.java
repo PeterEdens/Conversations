@@ -38,6 +38,7 @@ import android.util.Pair;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -51,7 +52,9 @@ import android.widget.AutoCompleteTextView;
 import android.widget.CheckBox;
 import android.widget.Checkable;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -1064,8 +1067,10 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
             if (fragments[position] == null) {
                 final MyListFragment listFragment = new MyListFragment();
                 if (position == 1) {
+
                     listFragment.setListAdapter(mConferenceAdapter);
                     listFragment.setContextMenu(R.menu.conference_context);
+                    listFragment.setLayoutId(R.layout.fragment_conference);
                     listFragment.setOnListItemClickListener(new OnItemClickListener() {
 
                         @Override
@@ -1074,16 +1079,30 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
                             openConversationForBookmark(position);
                         }
                     });
+                    listFragment.setOnAddClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            showJoinConferenceDialog(null);
+                        }
+                    });
+
                 } else {
 
                     listFragment.setListAdapter(mContactsAdapter);
                     listFragment.setContextMenu(R.menu.contact_context);
+                    listFragment.setLayoutId(R.layout.fragment_contacts);
                     listFragment.setOnListItemClickListener(new OnItemClickListener() {
 
                         @Override
                         public void onItemClick(AdapterView<?> arg0, View arg1,
                                                 int position, long arg3) {
                             openConversationForContact(position);
+                        }
+                    });
+                    listFragment.setOnAddClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            showCreateContactDialog(null, null);
                         }
                     });
                 }
@@ -1096,9 +1115,40 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
     public static class MyListFragment extends ListFragment {
         private AdapterView.OnItemClickListener mOnItemClickListener;
         private int mResContextMenu;
+        private int mLayoutId;
+        private ImageView add;
+        private RelativeLayout emptyView;
+        private View.OnClickListener mOnAddClickListener;
 
         public void setContextMenu(final int res) {
             this.mResContextMenu = res;
+        }
+
+        public void setLayoutId(final int res) { this.mLayoutId = res; }
+
+        public View getEmptyView() { return emptyView; }
+
+        @Override
+        public void onStart() {
+            super.onStart();
+
+            getListView().setEmptyView(getEmptyView());
+        }
+
+        public void setOnAddClickListener(View.OnClickListener onAddClickListener) {
+            mOnAddClickListener = onAddClickListener;
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            View view = inflater.inflate(mLayoutId, null);
+
+            add = (ImageView) view.findViewById(R.id.add_contact_button);
+            emptyView = (RelativeLayout) view.findViewById(R.id.emptyView);
+
+            add.setOnClickListener(mOnAddClickListener);
+
+            return view;
         }
 
         @Override
@@ -1115,6 +1165,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         @Override
         public void onViewCreated(final View view, final Bundle savedInstanceState) {
             super.onViewCreated(view, savedInstanceState);
+
             registerForContextMenu(getListView());
             getListView().setFastScrollEnabled(true);
         }
