@@ -258,6 +258,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 						td.setCrossFadeEnabled(true);
 						td.startTransition(2000);*/
 						imageView.setImageBitmap(bitmap);
+						imageView.clearColorFilter();
 					}
 				}
 			}
@@ -339,6 +340,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 		if (bitmap != null) {
 			imageView.setImageBitmap(bitmap);
+			imageView.clearColorFilter();
 			imageView.setBackgroundColor(0x00000000);
 			imageView.setTag(null);
 			return;
@@ -389,6 +391,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 			if (bitmap != null) {
 				imageView.setImageBitmap(bitmap);
+				imageView.clearColorFilter();
 				imageView.setBackgroundColor(0x00000000);
 				imageView.setTag(null);
 				return;
@@ -419,6 +422,7 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 			if (bitmap != null) {
 				imageView.setImageBitmap(bitmap);
+				imageView.clearColorFilter();
 				imageView.setBackgroundColor(0x00000000);
 				imageView.setTag(null);
 				return;
@@ -445,13 +449,15 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			Bitmap bitmap = mXmppConnectionService.getBitmapCache().get(KEY);
 			if (bitmap != null) {
 				imageView.setImageBitmap(bitmap);
+				imageView.clearColorFilter();
 				imageView.setBackgroundColor(0x00000000);
 				imageView.setTag(null);
 				return;
 			}
 
 			if (cancelPotentialWork(imageView, contact)) {
-				imageView.setImageResource(R.drawable.user_icon);
+				imageView.setImageResource(R.drawable.ic_person_white_48dp);
+				imageView.setColorFilter(Color.parseColor("#ff757575"));
 				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 				task.size = size;
 				task.item = contact;

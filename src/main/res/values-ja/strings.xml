@@ -695,4 +695,9 @@
   <string name="pref_force_relogin_summary">Prompt for username and password each time you start the app</string>
   <string name="logout">Logout</string>
   <string name="logout_confirm">Are you sure you want to Logout and Exit?</string>
+	<string name="no_new_messages">No new messages</string>
+	<string name="unread_message">1 unread message</string>
+	<string name="unread_messages">%d unread message</string>
+	<string name="contacts_empty">You have not added any contacts, touch the icon to add a contact.</string>
+	<string name="conference_empty">You have not added any conferences, touch the icon to add a conference.</string>
 </resources>

@@ -59,7 +59,7 @@
             android:orderInCategory="3"
             android:id="@+id/drawer_menu_contacts"
             android:title="@string/contacts"
-            android:icon="@drawable/ic_action_group"/>
+            android:icon="@drawable/ic_group"/>
         <item
             android:orderInCategory="3"
             android:id="@+id/action_settings"
@@ -72,7 +72,7 @@
         <item
             android:orderInCategory="3"
             android:id="@+id/nav_chat"
-            android:icon="@drawable/ic_textsms_black_48dp"
+            android:icon="@drawable/ic_textsms_white_24dp"
             android:title="@string/drawer_chat"/>
         <item
             android:orderInCategory="3"

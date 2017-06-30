@@ -6,6 +6,7 @@
         android:id="@+id/online_status"
         android:layout_width="400dp"
         android:layout_height="match_parent"
-        android:layout_gravity="top"
-        android:gravity="top" />
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
+        android:paddingBottom="5dp"/>
 </LinearLayout>

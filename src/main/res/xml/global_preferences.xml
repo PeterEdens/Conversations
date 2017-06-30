@@ -22,5 +22,7 @@
         <intent
             android:action="com.owncloud.android.ui.activity.Preferences"/>
     </PreferenceScreen>
-
+    <eu.siacs.conversations.ui.AllAboutPreference
+        android:summary="@string/pref_about_conversations_summary"
+        android:title="@string/title_activity_about"/>
 </PreferenceScreen>

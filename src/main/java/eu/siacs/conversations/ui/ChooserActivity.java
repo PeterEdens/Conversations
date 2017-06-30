@@ -252,11 +252,14 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                 List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
                 for (eu.siacs.conversations.entities.Account acc : xmppAccounts) {
                     if (mAccount.name.equals(acc.getJid().toBareJid().toString())) {
-                        if (acc.isOnlineAndConnected()) {
-                            messageTxt = getString(R.string.account_status_online) + " - " + messageTxt;
-                        } else {
-                            messageTxt = getString(R.string.account_status_offline) + " - " + messageTxt;
+                        String str = getString(acc.getStatus().getReadableId());
+                        if (acc.getStatus() == eu.siacs.conversations.entities.Account.State.ONLINE) {
+                            messageTxt = str + " - " + messageTxt;
                         }
+                        else {
+                            messageTxt = str;
+                        }
+
                         break;
                     }
                 }
@@ -457,6 +460,10 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
                     getResources()
                             .getDimension(R.dimen.chooser_avatar_radius), getResources(), getStorageManager(),
                     mAvatarContainer);
+
+            TextView sublabel = (TextView) findViewById(R.id.avatar_sublabel);
+            sublabel.setText(mAccount.name);
+
         }
     }
 

@@ -8,18 +8,18 @@
         android:id="@+id/imageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="5dp"
+        android:paddingLeft="4dp"
+        android:layout_centerVertical="true"
         android:tint="#757575"
         android:src="@drawable/ic_check_circle_black_24dp" /><!--Make sure image is present in Drawable folder-->
 
     <TextView
         android:id="@+id/textView"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:layout_toRightOf="@+id/imageView"
-        android:layout_alignTop="@+id/imageView"
-        android:layout_alignBottom="@+id/imageView"
+        android:layout_centerVertical="true"
         android:text="Demo"
         android:paddingLeft="25dp"
         android:textColor="#000" />

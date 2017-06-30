@@ -15,7 +15,11 @@
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
+    <uses-feature android:name="android.permission.PROCESS_OUTGOING_CALLS"  android:required="false"/>
+    <uses-feature android:name="android.permission.READ_PHONE_STATE"  android:required="false"/>
+    <uses-feature android:name="android.permission.CALL_PHONE"  android:required="false"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 
@@ -220,6 +224,35 @@
                 android:value=".services.ContactChooserTargetService" />
         </activity>
         <activity
+            android:name="eu.siacs.conversations.ui.ShareWithContact"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="*/*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="image/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".services.ContactChooserTargetService" />
+        </activity>
+        <activity
             android:name="eu.siacs.conversations.ui.TrustKeysActivity"
             android:label="@string/trust_omemo_fingerprints"
             android:windowSoftInputMode="stateAlwaysHidden" />
@@ -234,6 +267,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="eu.siacs.conversations.ui.SettingsActivity" />
+        </activity>
+        <activity
+            android:name="eu.siacs.conversations.ui.AllAboutActivity"
+            android:label="@string/title_activity_about"
+            android:parentActivityName="eu.siacs.conversations.ui.GlobalSettingsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="eu.siacs.conversations.ui.GlobalSettingsActivity" />
         </activity>
         <activity android:name="com.soundcloud.android.crop.CropImageActivity" />
 
@@ -496,9 +537,9 @@
         <activity
             android:name="org.appspot.apprtc.CallActivity"
             android:launchMode="singleTask"
-            android:configChanges="orientation|screenSize"
             android:label="@string/video_call_button"
             android:screenOrientation="fullUser"
+            android:configChanges="orientation|screenSize"
             android:theme="@style/CallActivityTheme"></activity>
 
         <service android:name="org.appspot.apprtc.service.WebsocketService"></service>
@@ -522,6 +563,12 @@
             </intent-filter>
         </receiver>
 
+        <receiver android:name="org.appspot.apprtc.receiver.PhoneStateReceiver">
+            <intent-filter android:priority="100">
+                <action android:name="android.intent.action.PHONE_STATE"/>
+                <action android:name="android.intent.action.NEW_OUTGOING_CALL"/>
+            </intent-filter>
+        </receiver>
     </application>
 
 </manifest>

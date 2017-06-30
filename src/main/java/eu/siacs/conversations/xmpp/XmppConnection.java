@@ -293,7 +293,7 @@ public class XmppConnection implements Runnable {
 
 				InetSocketAddress address = new InetSocketAddress(account.getHostname(), account.getPort());
 
-				features.encryptionEnabled = account.getPort() == 5223;
+				//features.encryptionEnabled = account.getPort() == 5223;
 
 				try {
 					if (features.encryptionEnabled) {
@@ -357,7 +357,7 @@ public class XmppConnection implements Runnable {
 							// TODO: Handle me?`
 							srvRecordServer = "";
 						}
-						final int srvRecordPort = namePort.getInt("port");
+						final int srvRecordPort = account.getPort(); // PE: DNS is overriding account namePort.getInt("port");
 						final String srvIpServer = namePort.getString("ip");
 						// if tls is true, encryption is implied and must not be started
 						features.encryptionEnabled = namePort.getBoolean("tls");

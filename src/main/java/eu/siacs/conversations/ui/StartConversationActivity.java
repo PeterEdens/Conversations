@@ -803,10 +803,7 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
             mDrawerLayout.closeDrawer(GravityCompat.START);
             return;
         }
-        Intent intent = new Intent(this, ChooserActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-        finish();
+        super.onBackPressed();
     }
 
     @Override

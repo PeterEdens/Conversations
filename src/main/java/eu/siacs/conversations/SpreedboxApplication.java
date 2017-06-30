@@ -9,6 +9,9 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 
+
+import spreedbox.me.app.R;
+
 public class SpreedboxApplication extends MainApp {
 
  
