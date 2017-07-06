@@ -355,6 +355,18 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 			if (conversation.getMode() == Conversation.MODE_SINGLE) {
 				tryToGetNextcloudAvatar(conversation.getContact(), size, imageView);
 			} else {
+				MucOptions mucOptions = conversation.getMucOptions();
+
+				Bitmap bitmap = get(mucOptions, size, true);
+
+				if (bitmap != null) {
+					imageView.setImageBitmap(bitmap);
+					imageView.clearColorFilter();
+					imageView.setBackgroundColor(0x00000000);
+					imageView.setTag(null);
+					return;
+				}
+				
 				if (cancelPotentialWork(imageView, conversation.getMucOptions())) {
 					final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 					task.size = size;

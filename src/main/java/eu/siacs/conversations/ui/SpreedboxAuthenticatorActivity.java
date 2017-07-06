@@ -109,8 +109,9 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
             }
 
             if (jid != null) {
-                if (xmppConnectionService.findAccountByJid(jid) == null) {
-                    Account account = new Account(jid.toBareJid(), password);
+                Account account = xmppConnectionService.findAccountByJid(jid);
+                if (account == null) {
+                    account = new Account(jid.toBareJid(), password);
                     if (url.getHost().equals("spreedbox-demo.ddns.net")) {
                         account.setPort(5223);
                     }
@@ -122,6 +123,10 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
                     account.setOption(Account.OPTION_USECOMPRESSION, true);
                     account.setOption(Account.OPTION_REGISTER, false);
                     xmppConnectionService.createAccount(account);
+                }
+                else {
+                    account.setPassword(password);
+                    xmppConnectionService.updateAccount(account);
                 }
             }
         }

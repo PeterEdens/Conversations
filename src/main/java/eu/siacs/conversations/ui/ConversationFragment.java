@@ -1359,6 +1359,11 @@ public class ConversationFragment extends Fragment implements EditMessage.Keyboa
 			return;
 		}
 		String previous = this.mEditMessage.getText().toString();
+
+		if (previous.contains(text) && text.contains("/apps/spreedme")) {
+			return;
+		}
+
 		if (previous.length() != 0 && !previous.endsWith(" ")) {
 			text = " " + text;
 		}

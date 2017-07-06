@@ -1137,7 +1137,15 @@ public class StartConversationActivity extends DrawerActivity implements OnRoste
         }
 
         @Override
+        public void onSaveInstanceState(Bundle savedInstanceState) {
+            savedInstanceState.putInt("layout_id", mLayoutId);
+        }
+
+        @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            if (savedInstanceState != null) {
+                mLayoutId = savedInstanceState.getInt("layout_id");
+            }
             View view = inflater.inflate(mLayoutId, null);
 
             add = (ImageView) view.findViewById(R.id.add_contact_button);

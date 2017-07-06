@@ -3,13 +3,11 @@ package eu.siacs.conversations.ui;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.annotation.SuppressLint;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -25,30 +23,22 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Base64;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
-import com.owncloud.android.datamodel.ThumbnailsCacheManager;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
-import com.owncloud.android.ui.activity.ManageAccountsActivity;
 import com.owncloud.android.utils.DisplayUtils;
 
 import org.appspot.apprtc.ConnectActivity;
-import org.appspot.apprtc.entities.Presence;
 import org.appspot.apprtc.service.WebsocketService;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
@@ -78,18 +68,20 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
 
     @Override
     public void onNewIntent(Intent intent) {
-        handleIntent(intent);
+        handleIntent(intent, null);
     }
 
-    private void handleIntent(Intent intent) {
-        if (intent.hasExtra(EXTRA_MODE)) {
-            String mode = intent.getStringExtra(EXTRA_MODE);
-            if (mode.equals(MODE_IM)) {
-                LaunchIM();
-            } else if (mode.equals(MODE_VIDEO_CHAT)) {
-                LaunchVideoChat();
-            } else if (mode.equals(MODE_SHARE_FILES)) {
-                LaunchShareFiles();
+    private void handleIntent(Intent intent, Bundle savedInstanceState) {
+        if (savedInstanceState == null) {
+            if (intent.hasExtra(EXTRA_MODE)) {
+                String mode = intent.getStringExtra(EXTRA_MODE);
+                if (mode.equals(MODE_IM)) {
+                    LaunchIM();
+                } else if (mode.equals(MODE_VIDEO_CHAT)) {
+                    LaunchVideoChat();
+                } else if (mode.equals(MODE_SHARE_FILES)) {
+                    LaunchShareFiles();
+                }
             }
         }
     }
@@ -277,7 +269,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
         Intent intent = getIntent();
 
         if (intent != null) {
-            handleIntent(intent);
+            handleIntent(intent, savedInstanceState);
         }
 
         mAccount = AccountUtils.getCurrentOwnCloudAccount(this);
