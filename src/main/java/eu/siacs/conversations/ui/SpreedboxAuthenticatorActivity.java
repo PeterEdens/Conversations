@@ -103,7 +103,7 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
 
             Jid jid = null;
             try {
-                jid = Jid.fromString(username + "@" + url.getHost());
+                jid = Jid.fromString(username + "@" + url.getHost(), true);
             } catch (final InvalidJidException e) {
                 e.printStackTrace();
             }

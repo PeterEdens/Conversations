@@ -77,6 +77,8 @@
             android:layout_alignBottom="@+id/avatar_layout"
             android:layout_toRightOf="@+id/avatar_layout"
             android:gravity="left"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:paddingBottom="7dp"
             android:paddingLeft="5dp"
             android:text="user@spreedbox.domain.com"

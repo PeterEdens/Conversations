@@ -28,7 +28,7 @@
         <item name="attr/ic_send_voice_offline">@drawable/ic_send_voice_offline</item>
 
         <item name="attr/icon_add_group">@drawable/ic_action_add_group</item>
-        <item name="attr/icon_add_person">@drawable/ic_action_add_person</item>
+        <item name="attr/icon_add_person">@drawable/ic_person_add_white_24dp</item>
         <item name="attr/icon_cancel">@drawable/ic_action_cancel</item>
         <item name="attr/icon_copy">@drawable/ic_action_copy</item>
         <item name="attr/icon_discard">@drawable/ic_action_discard</item>
@@ -103,7 +103,7 @@
         <item name="attr/dialog_vertical_padding">16dp</item>
 
         <item name="attr/icon_add_group">@drawable/ic_action_add_group</item>
-        <item name="attr/icon_add_person">@drawable/ic_action_add_person</item>
+        <item name="attr/icon_add_person">@drawable/ic_person_add_white_24dp</item>
         <item name="attr/icon_cancel">@drawable/ic_action_cancel</item>
         <item name="attr/icon_copy">@drawable/ic_action_copy_white</item>
         <item name="attr/icon_discard">@drawable/ic_action_discard</item>

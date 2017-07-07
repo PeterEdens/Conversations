@@ -138,7 +138,10 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 					e.printStackTrace();
 				}
 				connection.disconnect();
-				avatarService.get().mXmppConnectionService.getBitmapCache().put(url, bitmap);
+
+				if (bitmap != null) {
+					avatarService.get().mXmppConnectionService.getBitmapCache().put(url, bitmap);
+				}
 				return bitmap;
 			}
 			else if (account != null) {

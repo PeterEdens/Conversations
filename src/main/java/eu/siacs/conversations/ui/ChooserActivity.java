@@ -243,7 +243,7 @@ public class ChooserActivity extends AppCompatActivity implements DisplayUtils.A
             if (mAccount != null) {
                 List<eu.siacs.conversations.entities.Account> xmppAccounts = new ArrayList<eu.siacs.conversations.entities.Account>(xmppConnectionService.getAccounts());
                 for (eu.siacs.conversations.entities.Account acc : xmppAccounts) {
-                    if (mAccount.name.equals(acc.getJid().toBareJid().toString())) {
+                    if (mAccount.name.toLowerCase().equals(acc.getJid().toBareJid().toString())) {
                         String str = getString(acc.getStatus().getReadableId());
                         if (acc.getStatus() == eu.siacs.conversations.entities.Account.State.ONLINE) {
                             messageTxt = str + " - " + messageTxt;
