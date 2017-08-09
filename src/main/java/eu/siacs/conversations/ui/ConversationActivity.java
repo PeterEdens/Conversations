@@ -37,12 +37,15 @@ import android.widget.PopupMenu;
 import android.widget.PopupMenu.OnMenuItemClickListener;
 import android.widget.Toast;
 
+import com.example.sharedresourceslib.BroadcastTypes;
 import com.owncloud.android.authentication.AuthenticatorActivity;
 import com.owncloud.android.ui.activity.FileActivity;
 import com.owncloud.android.ui.activity.FileDisplayActivity;
 
 import net.java.otr4j.session.SessionStatus;
 
+import org.appspot.apprtc.CallActivity;
+import org.appspot.apprtc.service.WebsocketService;
 import org.openintents.openpgp.util.OpenPgpApi;
 
 import java.util.ArrayList;
@@ -213,6 +216,7 @@ public class ConversationActivity extends DrawerActivity
 		if (getSupportActionBar() != null) {
 			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 			getSupportActionBar().setHomeButtonEnabled(true);
+			getSupportActionBar().setTitle(R.string.secure_chat_button);
 			setupDrawer();
 		}
 
@@ -727,6 +731,20 @@ public class ConversationActivity extends DrawerActivity
 				case R.id.action_unblock:
 					BlockContactDialog.show(this, xmppConnectionService, getSelectedConversation());
 					break;
+				/*case R.id.action_call:
+
+					selectPresence(getSelectedConversation(), new OnPresenceSelected() {
+						@Override
+						public void onPresenceSelected() {
+							Intent callIntent = new Intent(getApplicationContext(), CallActivity.class);
+							callIntent.setAction(CallActivity.ACTION_NEW_CALL);
+							callIntent.putExtra(BroadcastTypes.EXTRA_SIGNALING, "xmpp");
+							callIntent.putExtra(BroadcastTypes.EXTRA_JID, getSelectedConversation().getNextCounterpart().toString());
+							callIntent.putExtra(BroadcastTypes.EXTRA_ACCOUNT_JID, getSelectedConversation().getAccount().getJid().toString());
+							callIntent.putExtra(CallActivity.EXTRA_VIDEO_CALL, true);
+							startActivity(callIntent);
+						}
+					});*/
 				default:
 					break;
 			}

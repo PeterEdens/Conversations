@@ -20,6 +20,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.math.BigInteger;
 import java.net.ConnectException;
 import java.net.IDN;
@@ -133,7 +134,7 @@ public class XmppConnection implements Runnable {
 	private final ArrayList<OnAdvancedStreamFeaturesLoaded> advancedStreamFeaturesLoadedListeners = new ArrayList<>();
 	private OnMessageAcknowledged acknowledgedListener = null;
 	private XmppConnectionService mXmppConnectionService = null;
-
+	private WeakReference<Thread> mThread;
 	private SaslMechanism saslMechanism;
 
 	private class MyKeyManager implements X509KeyManager {
@@ -1700,5 +1701,16 @@ public class XmppConnection implements Runnable {
 
 	private IqGenerator getIqGenerator() {
 		return mXmppConnectionService.getIqGenerator();
+	}
+
+	public void setThread(Thread thread) {
+		mThread = new WeakReference<Thread>(thread);
+	}
+
+	public Thread getThread() {
+		if (mThread != null) {
+			return mThread.get();
+		}
+		return null;
 	}
 }

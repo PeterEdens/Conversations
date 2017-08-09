@@ -546,7 +546,7 @@
 
         <activity android:name="org.appspot.apprtc.RoomActivity"
             android:label="@string/video_call_button"
-            android:launchMode="singleTask"
+            android:launchMode="singleTop"
             android:theme="@style/RoomActivityTheme"></activity>
 
         <activity android:name="org.appspot.apprtc.UserActivity"
@@ -557,6 +557,8 @@
         <receiver android:name="org.appspot.apprtc.receiver.CallReceiver" >
             <intent-filter>
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_DESCRIPTION" />
+                <action android:name="com.example.sharedresourceslib.ACTION_REMOTE_DESCRIPTION" />
+                <action android:name="com.example.sharedresourceslib.ACTION_REMOTE_ICE_CANDIDATE" />
                 <action android:name="org.appspot.apprtc.service.ACTION_REMOTE_ICE_CANDIDATE" />
                 <action android:name="org.appspot.apprtc.service.ACTION_BYE" />
                 <action android:name="org.appspot.apprtc.service.ACTION_ADD_CONFERENCE_USER" />

@@ -33,16 +33,22 @@ import android.util.Log;
 import android.util.LruCache;
 import android.util.Pair;
 
+import com.example.sharedresourceslib.BroadcastTypes;
+
 import net.java.otr4j.OtrException;
 import net.java.otr4j.session.Session;
 import net.java.otr4j.session.SessionID;
 import net.java.otr4j.session.SessionImpl;
 import net.java.otr4j.session.SessionStatus;
 
+import org.appspot.apprtc.SerializableIceCandidate;
+import org.appspot.apprtc.SerializableSessionDescription;
 import org.appspot.apprtc.service.WebsocketService;
 import org.openintents.openpgp.IOpenPgpService2;
 import org.openintents.openpgp.util.OpenPgpApi;
 import org.openintents.openpgp.util.OpenPgpServiceConnection;
+import org.webrtc.IceCandidate;
+import org.webrtc.SessionDescription;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
@@ -63,6 +69,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import de.duenndns.ssl.MemorizingTrustManager;
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.xmpp.jingle.JingleConnection;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.PgpDecryptionService;
 import eu.siacs.conversations.crypto.PgpEngine;
@@ -133,6 +140,7 @@ import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
 import me.leolin.shortcutbadger.ShortcutBadger;
 
 import static com.example.sharedresourceslib.BroadcastTypes.ACTION_PRESENCE_CHANGED;
+import static com.example.sharedresourceslib.BroadcastTypes.ACTION_SEND_SESSION_DESCRIPTION;
 import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_ACCOUNT_NAME;
 import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_PRESENCE;
 
@@ -937,6 +945,7 @@ public class XmppConnectionService extends Service {
 
 		mIntentFilter = new IntentFilter();
 		mIntentFilter.addAction(ACTION_PRESENCE_CHANGED);
+		mIntentFilter.addAction(BroadcastTypes.ACTION_SEND_SESSION_DESCRIPTION);
 		registerReceiver(mReceiver, mIntentFilter);
 	}
 
@@ -1087,6 +1096,12 @@ public class XmppConnectionService extends Service {
 		}
 	}
 
+	private void sendCallMessage(final Message message, final boolean delay) {
+		Log.d(Config.LOGTAG, "send file message");
+		final Account account = message.getConversation().getAccount();
+		mJingleConnectionManager.createNewConnection(message);
+	}
+
 	public void sendMessage(final Message message) {
 		sendMessage(message, false, false);
 	}
@@ -1121,12 +1136,15 @@ public class XmppConnectionService extends Service {
 			switch (message.getEncryption()) {
 				case Message.ENCRYPTION_NONE:
 					if (message.needsUploading()) {
-						if (account.httpUploadAvailable(fileBackend.getFile(message,false).getSize())
+						if (account.httpUploadAvailable(fileBackend.getFile(message, false).getSize())
 								|| message.fixCounterpart()) {
 							this.sendFileMessage(message, delay);
 						} else {
 							break;
 						}
+					}
+					else if (message.isCall()) {
+						this.sendCallMessage(message, delay);
 					} else {
 						packet = mMessageGenerator.generateChat(message);
 					}
@@ -1140,6 +1158,9 @@ public class XmppConnectionService extends Service {
 						} else {
 							break;
 						}
+					}
+					else if (message.isCall()) {
+						this.sendCallMessage(message, delay);
 					} else {
 						packet = mMessageGenerator.generatePgpChat(message);
 					}
@@ -1154,6 +1175,9 @@ public class XmppConnectionService extends Service {
 						}
 						if (message.needsUploading()) {
 							this.sendFileMessage(message, delay);
+						}
+						else if (message.isCall()) {
+							this.sendCallMessage(message, delay);
 						} else {
 							packet = mMessageGenerator.generateOtrChat(message);
 						}
@@ -1177,6 +1201,9 @@ public class XmppConnectionService extends Service {
 						} else {
 							break;
 						}
+					}
+					else if (message.isCall()) {
+						this.sendCallMessage(message, delay);
 					} else {
 						XmppAxolotlMessage axolotlMessage = account.getAxolotlService().fetchAxolotlMessageFromCache(message);
 						if (axolotlMessage == null) {
@@ -2926,6 +2953,12 @@ public class XmppConnectionService extends Service {
 				connection.setInteractive(interactive);
 				connection.prepareNewConnection();
 				connection.interrupt();
+				Thread oldThread = connection.getThread();
+				if (oldThread != null) {
+					oldThread.interrupt();
+					oldThread = null;
+				}
+				connection.setThread(thread);
 				thread.start();
 				scheduleWakeUpCall(Config.CONNECT_DISCO_TIMEOUT, account.getUuid().hashCode());
 			} else {
@@ -3798,6 +3831,46 @@ public class XmppConnectionService extends Service {
 				String statusMessage = "";//messageEditText.getText().toString();
 				PreferenceManager.getDefaultSharedPreferences(this).edit().putString(getString(R.string.pref_status_key), statusMessage).commit();
 				changeStatus(imAccount, status, statusMessage, true);
+			}
+		}
+		else if (intent.getAction().equals(ACTION_SEND_SESSION_DESCRIPTION)) {
+			String remoteJid = intent.getStringExtra(BroadcastTypes.EXTRA_JID);
+			String accountJid = intent.getStringExtra(BroadcastTypes.EXTRA_ACCOUNT_JID);
+			String sid = intent.getStringExtra(BroadcastTypes.EXTRA_SID);
+			SerializableSessionDescription sdp = (SerializableSessionDescription) intent.getSerializableExtra(BroadcastTypes.EXTRA_REMOTE_DESCRIPTION);
+			ArrayList<SerializableIceCandidate> candidates = (ArrayList<SerializableIceCandidate>) intent.getSerializableExtra(BroadcastTypes.EXTRA_CANDIDATES);
+
+			eu.siacs.conversations.entities.Account imAccount = null;
+			Jid remoteUser = null;
+
+			try {
+				imAccount = findAccountByJid(Jid.fromString(accountJid));
+				remoteUser = Jid.fromString(remoteJid);
+			} catch (InvalidJidException e) {
+				e.printStackTrace();
+			}
+
+			if (imAccount != null) {
+				Conversation conversation = findOrCreateConversation(imAccount, remoteUser, false);
+				Message message = new Message(conversation, "", conversation.getNextEncryption());
+				message.setType(Message.TYPE_CALL);
+				message.setCounterpart(remoteUser);
+
+				ArrayList<IceCandidate> candidateList = new ArrayList<IceCandidate>();
+				for (SerializableIceCandidate candidate: candidates) {
+					candidateList.add(new IceCandidate(candidate.sdpMid, candidate.sdpMLineIndex, candidate.sdp));
+				}
+				message.setCallParams(new SessionDescription(sdp.type, sdp.description), candidateList);
+
+				if (sdp.type == SessionDescription.Type.OFFER) {
+					sendMessage(message);
+				}
+				else {
+					JingleConnection jingleConnection = mJingleConnectionManager.findConnection(sid);
+					if (jingleConnection != null) {
+						jingleConnection.sendCallRequest(message.getCallParams());
+					}
+				}
 			}
 		}
 	}

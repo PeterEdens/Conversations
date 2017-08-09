@@ -1,11 +1,16 @@
 package eu.siacs.conversations.entities;
 
 import android.content.ContentValues;
+import android.content.pm.PackageInstaller;
 import android.database.Cursor;
 import android.text.SpannableStringBuilder;
 
+import org.webrtc.IceCandidate;
+import org.webrtc.SessionDescription;
+
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
@@ -42,6 +47,7 @@ public class Message extends AbstractEntity {
 	public static final int TYPE_FILE = 2;
 	public static final int TYPE_STATUS = 3;
 	public static final int TYPE_PRIVATE = 4;
+	public static final int TYPE_CALL = 5;
 
 	public static final String CONVERSATION = "conversationUuid";
 	public static final String COUNTERPART = "counterpart";
@@ -86,6 +92,7 @@ public class Message extends AbstractEntity {
 	private Message mPreviousMessage = null;
 	private String axolotlFingerprint = null;
 	private String errorMessage = null;
+	private CallParams callParams = null;
 
 	private Message() {
 
@@ -508,6 +515,10 @@ public class Message extends AbstractEntity {
 		);
 	}
 
+	public CallParams getCallParams() {
+		return callParams;
+	}
+
 	public static class MergeSeparator {}
 
 	public SpannableStringBuilder getMergedBody() {
@@ -815,11 +826,20 @@ public class Message extends AbstractEntity {
 		return isFileOrImage() && getFileParams().url == null;
 	}
 
+	public boolean isCall() {
+		return getType() == TYPE_CALL;
+	}
+
 	public class FileParams {
 		public URL url;
 		public long size = 0;
 		public int width = 0;
 		public int height = 0;
+	}
+
+	public class CallParams {
+		public SessionDescription sdp;
+		public ArrayList<IceCandidate> candidates;
 	}
 
 	public void setFingerprint(String fingerprint) {
@@ -871,5 +891,11 @@ public class Message extends AbstractEntity {
 			return ENCRYPTION_PGP;
 		}
 		return encryption;
+	}
+
+	public void setCallParams(SessionDescription sdp, ArrayList<IceCandidate> candidates) {
+		callParams = new CallParams();
+		callParams.sdp = sdp;
+		callParams.candidates = candidates;
 	}
 }

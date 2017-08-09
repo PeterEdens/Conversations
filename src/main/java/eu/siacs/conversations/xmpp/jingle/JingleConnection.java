@@ -1,7 +1,15 @@
 package eu.siacs.conversations.xmpp.jingle;
 
+import android.content.Intent;
 import android.util.Log;
 import android.util.Pair;
+
+import com.example.sharedresourceslib.BroadcastTypes;
+
+import org.appspot.apprtc.SerializableIceCandidate;
+import org.appspot.apprtc.SerializableSessionDescription;
+import org.webrtc.IceCandidate;
+import org.webrtc.SessionDescription;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -36,6 +44,9 @@ import eu.siacs.conversations.xmpp.jingle.stanzas.Content;
 import eu.siacs.conversations.xmpp.jingle.stanzas.JinglePacket;
 import eu.siacs.conversations.xmpp.jingle.stanzas.Reason;
 import eu.siacs.conversations.xmpp.stanzas.IqPacket;
+
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_REMOTE_DESCRIPTION;
+import static com.example.sharedresourceslib.BroadcastTypes.EXTRA_SIGNALING;
 
 public class JingleConnection implements Transferable {
 
@@ -309,6 +320,43 @@ public class JingleConnection implements Transferable {
 		}
 	}
 
+	private void handleCall(Account account, JinglePacket packet) {
+		// Convert Jingle to SDP.
+		String sdpString = SdpToJingle.sdpFromJingle(packet).toString();
+		String action = packet.getAction();
+
+		// Wrap in a SessionDescription object.
+		SessionDescription.Type sdpType = action.equals("session-initiate") ? SessionDescription.Type.OFFER : SessionDescription.Type.ANSWER;
+		SerializableSessionDescription sdp = new SerializableSessionDescription(sdpType, sdpString, packet.getFrom().toString());
+
+		// Set as remote description.
+		// send intent to receiver
+		Intent broadcastIntent = new Intent();
+		broadcastIntent.setAction(BroadcastTypes.ACTION_REMOTE_DESCRIPTION);
+		broadcastIntent.putExtra(EXTRA_REMOTE_DESCRIPTION, sdp);
+		broadcastIntent.putExtra(EXTRA_SIGNALING, "xmpp");
+		broadcastIntent.putExtra(BroadcastTypes.EXTRA_ACCOUNT_JID, account.getJid().toString());
+		broadcastIntent.putExtra(BroadcastTypes.EXTRA_SID, packet.getSessionId());
+		this.mXmppConnectionService.sendBroadcast(broadcastIntent);
+	}
+
+	private void processIceCandidaate(JinglePacket packet) {
+		// Convert Jingle to SDP.
+		IceCandidate candidate = SdpToJingle.candidateFromJingle(packet);
+
+		SerializableIceCandidate serCandidate = new SerializableIceCandidate(
+				candidate.sdpMid, candidate.sdpMLineIndex, candidate.sdp, packet.getFrom().toString());
+
+		// send intent to receiver
+		Intent broadcastIntent = new Intent();
+		broadcastIntent.setAction(BroadcastTypes.ACTION_REMOTE_ICE_CANDIDATE);
+		broadcastIntent.putExtra(BroadcastTypes.EXTRA_CANDIDATE, serCandidate);
+		broadcastIntent.putExtra(EXTRA_SIGNALING, "xmpp");
+		broadcastIntent.putExtra(BroadcastTypes.EXTRA_ACCOUNT_JID, account.getJid().toString());
+		broadcastIntent.putExtra(BroadcastTypes.EXTRA_SID, packet.getSessionId());
+		this.mXmppConnectionService.sendBroadcast(broadcastIntent);
+	}
+
 	public void init(Account account, JinglePacket packet) {
 		this.mJingleStatus = JINGLE_STATUS_INITIATED;
 		Conversation conversation = this.mXmppConnectionService
@@ -330,6 +378,13 @@ public class JingleConnection implements Transferable {
 		this.transportId = content.getTransportId();
 		this.mergeCandidates(JingleCandidate.parse(content.socks5transport().getChildren()));
 		this.ftVersion = content.getVersion();
+        Element description = content.findChild("description", "urn:xmpp:jingle:apps:rtp:1");
+
+		if (description != null) {
+			// handle incoming call
+			handleCall(account, packet);
+			return;
+		}
 		if (ftVersion == null) {
 			this.sendCancel();
 			this.fail();
@@ -495,6 +550,44 @@ public class JingleConnection implements Transferable {
 			});
 
 		}
+		else if (message.getType() == Message.TYPE_CALL) {
+			sendCallRequest(message.getCallParams());
+		}
+	}
+
+	public void sendCallRequest(Message.CallParams callParams) {
+		if (callParams != null) {
+			SessionDescription sdp = callParams.sdp;
+			ArrayList<IceCandidate> candidates = callParams.candidates;
+
+			String type = "";
+			if (sdp.type == SessionDescription.Type.OFFER) {
+				type = "session-initiate";
+			} else {
+				type = "session-accept";
+			}
+
+			JinglePacket packet = this.bootstrapPacket(type);
+			Content content = new Content(this.contentCreator, this.contentName);
+
+			content = SdpToJingle.jingleFromSdp(content, sdp, candidates);
+
+			packet.setContent(content);
+			this.sendJinglePacket(packet, new OnIqPacketReceived() {
+
+				@Override
+				public void onIqPacketReceived(Account account, IqPacket packet) {
+					if (packet.getType() == IqPacket.TYPE.RESULT) {
+						Log.d(Config.LOGTAG, account.getJid().toBareJid() + ": other party received offer");
+						mJingleStatus = JINGLE_STATUS_INITIATED;
+						mXmppConnectionService.markMessage(message, Message.STATUS_OFFERED);
+					} else {
+						fail(IqParser.extractErrorMessage(packet));
+					}
+				}
+			});
+		}
+
 	}
 
 	private List<Element> getCandidatesAsElements() {
@@ -575,6 +668,13 @@ public class JingleConnection implements Transferable {
 
 	private boolean receiveAccept(JinglePacket packet) {
 		Content content = packet.getJingleContent();
+        Element description = content.findChild("description", "urn:xmpp:jingle:apps:rtp:1");
+
+        if (description != null) {
+            // handle incoming call
+            handleCall(account, packet);
+        }
+
 		mergeCandidates(JingleCandidate.parse(content.socks5transport()
 				.getChildren()));
 		this.mJingleStatus = JINGLE_STATUS_ACCEPTED;
@@ -640,6 +740,10 @@ public class JingleConnection implements Transferable {
 			} else {
 				return false;
 			}
+		} else if (content.hasIceTransport()) {
+			// Process ice candidate
+			processIceCandidaate(packet);
+			return true;
 		} else {
 			return true;
 		}
@@ -837,7 +941,7 @@ public class JingleConnection implements Transferable {
 		}
 		this.sendCancel();
 		this.mJingleConnectionManager.finishConnection(this);
-		if (this.responder.equals(account.getJid())) {
+		if (this.responder != null && this.responder.equals(account.getJid())) {
 			this.message.setTransferable(new TransferablePlaceholder(Transferable.STATUS_FAILED));
 			if (this.file!=null) {
 				file.delete();
@@ -863,7 +967,7 @@ public class JingleConnection implements Transferable {
 		FileBackend.close(mFileInputStream);
 		FileBackend.close(mFileOutputStream);
 		if (this.message != null) {
-			if (this.responder.equals(account.getJid())) {
+			if (this.responder != null && this.responder.equals(account.getJid())) {
 				this.message.setTransferable(new TransferablePlaceholder(Transferable.STATUS_FAILED));
 				if (this.file!=null) {
 					file.delete();
@@ -966,6 +1070,16 @@ public class JingleConnection implements Transferable {
 		if ((receivedCandidate) && (mJingleStatus == JINGLE_STATUS_ACCEPTED)) {
 			connect();
 		}
+		this.sendJinglePacket(packet);
+	}
+
+	private void sendIceCandidate(String cid) {
+		JinglePacket packet = bootstrapPacket("transport-info");
+		Content content = new Content(this.contentCreator, this.contentName);
+		content.setTransportId(this.transportId);
+		content.udpTransport().addChild("activated")
+				.setAttribute("cid", cid);
+		packet.setContent(content);
 		this.sendJinglePacket(packet);
 	}
 

@@ -7,6 +7,12 @@
         android:orderInCategory="10"
         app:showAsAction="always"
         android:title="@string/action_add"/>
+    <!--<item
+        android:id="@+id/action_call"
+        android:icon="@drawable/ic_call_white_48dp"
+        android:orderInCategory="20"
+        app:showAsAction="always"
+        android:title="@string/action_secure"/>-->
     <item
         android:id="@+id/action_security"
         android:icon="?attr/icon_not_secure"

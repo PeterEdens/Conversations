@@ -119,10 +119,24 @@ public class Content extends Element {
 		return transport;
 	}
 
+	public Element udpTransport() {
+		Element transport = this.findChild("transport",
+				"urn:xmpp:jingle:transports:ice-udp:1");
+		if (transport == null) {
+			transport = this.addChild("transport",
+					"urn:xmpp:jingle:transports:ice-udp:1");
+			transport.setAttribute("sid", this.transportId);
+		}
+		return transport;
+	}
+
 	public boolean hasSocks5Transport() {
 		return this.hasChild("transport", "urn:xmpp:jingle:transports:s5b:1");
 	}
 
+	public boolean hasIceTransport() {
+		return this.hasChild("transport", "urn:xmpp:jingle:transports:ice-udp:1");
+	}
 	public boolean hasIbbTransport() {
 		return this.hasChild("transport", "urn:xmpp:jingle:transports:ibb:1");
 	}

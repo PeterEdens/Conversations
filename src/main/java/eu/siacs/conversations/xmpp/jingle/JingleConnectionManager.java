@@ -168,4 +168,13 @@ public class JingleConnectionManager extends AbstractConnectionManager {
 			}
 		}
 	}
+
+	public JingleConnection findConnection(String sid) {
+		for (JingleConnection connection : this.connections) {
+			if (connection.getSessionId().equals(sid)) {
+				return connection;
+			}
+		}
+		return null;
+	}
 }
