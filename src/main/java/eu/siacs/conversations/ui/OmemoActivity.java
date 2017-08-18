@@ -1,8 +1,10 @@
-package eu.siacs.conversations;
+package eu.siacs.conversations.ui;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.view.ContextMenu;
 import android.view.MenuItem;
 import android.view.View;
@@ -12,29 +14,54 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.security.cert.X509Certificate;
 
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
+
+import eu.siacs.conversations.Config;
+import eu.siacs.conversations.qr_reader.DecoderActivity;
+import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
 import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
 import eu.siacs.conversations.entities.Account;
-import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.ui.widget.Switch;
 import eu.siacs.conversations.utils.CryptoHelper;
-import spreedbox.me.app.R;
+import eu.siacs.conversations.utils.XmppUri;
 
 
 public abstract class OmemoActivity extends XmppActivity {
 
     private Account mSelectedAccount;
     private String mSelectedFingerprint;
+    private final int DECODER_ACTIVITY_RESULT = 1;
+
+    protected XmppUri mPendingFingerprintVerificationUri = null;
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu,v,menuInfo);
         Object account = v.getTag(R.id.TAG_ACCOUNT);
         Object fingerprint = v.getTag(R.id.TAG_FINGERPRINT);
-        if (account != null && fingerprint != null && account instanceof Account && fingerprint instanceof String) {
+        Object fingerprintStatus = v.getTag(R.id.TAG_FINGERPRINT_STATUS);
+        if (account != null
+                && fingerprint != null
+                && account instanceof Account
+                && fingerprintStatus != null
+                && fingerprint instanceof String
+                && fingerprintStatus instanceof FingerprintStatus) {
             getMenuInflater().inflate(R.menu.omemo_key_context, menu);
+            MenuItem distrust = menu.findItem(R.id.distrust_key);
+            MenuItem verifyScan = menu.findItem(R.id.verify_scan);
+            if (this instanceof TrustKeysActivity) {
+                distrust.setVisible(false);
+                verifyScan.setVisible(false);
+            } else {
+                FingerprintStatus status = (FingerprintStatus) fingerprintStatus;
+                if (!status.isActive() || status.isVerified()) {
+                    verifyScan.setVisible(false);
+                }
+                distrust.setVisible(status.isVerified() || (!status.isActive() && status.isTrusted()));
+            }
             this.mSelectedAccount = (Account) account;
             this.mSelectedFingerprint = (String) fingerprint;
         }
@@ -43,15 +70,53 @@ public abstract class OmemoActivity extends XmppActivity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.purge_omemo_key:
+            case R.id.distrust_key:
                 showPurgeKeyDialog(mSelectedAccount,mSelectedFingerprint);
                 break;
             case R.id.copy_omemo_key:
                 copyOmemoFingerprint(mSelectedFingerprint);
                 break;
+            case R.id.verify_scan:
+                //new IntentIntegrator(this).initiateScan(Arrays.asList("AZTEC","QR_CODE"));
+                Intent i = new Intent(this, DecoderActivity.class);
+                startActivityForResult(i, DECODER_ACTIVITY_RESULT);
+                break;
         }
         return true;
     }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        /*IntentResult scanResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if (scanResult != null && scanResult.getFormatName() != null) {
+            String data = scanResult.getContents();
+            XmppUri uri = new XmppUri(data);
+            if (xmppConnectionServiceBound) {
+                processFingerprintVerification(uri);
+            } else {
+                this.mPendingFingerprintVerificationUri =uri;
+            }
+        }*/
+        if ((requestCode) == DECODER_ACTIVITY_RESULT) {
+            String scanResult = null;
+            if (resultCode == RESULT_OK) {
+                scanResult = intent.getStringExtra("result");
+            }
+
+            if (scanResult != null) {
+                String data = scanResult;
+                XmppUri uri = new XmppUri(data);
+                if (xmppConnectionServiceBound) {
+                    processFingerprintVerification(uri);
+                    finish();
+                } else {
+                    this.mPendingFingerprintVerificationUri = uri;
+                }
+            }
+        }
+    }
+
+    protected abstract void processFingerprintVerification(XmppUri uri);
 
     protected void copyOmemoFingerprint(String fingerprint) {
         if (copyTextToClipboard(CryptoHelper.prettifyFingerprint(fingerprint.substring(2)), R.string.omemo_fingerprint)) {
@@ -67,7 +132,7 @@ public abstract class OmemoActivity extends XmppActivity {
         final String fingerprint = session.getFingerprint();
         addFingerprintRowWithListeners(keys,
                 session.getAccount(),
-                session.getFingerprint(),
+                fingerprint,
                 highlight,
                 session.getTrust(),
                 true,
@@ -107,6 +172,7 @@ public abstract class OmemoActivity extends XmppActivity {
         registerForContextMenu(view);
         view.setTag(R.id.TAG_ACCOUNT,account);
         view.setTag(R.id.TAG_FINGERPRINT,fingerprint);
+        view.setTag(R.id.TAG_FINGERPRINT_STATUS,status);
         boolean x509 = Config.X509_VERIFICATION && status.getTrust() == FingerprintStatus.Trust.VERIFIED_X509;
         final View.OnClickListener toast;
         trustToggle.setChecked(status.isTrusted(), false);
@@ -182,7 +248,7 @@ public abstract class OmemoActivity extends XmppActivity {
             keyType.setVisibility(View.GONE);
         }
         if (highlight) {
-            keyType.setTextColor(getResources().getColor(R.color.accent));
+            keyType.setTextColor(ContextCompat.getColor(this, R.color.accent));
             keyType.setText(getString(x509 ? R.string.omemo_fingerprint_x509_selected_message : R.string.omemo_fingerprint_selected_message));
         } else {
             keyType.setText(getString(x509 ? R.string.omemo_fingerprint_x509 : R.string.omemo_fingerprint));
@@ -195,17 +261,14 @@ public abstract class OmemoActivity extends XmppActivity {
 
     public void showPurgeKeyDialog(final Account account, final String fingerprint) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle(getString(R.string.purge_key));
-        builder.setIconAttribute(android.R.attr.alertDialogIcon);
-        builder.setMessage(getString(R.string.purge_key_desc_part1)
-                + "\n\n" + CryptoHelper.prettifyFingerprint(fingerprint.substring(2))
-                + "\n\n" + getString(R.string.purge_key_desc_part2));
+        builder.setTitle(R.string.distrust_omemo_key);
+        builder.setMessage(R.string.distrust_omemo_key_text);
         builder.setNegativeButton(getString(R.string.cancel), null);
-        builder.setPositiveButton(getString(R.string.purge_key),
+        builder.setPositiveButton(R.string.confirm,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        account.getAxolotlService().purgeKey(fingerprint);
+                        account.getAxolotlService().distrustFingerprint(fingerprint);
                         refreshUi();
                     }
                 });

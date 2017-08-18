@@ -1,24 +1,27 @@
 package eu.siacs.conversations.xml;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import eu.siacs.conversations.Config;
 import eu.siacs.conversations.xmpp.stanzas.AbstractStanza;
 
 public class TagWriter {
 
 	private OutputStreamWriter outputStream;
-	private boolean finshed = false;
+	private boolean finished = false;
 	private LinkedBlockingQueue<AbstractStanza> writeQueue = new LinkedBlockingQueue<AbstractStanza>();
+
 	private Thread asyncStanzaWriter = new Thread() {
-		private boolean shouldStop = false;
 
 		@Override
 		public void run() {
-			while (!shouldStop) {
-				if ((finshed) && (writeQueue.size() == 0)) {
+			while (!isInterrupted()) {
+				if (finished && writeQueue.size() == 0) {
 					return;
 				}
 				try {
@@ -26,7 +29,7 @@ public class TagWriter {
 					outputStream.write(output.toString());
 					outputStream.flush();
 				} catch (Exception e) {
-					shouldStop = true;
+					return;
 				}
 			}
 		}
@@ -35,7 +38,7 @@ public class TagWriter {
 	public TagWriter() {
 	}
 
-	public void setOutputStream(OutputStream out) throws IOException {
+	public synchronized void setOutputStream(OutputStream out) throws IOException {
 		if (out == null) {
 			throw new IOException();
 		}
@@ -51,7 +54,7 @@ public class TagWriter {
 		return this;
 	}
 
-	public TagWriter writeTag(Tag tag) throws IOException {
+	public synchronized  TagWriter writeTag(Tag tag) throws IOException {
 		if (outputStream == null) {
 			throw new IOException("output stream was null");
 		}
@@ -60,7 +63,7 @@ public class TagWriter {
 		return this;
 	}
 
-	public TagWriter writeElement(Element element) throws IOException {
+	public synchronized TagWriter writeElement(Element element) throws IOException {
 		if (outputStream == null) {
 			throw new IOException("output stream was null");
 		}
@@ -70,7 +73,8 @@ public class TagWriter {
 	}
 
 	public TagWriter writeStanzaAsync(AbstractStanza stanza) {
-		if (finshed) {
+		if (finished) {
+			Log.d(Config.LOGTAG,"attempting to write stanza to finished TagWriter");
 			return this;
 		} else {
 			if (!asyncStanzaWriter.isAlive()) {
@@ -79,12 +83,6 @@ public class TagWriter {
 				} catch (IllegalThreadStateException e) {
 					// already started
 				}
-				catch (OutOfMemoryError e) {
-					e.printStackTrace();
-				}
-				catch (InternalError e) {
-					e.printStackTrace();
-				}
 			}
 			writeQueue.add(stanza);
 			return this;
@@ -92,7 +90,7 @@ public class TagWriter {
 	}
 
 	public void finish() {
-		this.finshed = true;
+		this.finished = true;
 	}
 
 	public boolean finished() {
@@ -103,8 +101,15 @@ public class TagWriter {
 		return outputStream != null;
 	}
 
-	public void forceClose() {
-		finish();
+	public synchronized void forceClose() {
+		asyncStanzaWriter.interrupt();
+		if (outputStream != null) {
+			try {
+				outputStream.close();
+			} catch (IOException e) {
+				//ignoring
+			}
+		}
 		outputStream = null;
 	}
 }

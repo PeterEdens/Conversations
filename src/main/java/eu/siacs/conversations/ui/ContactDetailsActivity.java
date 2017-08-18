@@ -1,11 +1,9 @@
 package eu.siacs.conversations.ui;
 
 import android.app.AlertDialog;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentSender.SendIntentException;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,6 +11,7 @@ import android.preference.PreferenceManager;
 import android.provider.ContactsContract.CommonDataKinds;
 import android.provider.ContactsContract.Contacts;
 import android.provider.ContactsContract.Intents;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -33,11 +32,9 @@ import com.wefika.flowlayout.FlowLayout;
 
 import org.openintents.openpgp.util.OpenPgpUtils;
 
-import java.security.cert.X509Certificate;
 import java.util.List;
 
 import eu.siacs.conversations.Config;
-import eu.siacs.conversations.OmemoActivity;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.PgpEngine;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
@@ -50,6 +47,8 @@ import eu.siacs.conversations.services.XmppConnectionService.OnAccountUpdate;
 import eu.siacs.conversations.services.XmppConnectionService.OnRosterUpdate;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.UIHelper;
+import eu.siacs.conversations.utils.XmppUri;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xmpp.OnKeyStatusUpdated;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
 import eu.siacs.conversations.xmpp.XmppConnection;
@@ -115,11 +114,14 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	private CheckBox send;
 	private CheckBox receive;
 	private Button addContactButton;
+	private Button mShowInactiveDevicesButton;
 	private QuickContactBadge badge;
 	private LinearLayout keys;
+	private LinearLayout keysWrapper;
 	private FlowLayout tags;
 	private boolean showDynamicTags = false;
 	private boolean showLastSeen = false;
+	private boolean showInactiveOmemo = false;
 	private String messageFingerprint;
 
 	private DialogInterface.OnClickListener addToPhonebook = new DialogInterface.OnClickListener() {
@@ -192,8 +194,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-
+		showInactiveOmemo = savedInstanceState != null && savedInstanceState.getBoolean("show_inactive_omemo",false);
 		if (getIntent().getAction().equals(ACTION_VIEW_CONTACT)) {
 			try {
 				this.accountJid = Jid.fromString(getIntent().getExtras().getString(EXTRA_ACCOUNT));
@@ -225,11 +226,26 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			}
 		});
 		keys = (LinearLayout) findViewById(R.id.details_contact_keys);
+		keysWrapper = (LinearLayout) findViewById(R.id.keys_wrapper);
 		tags = (FlowLayout) findViewById(R.id.tags);
+		mShowInactiveDevicesButton = (Button) findViewById(R.id.show_inactive_devices);
 		if (getActionBar() != null) {
 			getActionBar().setHomeButtonEnabled(true);
 			getActionBar().setDisplayHomeAsUpEnabled(true);
 		}
+		mShowInactiveDevicesButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				showInactiveOmemo = !showInactiveOmemo;
+				populateView();
+			}
+		});
+	}
+
+	@Override
+	public void onSaveInstanceState(final Bundle savedInstanceState) {
+		savedInstanceState.putBoolean("show_inactive_omemo",showInactiveOmemo);
+		super.onSaveInstanceState(savedInstanceState);
 	}
 
 	@Override
@@ -240,7 +256,7 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			recreate();
 		} else {
 			final SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-			this.showDynamicTags = preferences.getBoolean("show_dynamic_tags", false);
+			this.showDynamicTags = preferences.getBoolean(SettingsActivity.SHOW_DYNAMIC_TAGS, false);
 			this.showLastSeen = preferences.getBoolean("last_activity", false);
 		}
 	}
@@ -285,10 +301,10 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 				}
 				break;
 			case R.id.action_block:
-				BlockContactDialog.show(this, xmppConnectionService, contact);
+				BlockContactDialog.show(this, contact);
 				break;
 			case R.id.action_unblock:
-				BlockContactDialog.show(this, xmppConnectionService, contact);
+				BlockContactDialog.show(this, contact);
 				break;
 		}
 		return super.onOptionsItemSelected(menuItem);
@@ -399,7 +415,9 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			lastseen.setVisibility(View.VISIBLE);
 			lastseen.setText(R.string.contact_blocked);
 		} else {
-			if (showLastSeen && contact.getLastseen() > 0) {
+			if (showLastSeen
+					&& contact.getLastseen() > 0
+					&& contact.getPresences().allOrNonSupport(Namespace.IDLE)) {
 				lastseen.setVisibility(View.VISIBLE);
 				lastseen.setText(UIHelper.lastseen(getApplicationContext(), contact.isActive(), contact.getLastseen()));
 			} else {
@@ -437,9 +455,9 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 						.findViewById(R.id.button_remove);
 				removeButton.setVisibility(View.VISIBLE);
 				key.setText(CryptoHelper.prettifyFingerprint(otrFingerprint));
-				if (otrFingerprint != null && otrFingerprint.equals(messageFingerprint)) {
+				if (otrFingerprint != null && otrFingerprint.equalsIgnoreCase(messageFingerprint)) {
 					keyType.setText(R.string.otr_fingerprint_selected_message);
-					keyType.setTextColor(getResources().getColor(R.color.accent));
+					keyType.setTextColor(ContextCompat.getColor(this, R.color.accent));
 				} else {
 					keyType.setText(R.string.otr_fingerprint);
 				}
@@ -454,13 +472,32 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			}
 		}
 		if (Config.supportOmemo()) {
+			boolean skippedInactive = false;
+			boolean showsInactive = false;
 			for (final XmppAxolotlSession session : contact.getAccount().getAxolotlService().findSessionsForContact(contact)) {
-				if (!session.getTrust().isCompromised()) {
+				final FingerprintStatus trust = session.getTrust();
+				hasKeys |= !trust.isCompromised();
+				if (!trust.isActive()) {
+					if (showInactiveOmemo) {
+						showsInactive = true;
+					} else {
+						skippedInactive = true;
+						continue;
+					}
+				}
+				if (!trust.isCompromised()) {
 					boolean highlight = session.getFingerprint().equals(messageFingerprint);
-					hasKeys = true;
 					addFingerprintRow(keys, session, highlight);
 				}
 			}
+			if (showsInactive || skippedInactive) {
+				mShowInactiveDevicesButton.setText(showsInactive ? R.string.hide_inactive_devices : R.string.show_inactive_devices);
+				mShowInactiveDevicesButton.setVisibility(View.VISIBLE);
+			} else {
+				mShowInactiveDevicesButton.setVisibility(View.GONE);
+			}
+		} else {
+			mShowInactiveDevicesButton.setVisibility(View.GONE);
 		}
 		if (Config.supportOpenPgp() && contact.getPgpKeyId() != 0) {
 			hasKeys = true;
@@ -469,36 +506,22 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 			TextView keyType = (TextView) view.findViewById(R.id.key_type);
 			keyType.setText(R.string.openpgp_key_id);
 			if ("pgp".equals(messageFingerprint)) {
-				keyType.setTextColor(getResources().getColor(R.color.accent));
+				keyType.setTextColor(ContextCompat.getColor(this, R.color.accent));
 			}
 			key.setText(OpenPgpUtils.convertKeyIdToHex(contact.getPgpKeyId()));
-			view.setOnClickListener(new OnClickListener() {
+			final OnClickListener openKey = new OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
-					PgpEngine pgp = ContactDetailsActivity.this.xmppConnectionService
-						.getPgpEngine();
-					if (pgp != null) {
-						PendingIntent intent = pgp.getIntentForKey(contact);
-						if (intent != null) {
-							try {
-								startIntentSenderForResult(
-										intent.getIntentSender(), 0, null, 0,
-										0, 0);
-							} catch (SendIntentException e) {
-
-							}
-						}
-					}
+					launchOpenKeyChain(contact.getPgpKeyId());
 				}
-			});
+			};
+			view.setOnClickListener(openKey);
+			key.setOnClickListener(openKey);
+			keyType.setOnClickListener(openKey);
 			keys.addView(view);
 		}
-		if (hasKeys) {
-			keys.setVisibility(View.VISIBLE);
-		} else {
-			keys.setVisibility(View.GONE);
-		}
+		keysWrapper.setVisibility(hasKeys ? View.VISIBLE : View.GONE);
 
 		List<ListItem.Tag> tagList = contact.getTags(this);
 		if (tagList.size() == 0 || !this.showDynamicTags) {
@@ -536,13 +559,16 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	}
 
 	public void onBackendConnected() {
-		if ((accountJid != null) && (contactJid != null)) {
-			Account account = xmppConnectionService
-				.findAccountByJid(accountJid);
+		if (accountJid != null && contactJid != null) {
+			Account account = xmppConnectionService.findAccountByJid(accountJid);
 			if (account == null) {
 				return;
 			}
 			this.contact = account.getRoster().getContact(contactJid);
+			if (mPendingFingerprintVerificationUri != null) {
+				processFingerprintVerification(mPendingFingerprintVerificationUri);
+				mPendingFingerprintVerificationUri = null;
+			}
 			populateView();
 		}
 	}
@@ -550,5 +576,16 @@ public class ContactDetailsActivity extends OmemoActivity implements OnAccountUp
 	@Override
 	public void onKeyStatusUpdated(AxolotlService.FetchStatus report) {
 		refreshUi();
+	}
+
+	@Override
+	protected void processFingerprintVerification(XmppUri uri) {
+		if (contact != null && contact.getJid().toBareJid().equals(uri.getJid()) && uri.hasFingerprints()) {
+			if (xmppConnectionService.verifyFingerprints(contact,uri.getFingerprints())) {
+				Toast.makeText(this,R.string.verified_fingerprints,Toast.LENGTH_SHORT).show();
+			}
+		} else {
+			Toast.makeText(this,R.string.invalid_barcode,Toast.LENGTH_SHORT).show();
+		}
 	}
 }

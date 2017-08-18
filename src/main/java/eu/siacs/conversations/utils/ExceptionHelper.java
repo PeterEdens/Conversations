@@ -7,15 +7,12 @@ import android.content.DialogInterface.OnClickListener;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.Signature;
 import android.preference.PreferenceManager;
-import android.text.format.DateUtils;
 import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -71,7 +68,6 @@ public class ExceptionHelper {
 			try {
 				packageInfo = pm.getPackageInfo(activity.getPackageName(), PackageManager.GET_SIGNATURES);
 				report.append("Version: " + packageInfo.versionName + '\n');
-				report.append("Build: " + packageInfo.versionCode + '\n');
 				report.append("Last Update: " + DATE_FORMATs.format(new Date(packageInfo.lastUpdateTime)) + '\n');
 				Signature[] signatures = packageInfo.signatures;
 				if (signatures != null && signatures.length >= 1) {
@@ -104,7 +100,7 @@ public class ExceptionHelper {
 							Conversation conversation = null;
 							try {
 								conversation = service.findOrCreateConversation(finalAccount,
-										Jid.fromString(Config.BUG_REPORTS), false);
+										Jid.fromString(Config.BUG_REPORTS), false, true);
 							} catch (final InvalidJidException ignored) {
 							}
 							Message message = new Message(conversation, report

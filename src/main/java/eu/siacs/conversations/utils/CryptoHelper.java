@@ -1,6 +1,7 @@
 package eu.siacs.conversations.utils;
 
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Pair;
 
 import org.bouncycastle.asn1.x500.X500Name;
@@ -8,8 +9,11 @@ import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
@@ -27,6 +31,7 @@ import eu.siacs.conversations.Config;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.http.AesGcmURLStreamHandler;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
@@ -94,13 +99,19 @@ public final class CryptoHelper {
 		return Normalizer.normalize(s, Normalizer.Form.NFKC);
 	}
 
+	public static String random(int length, SecureRandom random) {
+		final byte[] bytes = new byte[length];
+		random.nextBytes(bytes);
+		return Base64.encodeToString(bytes,Base64.NO_PADDING|Base64.NO_WRAP);
+	}
+
 	public static String prettifyFingerprint(String fingerprint) {
 		if (fingerprint==null) {
 			return "";
 		} else if (fingerprint.length() < 40) {
 			return fingerprint;
 		}
-		StringBuilder builder = new StringBuilder(fingerprint.toLowerCase(Locale.US).replaceAll("\\s", ""));
+		StringBuilder builder = new StringBuilder(fingerprint);
 		for(int i=8;i<builder.length();i+=9) {
 			builder.insert(i, ' ');
 		}
@@ -150,15 +161,23 @@ public final class CryptoHelper {
 			}
 		}
 		X500Name x500name = new JcaX509CertificateHolder(certificate).getSubject();
-		if (emails.size() == 0) {
+		if (emails.size() == 0 && x500name.getRDNs(BCStyle.EmailAddress).length > 0) {
 			emails.add(IETFUtils.valueToString(x500name.getRDNs(BCStyle.EmailAddress)[0].getFirst().getValue()));
 		}
-		String name = IETFUtils.valueToString(x500name.getRDNs(BCStyle.CN)[0].getFirst().getValue());
+		String name = x500name.getRDNs(BCStyle.CN).length > 0 ? IETFUtils.valueToString(x500name.getRDNs(BCStyle.CN)[0].getFirst().getValue()) : null;
 		if (emails.size() >= 1) {
 			return new Pair<>(Jid.fromString(emails.get(0)), name);
-		} else {
-			return null;
+		} else if (name != null){
+			try {
+				Jid jid = Jid.fromString(name);
+				if (jid.isBareJid() && !jid.isDomainJid()) {
+					return new Pair<>(jid,null);
+				}
+			} catch (InvalidJidException e) {
+				return null;
+			}
 		}
+		return null;
 	}
 
 	public static Bundle extractCertificateInformation(X509Certificate certificate) {
@@ -229,5 +248,35 @@ public final class CryptoHelper {
 			default:
 				return R.string.encryption_choice_pgp;
 		}
+	}
+
+	public static URL toAesGcmUrl(URL url) {
+		if (!url.getProtocol().equalsIgnoreCase("https")) {
+			return url;
+		}
+		try {
+			return new URL(AesGcmURLStreamHandler.PROTOCOL_NAME+url.toString().substring(url.getProtocol().length()));
+		} catch (MalformedURLException e) {
+			return url;
+		}
+	}
+
+	public static URL toHttpsUrl(URL url) {
+		if (!url.getProtocol().equalsIgnoreCase(AesGcmURLStreamHandler.PROTOCOL_NAME)) {
+			return url;
+		}
+		try {
+			return new URL("https"+url.toString().substring(url.getProtocol().length()));
+		} catch (MalformedURLException e) {
+			return url;
+		}
+	}
+
+	public static boolean isPgpEncryptedUrl(String url) {
+		if (url == null) {
+			return false;
+		}
+		final String u = url.toLowerCase();
+		return !u.contains(" ") && (u.startsWith("https://") || u.startsWith("http://")) && u.endsWith(".pgp");
 	}
 }

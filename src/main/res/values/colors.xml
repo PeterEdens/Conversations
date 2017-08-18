@@ -25,5 +25,8 @@
     <color name="homepage_button_normal">#dddddd</color>
     <color name="homepage_button_pressed">#88d8f4</color>
 
+	<color name="bubble">#ff4b9b4a</color>
+	<color name="unreadcountlight">#ff4b9b4a</color>
+	<color name="unreadcountdark">#ff326130</color>
     <color name="black_overlay">#66000000</color>
 </resources>

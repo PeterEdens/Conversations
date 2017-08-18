@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import de.timroes.android.listview.EnhancedListView;
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.utils.UIHelper;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
@@ -107,6 +108,7 @@ public class ConversationActivity extends DrawerActivity
 
 	private String mOpenConversation = null;
 	private boolean mPanelOpen = true;
+	private AtomicBoolean mShouldPanelBeOpen = new AtomicBoolean(false);
 	private Pair<Integer,Integer> mScrollPosition = null;
 	final private List<Uri> mPendingImageUris = new ArrayList<>();
 	final private List<Uri> mPendingFileUris = new ArrayList<>();
@@ -143,6 +145,7 @@ public class ConversationActivity extends DrawerActivity
 	public void showConversationsOverview() {
 		if (mContentView instanceof SlidingPaneLayout) {
 			SlidingPaneLayout mSlidingPaneLayout = (SlidingPaneLayout) mContentView;
+			mShouldPanelBeOpen.set(true);
 			mSlidingPaneLayout.openPane();
 		}
 	}
@@ -160,6 +163,7 @@ public class ConversationActivity extends DrawerActivity
 	public void hideConversationsOverview() {
 		if (mContentView instanceof SlidingPaneLayout) {
 			SlidingPaneLayout mSlidingPaneLayout = (SlidingPaneLayout) mContentView;
+			mShouldPanelBeOpen.set(false);
 			mSlidingPaneLayout.closePane();
 		}
 	}
@@ -170,8 +174,7 @@ public class ConversationActivity extends DrawerActivity
 
 	public boolean isConversationsOverviewVisable() {
 		if (mContentView instanceof SlidingPaneLayout) {
-			SlidingPaneLayout mSlidingPaneLayout = (SlidingPaneLayout) mContentView;
-			return mSlidingPaneLayout.isOpen();
+			return mShouldPanelBeOpen.get();
 		} else {
 			return true;
 		}
@@ -312,26 +315,25 @@ public class ConversationActivity extends DrawerActivity
 		}
 		if (mContentView instanceof SlidingPaneLayout) {
 			SlidingPaneLayout mSlidingPaneLayout = (SlidingPaneLayout) mContentView;
-			mSlidingPaneLayout.setParallaxDistance(150);
-			mSlidingPaneLayout
-					.setShadowResource(R.drawable.es_slidingpane_shadow);
+			mSlidingPaneLayout.setShadowResource(R.drawable.es_slidingpane_shadow);
 			mSlidingPaneLayout.setSliderFadeColor(0);
 			mSlidingPaneLayout.setPanelSlideListener(new PanelSlideListener() {
 
 				@Override
 				public void onPanelOpened(View arg0) {
+					mShouldPanelBeOpen.set(true);
 					updateActionBarTitle();
 					invalidateOptionsMenu();
 					hideKeyboard();
 					if (xmppConnectionServiceBound) {
-						xmppConnectionService.getNotificationService()
-								.setOpenConversation(null);
+						xmppConnectionService.getNotificationService().setOpenConversation(null);
 					}
 					closeContextMenu();
 				}
 
 				@Override
 				public void onPanelClosed(View arg0) {
+					mShouldPanelBeOpen.set(false);
 					listView.discardUndo();
 					openConversation();
 				}
@@ -441,6 +443,7 @@ public class ConversationActivity extends DrawerActivity
 					menuContactDetails.setVisible(!this.getSelectedConversation().withSelf());
 					menuMucDetails.setVisible(false);
 					menuSecure.setVisible(Config.multipleEncryptionChoices());
+					menuInviteContact.setVisible(xmppConnectionService != null && xmppConnectionService.findConferenceServer(getSelectedConversation().getAccount()) != null);
 				}
 				if (this.getSelectedConversation().isMuted()) {
 					menuMute.setVisible(false);
@@ -513,6 +516,7 @@ public class ConversationActivity extends DrawerActivity
 					case ATTACHMENT_CHOICE_TAKE_PHOTO:
 						Uri uri = xmppConnectionService.getFileBackend().getTakePhotoUri();
 						intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+						intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 						intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
 						intent.putExtra(MediaStore.EXTRA_OUTPUT, uri);
 						mPendingImageUris.clear();
@@ -567,7 +571,7 @@ public class ConversationActivity extends DrawerActivity
 
 	public void attachFile(final int attachmentChoice) {
 		if (attachmentChoice != ATTACHMENT_CHOICE_LOCATION) {
-			if (!hasStoragePermission(attachmentChoice)) {
+			if (!Config.ONLY_INTERNAL_STORAGE && !hasStoragePermission(attachmentChoice)) {
 				return;
 			}
 		}
@@ -664,7 +668,7 @@ public class ConversationActivity extends DrawerActivity
 	}
 
 	public void startDownloadable(Message message) {
-		if (!hasStoragePermission(ConversationActivity.REQUEST_START_DOWNLOAD)) {
+		if (!Config.ONLY_INTERNAL_STORAGE && !hasStoragePermission(ConversationActivity.REQUEST_START_DOWNLOAD)) {
 			this.mPendingDownloadableMessage = message;
 			return;
 		}
@@ -673,7 +677,7 @@ public class ConversationActivity extends DrawerActivity
 			if (!transferable.start()) {
 				Toast.makeText(this, R.string.not_connected_try_again, Toast.LENGTH_SHORT).show();
 			}
-		} else if (message.treatAsDownloadable() != Message.Decision.NEVER) {
+		} else if (message.treatAsDownloadable()) {
 			xmppConnectionService.getHttpConnectionManager().createNewDownloadConnection(message, true);
 		}
 	}
@@ -726,10 +730,10 @@ public class ConversationActivity extends DrawerActivity
 					unmuteConversation(getSelectedConversation());
 					break;
 				case R.id.action_block:
-					BlockContactDialog.show(this, xmppConnectionService, getSelectedConversation());
+					BlockContactDialog.show(this, getSelectedConversation());
 					break;
 				case R.id.action_unblock:
-					BlockContactDialog.show(this, xmppConnectionService, getSelectedConversation());
+					BlockContactDialog.show(this, getSelectedConversation());
 					break;
 				/*case R.id.action_call:
 
@@ -843,6 +847,7 @@ public class ConversationActivity extends DrawerActivity
 				return false;
 			}
 		});
+		UIHelper.showIconsInPopup(attachFilePopup);
 		attachFilePopup.show();
 	}
 
@@ -1028,6 +1033,7 @@ public class ConversationActivity extends DrawerActivity
 				upKey = KeyEvent.KEYCODE_DPAD_RIGHT;
 				downKey = KeyEvent.KEYCODE_DPAD_LEFT;
 				break;
+			case Surface.ROTATION_0:
 			default:
 				upKey = KeyEvent.KEYCODE_DPAD_UP;
 				downKey = KeyEvent.KEYCODE_DPAD_DOWN;
@@ -1201,10 +1207,20 @@ public class ConversationActivity extends DrawerActivity
 		mPostponedActivityResult = null;
 	}
 
+	private void redirectToStartConversationActivity() {
+		Account pendingAccount = xmppConnectionService.getPendingAccount();
+		if (pendingAccount == null) {
+			Intent startConversationActivity = new Intent(this, StartConversationActivity.class);
+			startConversationActivity.putExtra("init", true);
+			startActivity(startConversationActivity);
+		} else {
+			switchToAccount(pendingAccount, true);
+		}
+		finish();
+	}
+
 	@Override
 	void onBackendConnected() {
-		super.onBackendConnected();
-
 		this.xmppConnectionService.getNotificationService().setIsInForeground(true);
 		updateConversationList();
 
@@ -1235,15 +1251,7 @@ public class ConversationActivity extends DrawerActivity
 			}
 		} else if (conversationList.size() <= 0) {
 			if (mRedirected.compareAndSet(false, true)) {
-				Account pendingAccount = xmppConnectionService.getPendingAccount();
-				if (pendingAccount == null) {
-					Intent startConversationActivity = new Intent(this, StartConversationActivity.class);
-					intent.putExtra("init", true);
-					startActivity(startConversationActivity);
-				} else {
-					switchToAccount(pendingAccount, true);
-				}
-				finish();
+				redirectToStartConversationActivity();
 			}
 		} else if (selectConversationByUuid(mOpenConversation)) {
 			if (mPanelOpen) {
@@ -1264,10 +1272,7 @@ public class ConversationActivity extends DrawerActivity
 			handleViewConversationIntent(intent);
 			intent.setAction(Intent.ACTION_MAIN);
 		} else if (getSelectedConversation() == null) {
-			showConversationsOverview();
-			clearPending();
-			setSelectedConversation(conversationList.get(0));
-			this.mConversationFragment.reInit(getSelectedConversation());
+			reInitLatestConversation();
 		} else {
 			this.mConversationFragment.messageListAdapter.updatePreferences();
 			this.mConversationFragment.messagesView.invalidateViews();
@@ -1278,12 +1283,7 @@ public class ConversationActivity extends DrawerActivity
 			this.onActivityResult(mPostponedActivityResult.first, RESULT_OK, mPostponedActivityResult.second);
 		}
 
-		final boolean stopping;
-		if (Build.VERSION.SDK_INT >= 17) {
-			stopping = isFinishing() || isDestroyed();
-		} else {
-			stopping = isFinishing();
-		}
+		final boolean stopping = isStopping();
 
 		if (!forbidProcessingPendings) {
 			for (Iterator<Uri> i = mPendingImageUris.iterator(); i.hasNext(); i.remove()) {
@@ -1304,9 +1304,29 @@ public class ConversationActivity extends DrawerActivity
 		}
 		forbidProcessingPendings = false;
 
-		if (!ExceptionHelper.checkForCrash(this, this.xmppConnectionService)) {
+		if (!ExceptionHelper.checkForCrash(this, this.xmppConnectionService) && !mRedirected.get()) {
 			openBatteryOptimizationDialogIfNeeded();
 		}
+		if (isConversationsOverviewVisable() && isConversationsOverviewHideable()) {
+			xmppConnectionService.getNotificationService().setOpenConversation(null);
+		} else {
+			xmppConnectionService.getNotificationService().setOpenConversation(getSelectedConversation());
+		}
+	}
+
+	private boolean isStopping() {
+		if (Build.VERSION.SDK_INT >= 17) {
+			return isFinishing() || isDestroyed();
+		} else {
+			return isFinishing();
+		}
+	}
+
+	private void reInitLatestConversation() {
+		showConversationsOverview();
+		clearPending();
+		setSelectedConversation(conversationList.get(0));
+		this.mConversationFragment.reInit(getSelectedConversation());
 	}
 
 	private void handleViewConversationIntent(final Intent intent) {
@@ -1457,9 +1477,11 @@ public class ConversationActivity extends DrawerActivity
 						attachImageToConversation(getSelectedConversation(), uri);
 						mPendingImageUris.clear();
 					}
-					Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-					intent.setData(uri);
-					sendBroadcast(intent);
+					if (!Config.ONLY_INTERNAL_STORAGE) {
+						Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+						intent.setData(uri);
+						sendBroadcast(intent);
+					}
 				} else {
 					mPendingImageUris.clear();
 				}
@@ -1499,7 +1521,7 @@ public class ConversationActivity extends DrawerActivity
 	}
 
 	private void setNeverAskForBatteryOptimizationsAgain() {
-		getPreferences().edit().putBoolean("show_battery_optimization", false).commit();
+		getPreferences().edit().putBoolean("show_battery_optimization", false).apply();
 	}
 
 	private void openBatteryOptimizationDialogIfNeeded() {
@@ -1530,14 +1552,16 @@ public class ConversationActivity extends DrawerActivity
 					}
 				});
 			}
-			builder.create().show();
+			AlertDialog dialog = builder.create();
+			dialog.setCanceledOnTouchOutside(false);
+			dialog.show();
 		}
 	}
 
 	private boolean hasAccountWithoutPush() {
 		for(Account account : xmppConnectionService.getAccounts()) {
 			if (account.getStatus() != Account.State.DISABLED
-					&& !xmppConnectionService.getPushManagementService().available(account)) {
+					&& !xmppConnectionService.getPushManagementService().availableAndUseful(account)) {
 				return true;
 			}
 		}
@@ -1573,9 +1597,26 @@ public class ConversationActivity extends DrawerActivity
 		}
 		final Toast prepareFileToast = Toast.makeText(getApplicationContext(),getText(R.string.preparing_file), Toast.LENGTH_LONG);
 		prepareFileToast.show();
-		xmppConnectionService.attachFileToConversation(conversation, uri, new UiCallback<Message>() {
+		xmppConnectionService.attachFileToConversation(conversation, uri, new UiInformableCallback<Message>() {
+			@Override
+			public void inform(final String text) {
+				hidePrepareFileToast(prepareFileToast);
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						replaceToast(text);
+					}
+				});
+			}
+
 			@Override
 			public void success(Message message) {
+				runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						hideToast();
+					}
+				});
 				hidePrepareFileToast(prepareFileToast);
 				xmppConnectionService.sendMessage(message);
 			}
@@ -1597,6 +1638,10 @@ public class ConversationActivity extends DrawerActivity
 				hidePrepareFileToast(prepareFileToast);
 			}
 		});
+	}
+
+	public void attachImageToConversation(Uri uri) {
+		this.attachImageToConversation(getSelectedConversation(), uri);
 	}
 
 	private void attachImageToConversation(Conversation conversation, Uri uri) {
@@ -1645,8 +1690,10 @@ public class ConversationActivity extends DrawerActivity
 	}
 
 	public void updateConversationList() {
-		xmppConnectionService
-			.populateWithOrderedConversations(conversationList);
+		xmppConnectionService.populateWithOrderedConversations(conversationList);
+		if (!conversationList.contains(mSelectedConversation)) {
+			mSelectedConversation = null;
+		}
 		if (swipedConversation != null) {
 			if (swipedConversation.isRead()) {
 				conversationList.remove(swipedConversation);
@@ -1678,9 +1725,12 @@ public class ConversationActivity extends DrawerActivity
 					public void success(Message message) {
 						message.setEncryption(Message.ENCRYPTION_DECRYPTED);
 						xmppConnectionService.sendMessage(message);
-						if (mConversationFragment != null) {
-							mConversationFragment.messageSent();
-						}
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								mConversationFragment.messageSent();
+							}
+						});
 					}
 
 					@Override
@@ -1688,26 +1738,28 @@ public class ConversationActivity extends DrawerActivity
 						runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
+								mConversationFragment.doneSendingPgpMessage();
 								Toast.makeText(ConversationActivity.this,
 										R.string.unable_to_connect_to_keychain,
 										Toast.LENGTH_SHORT
 								).show();
 							}
 						});
+
 					}
 				});
 	}
 
 	public boolean useSendButtonToIndicateStatus() {
-		return getPreferences().getBoolean("send_button_status", false);
+		return getPreferences().getBoolean("send_button_status", getResources().getBoolean(R.bool.send_button_status));
 	}
 
 	public boolean indicateReceived() {
-		return getPreferences().getBoolean("indicate_received", false);
+		return getPreferences().getBoolean("indicate_received", getResources().getBoolean(R.bool.indicate_received));
 	}
 
 	public boolean useGreenBackground() {
-		return getPreferences().getBoolean("use_green_background",true);
+		return getPreferences().getBoolean("use_green_background",getResources().getBoolean(R.bool.use_green_background));
 	}
 
 	protected boolean trustKeysIfNeeded(int requestCode) {
@@ -1747,10 +1799,17 @@ public class ConversationActivity extends DrawerActivity
 			if (!this.mConversationFragment.isAdded()) {
 				Log.d(Config.LOGTAG,"fragment NOT added to activity. detached="+Boolean.toString(mConversationFragment.isDetached()));
 			}
-			ConversationActivity.this.mConversationFragment.updateMessages();
-			updateActionBarTitle();
-			invalidateOptionsMenu();
+			if (getSelectedConversation() == null) {
+				reInitLatestConversation();
+			} else {
+				ConversationActivity.this.mConversationFragment.updateMessages();
+				updateActionBarTitle();
+				invalidateOptionsMenu();
+			}
 		} else {
+			if (!isStopping() && mRedirected.compareAndSet(false, true)) {
+				redirectToStartConversationActivity();
+			}
 			Log.d(Config.LOGTAG,"not updating conversations fragment because conversations list size was 0");
 		}
 	}
@@ -1780,7 +1839,7 @@ public class ConversationActivity extends DrawerActivity
 	}
 
 	public boolean enterIsSend() {
-		return getPreferences().getBoolean("enter_is_send",false);
+		return getPreferences().getBoolean("enter_is_send",getResources().getBoolean(R.bool.enter_is_send));
 	}
 
 	@Override
@@ -1795,12 +1854,5 @@ public class ConversationActivity extends DrawerActivity
 
 	public boolean highlightSelectedConversations() {
 		return !isConversationsOverviewHideable() || this.conversationWasSelectedByKeyboard;
-	}
-
-	public void setMessagesLoaded() {
-		if (mConversationFragment != null) {
-			mConversationFragment.setMessagesLoaded();
-			mConversationFragment.updateMessages();
-		}
 	}
 }

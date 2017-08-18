@@ -1,9 +1,10 @@
 package eu.siacs.conversations.entities;
 
 import android.content.ContentValues;
-import android.content.pm.PackageInstaller;
 import android.database.Cursor;
 import android.text.SpannableStringBuilder;
+
+import com.vdurmont.emoji.EmojiManager;
 
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
@@ -14,7 +15,8 @@ import java.util.ArrayList;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.axolotl.FingerprintStatus;
-import eu.siacs.conversations.crypto.axolotl.XmppAxolotlSession;
+import eu.siacs.conversations.http.AesGcmURLStreamHandler;
+import eu.siacs.conversations.ui.adapter.MessageAdapter;
 import eu.siacs.conversations.utils.CryptoHelper;
 import eu.siacs.conversations.utils.GeoHelper;
 import eu.siacs.conversations.utils.MimeUtils;
@@ -94,8 +96,13 @@ public class Message extends AbstractEntity {
 	private String errorMessage = null;
 	private CallParams callParams = null;
 
-	private Message() {
+	private Boolean isGeoUri = null;
+	private Boolean isEmojisOnly = null;
+	private Boolean treatAsDownloadable = null;
+	private FileParams fileParams = null;
 
+	private Message(Conversation conversation) {
+		this.conversation = conversation;
 	}
 
 	public Message(Conversation conversation, String body, int encryption) {
@@ -103,7 +110,7 @@ public class Message extends AbstractEntity {
 	}
 
 	public Message(Conversation conversation, String body, int encryption, int status) {
-		this(java.util.UUID.randomUUID().toString(),
+		this(conversation, java.util.UUID.randomUUID().toString(),
 				conversation.getUuid(),
 				conversation.getJid() == null ? null : conversation.getJid().toBareJid(),
 				null,
@@ -121,15 +128,15 @@ public class Message extends AbstractEntity {
 				null,
 				false,
 				null);
-		this.conversation = conversation;
 	}
 
-	private Message(final String uuid, final String conversationUUid, final Jid counterpart,
+	private Message(final Conversation conversation, final String uuid, final String conversationUUid, final Jid counterpart,
 					final Jid trueCounterpart, final String body, final long timeSent,
 					final int encryption, final int status, final int type, final boolean carbon,
 					final String remoteMsgId, final String relativeFilePath,
 					final String serverMsgId, final String fingerprint, final boolean read,
 					final String edited, final boolean oob, final String errorMessage) {
+		this.conversation = conversation;
 		this.uuid = uuid;
 		this.conversationUuid = conversationUUid;
 		this.counterpart = counterpart;
@@ -150,7 +157,7 @@ public class Message extends AbstractEntity {
 		this.errorMessage = errorMessage;
 	}
 
-	public static Message fromCursor(Cursor cursor) {
+	public static Message fromCursor(Cursor cursor, Conversation conversation) {
 		Jid jid;
 		try {
 			String value = cursor.getString(cursor.getColumnIndex(COUNTERPART));
@@ -161,6 +168,8 @@ public class Message extends AbstractEntity {
 			}
 		} catch (InvalidJidException e) {
 			jid = null;
+		} catch (IllegalStateException e) {
+			return null; // message too long?
 		}
 		Jid trueCounterpart;
 		try {
@@ -173,7 +182,8 @@ public class Message extends AbstractEntity {
 		} catch (InvalidJidException e) {
 			trueCounterpart = null;
 		}
-		return new Message(cursor.getString(cursor.getColumnIndex(UUID)),
+		return new Message(conversation,
+				cursor.getString(cursor.getColumnIndex(UUID)),
 				cursor.getString(cursor.getColumnIndex(CONVERSATION)),
 				jid,
 				trueCounterpart,
@@ -194,19 +204,25 @@ public class Message extends AbstractEntity {
 	}
 
 	public static Message createStatusMessage(Conversation conversation, String body) {
-		final Message message = new Message();
+		final Message message = new Message(conversation);
 		message.setType(Message.TYPE_STATUS);
-		message.setConversation(conversation);
-		message.setBody(body);
+		message.body = body;
 		return message;
 	}
 
 	public static Message createLoadMoreMessage(Conversation conversation) {
-		final Message message = new Message();
+		final Message message = new Message(conversation);
 		message.setType(Message.TYPE_STATUS);
-		message.setConversation(conversation);
-		message.setBody("LOAD_MORE");
+		message.body = "LOAD_MORE";
 		return message;
+	}
+
+	public static Message createDateSeparator(Message message) {
+		final Message separator = new Message(message.getConversation());
+		separator.setType(Message.TYPE_STATUS);
+		separator.body = MessageAdapter.DATE_SEPARATOR_BODY;
+		separator.setTime(message.getTimeSent());
+		return separator;
 	}
 
 	@Override
@@ -224,7 +240,7 @@ public class Message extends AbstractEntity {
 		} else {
 			values.put(TRUE_COUNTERPART, trueCounterpart.toPreppedString());
 		}
-		values.put(BODY, body);
+		values.put(BODY, body.length() > Config.MAX_STORAGE_MESSAGE_CHARS ? body.substring(0,Config.MAX_STORAGE_MESSAGE_CHARS) : body);
 		values.put(TIME_SENT, timeSent);
 		values.put(ENCRYPTION, encryption);
 		values.put(STATUS, status);
@@ -247,10 +263,6 @@ public class Message extends AbstractEntity {
 
 	public Conversation getConversation() {
 		return this.conversation;
-	}
-
-	public void setConversation(Conversation conv) {
-		this.conversation = conv;
 	}
 
 	public Jid getCounterpart() {
@@ -278,11 +290,15 @@ public class Message extends AbstractEntity {
 		return body;
 	}
 
-	public void setBody(String body) {
+	public synchronized void setBody(String body) {
 		if (body == null) {
 			throw new Error("You should not set the message body to null");
 		}
 		this.body = body;
+		this.isGeoUri = null;
+		this.isEmojisOnly = null;
+		this.treatAsDownloadable = null;
+		this.fileParams = null;
 	}
 
 	public String getErrorMessage() {
@@ -376,6 +392,8 @@ public class Message extends AbstractEntity {
 		return carbon;
 	}
 
+	public boolean isCall() { return callParams != null; }
+
 	public void setCarbon(boolean carbon) {
 		this.carbon = carbon;
 	}
@@ -400,7 +418,8 @@ public class Message extends AbstractEntity {
 		return this.transferable;
 	}
 
-	public void setTransferable(Transferable transferable) {
+	public synchronized void setTransferable(Transferable transferable) {
+		this.fileParams = null;
 		this.transferable = transferable;
 	}
 
@@ -418,15 +437,18 @@ public class Message extends AbstractEntity {
 				body = this.body;
 				otherBody = message.body;
 			}
+			final boolean matchingCounterpart = this.counterpart.equals(message.getCounterpart());
 			if (message.getRemoteMsgId() != null) {
+				final boolean hasUuid = CryptoHelper.UUID_PATTERN.matcher(message.getRemoteMsgId()).matches();
+				if (hasUuid && this.edited != null && matchingCounterpart && this.edited.equals(message.getRemoteMsgId())) {
+					return true;
+				}
 				return (message.getRemoteMsgId().equals(this.remoteMsgId) || message.getRemoteMsgId().equals(this.uuid))
-						&& this.counterpart.equals(message.getCounterpart())
-						&& (body.equals(otherBody)
-						||(message.getEncryption() == Message.ENCRYPTION_PGP
-						&& CryptoHelper.UUID_PATTERN.matcher(message.getRemoteMsgId()).matches()));
+						&& matchingCounterpart
+						&& (body.equals(otherBody) ||(message.getEncryption() == Message.ENCRYPTION_PGP && hasUuid));
 			} else {
 				return this.remoteMsgId == null
-						&& this.counterpart.equals(message.getCounterpart())
+						&& matchingCounterpart
 						&& body.equals(otherBody)
 						&& Math.abs(this.getTimeSent() - message.getTimeSent()) < Config.MESSAGE_MERGE_WINDOW * 1000;
 			}
@@ -492,15 +514,16 @@ public class Message extends AbstractEntity {
 						this.edited() == message.edited() &&
 						(message.getTimeSent() - this.getTimeSent()) <= (Config.MESSAGE_MERGE_WINDOW * 1000) &&
 						this.getBody().length() + message.getBody().length() <= Config.MAX_DISPLAY_MESSAGE_CHARS &&
-						!GeoHelper.isGeoUri(message.getBody()) &&
-						!GeoHelper.isGeoUri(this.body) &&
-						message.treatAsDownloadable() == Decision.NEVER &&
-						this.treatAsDownloadable() == Decision.NEVER &&
+						!message.isGeoUri()&&
+						!this.isGeoUri() &&
+						!message.treatAsDownloadable() &&
+						!this.treatAsDownloadable() &&
 						!message.getBody().startsWith(ME_COMMAND) &&
 						!this.getBody().startsWith(ME_COMMAND) &&
-						!this.bodyIsHeart() &&
-						!message.bodyIsHeart() &&
-						this.isTrusted() == message.isTrusted()
+						!this.bodyIsOnlyEmojis() &&
+						!message.bodyIsOnlyEmojis() &&
+						((this.axolotlFingerprint == null && message.axolotlFingerprint == null) || this.axolotlFingerprint.equals(message.getFingerprint())) &&
+						UIHelper.sameDay(message.getTimeSent(),this.getTimeSent())
 				);
 	}
 
@@ -508,10 +531,9 @@ public class Message extends AbstractEntity {
 		return a == b || (
 				(a == Message.STATUS_SEND_RECEIVED && b == Message.STATUS_UNSEND)
 						|| (a == Message.STATUS_SEND_RECEIVED && b == Message.STATUS_SEND)
-						|| (a == Message.STATUS_UNSEND && b == Message.STATUS_SEND)
-						|| (a == Message.STATUS_UNSEND && b == Message.STATUS_SEND_RECEIVED)
+						|| (a == Message.STATUS_SEND_RECEIVED && b == Message.STATUS_WAITING)
 						|| (a == Message.STATUS_SEND && b == Message.STATUS_UNSEND)
-						|| (a == Message.STATUS_SEND && b == Message.STATUS_SEND_RECEIVED)
+						|| (a == Message.STATUS_SEND && b == Message.STATUS_WAITING)
 		);
 	}
 
@@ -625,12 +647,6 @@ public class Message extends AbstractEntity {
 		this.oob = isOob;
 	}
 
-	public enum Decision {
-		MUST,
-		SHOULD,
-		NEVER,
-	}
-
 	private static String extractRelevantExtension(URL url) {
 		String path = url.getPath();
 		return extractRelevantExtension(path);
@@ -673,138 +689,96 @@ public class Message extends AbstractEntity {
 		}
 	}
 
-	public Decision treatAsDownloadable() {
-		if (body.startsWith("<a ")) {
-			return Decision.MUST;
-		}
-		if (body.trim().contains(" ")) {
-			return Decision.NEVER;
-		}
-		try {
-			URL url = new URL(body);
-			if (!url.getProtocol().equalsIgnoreCase("http") && !url.getProtocol().equalsIgnoreCase("https")) {
-				return Decision.NEVER;
-			} else if (oob) {
-				return Decision.MUST;
+	public synchronized boolean treatAsDownloadable() {
+		if (treatAsDownloadable == null) {
+			if (body.trim().contains(" ")) {
+				treatAsDownloadable = false;
 			}
-			String extension = extractRelevantExtension(url);
-			if (extension == null) {
-				return Decision.NEVER;
-			}
-			String ref = url.getRef();
-			boolean encrypted = ref != null && ref.matches("([A-Fa-f0-9]{2}){48}");
+			try {
+				final URL url = new URL(body);
+				final String ref = url.getRef();
+				final String protocol = url.getProtocol();
+				final boolean encrypted = ref != null && AesGcmURLStreamHandler.IV_KEY.matcher(ref).matches();
+				treatAsDownloadable = (AesGcmURLStreamHandler.PROTOCOL_NAME.equalsIgnoreCase(protocol) && encrypted)
+						|| (("http".equalsIgnoreCase(protocol) || "https".equalsIgnoreCase(protocol)) && (oob || encrypted));
 
-			if (encrypted) {
-				return Decision.MUST;
-			} else if (Transferable.VALID_IMAGE_EXTENSIONS.contains(extension)
-					|| Transferable.WELL_KNOWN_EXTENSIONS.contains(extension)) {
-				return Decision.SHOULD;
-			} else {
-				return Decision.NEVER;
+			} catch (MalformedURLException e) {
+				treatAsDownloadable = false;
 			}
-
-		} catch (MalformedURLException e) {
-			return Decision.NEVER;
 		}
+		return treatAsDownloadable;
 	}
 
-	public boolean bodyIsHeart() {
-		return body != null && UIHelper.HEARTS.contains(body.trim());
+	public synchronized boolean bodyIsOnlyEmojis() {
+		if (isEmojisOnly == null) {
+			isEmojisOnly = EmojiManager.isOnlyEmojis(body.replaceAll("\\s", ""));
+		}
+		return isEmojisOnly;
 	}
 
-	public FileParams getFileParams() {
-		FileParams params = getLegacyFileParams();
-		if (params != null) {
-			return params;
+	public synchronized boolean isGeoUri() {
+		if (isGeoUri == null) {
+			isGeoUri = GeoHelper.GEO_URI.matcher(body).matches();
 		}
-		params = new FileParams();
-		if (this.transferable != null) {
-			params.size = this.transferable.getFileSize();
-		}
-		if (body == null) {
-			return params;
-		}
-		String parts[] = body.split("\\|");
-		switch (parts.length) {
-			case 1:
-				try {
-					params.size = Long.parseLong(parts[0]);
-				} catch (NumberFormatException e) {
+		return isGeoUri;
+	}
+
+	public synchronized void resetFileParams() {
+		this.fileParams = null;
+	}
+
+	public synchronized FileParams getFileParams() {
+		if (fileParams == null) {
+			fileParams = new FileParams();
+			if (this.transferable != null) {
+				fileParams.size = this.transferable.getFileSize();
+			}
+			String parts[] = body == null ? new String[0] : body.split("\\|");
+			switch (parts.length) {
+				case 1:
 					try {
-						params.url = new URL(parts[0]);
-					} catch (MalformedURLException e1) {
-						params.url = null;
+						fileParams.size = Long.parseLong(parts[0]);
+					} catch (NumberFormatException e) {
+						fileParams.url = parseUrl(parts[0]);
 					}
-				}
-				break;
-			case 2:
-			case 4:
-				try {
-					params.url = new URL(parts[0]);
-				} catch (MalformedURLException e1) {
-					params.url = null;
-				}
-				try {
-					params.size = Long.parseLong(parts[1]);
-				} catch (NumberFormatException e) {
-					params.size = 0;
-				}
-				try {
-					params.width = Integer.parseInt(parts[2]);
-				} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-					params.width = 0;
-				}
-				try {
-					params.height = Integer.parseInt(parts[3]);
-				} catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {
-					params.height = 0;
-				}
-				break;
-			case 3:
-				try {
-					params.size = Long.parseLong(parts[0]);
-				} catch (NumberFormatException e) {
-					params.size = 0;
-				}
-				try {
-					params.width = Integer.parseInt(parts[1]);
-				} catch (NumberFormatException e) {
-					params.width = 0;
-				}
-				try {
-					params.height = Integer.parseInt(parts[2]);
-				} catch (NumberFormatException e) {
-					params.height = 0;
-				}
-				break;
+					break;
+				case 4:
+					fileParams.width = parseInt(parts[2]);
+					fileParams.height = parseInt(parts[3]);
+				case 2:
+					fileParams.url = parseUrl(parts[0]);
+					fileParams.size = parseLong(parts[1]);
+					break;
+				case 3:
+					fileParams.size = parseLong(parts[0]);
+					fileParams.width = parseInt(parts[1]);
+					fileParams.height = parseInt(parts[2]);
+					break;
+			}
 		}
-		return params;
+		return fileParams;
 	}
 
-	public FileParams getLegacyFileParams() {
-		FileParams params = new FileParams();
-		if (body == null) {
-			return params;
+	private static long parseLong(String value) {
+		try {
+			return Long.parseLong(value);
+		} catch (NumberFormatException e) {
+			return 0;
 		}
-		String parts[] = body.split(",");
-		if (parts.length == 3) {
-			try {
-				params.size = Long.parseLong(parts[0]);
-			} catch (NumberFormatException e) {
-				return null;
-			}
-			try {
-				params.width = Integer.parseInt(parts[1]);
-			} catch (NumberFormatException e) {
-				return null;
-			}
-			try {
-				params.height = Integer.parseInt(parts[2]);
-			} catch (NumberFormatException e) {
-				return null;
-			}
-			return params;
-		} else {
+	}
+
+	private static int parseInt(String value) {
+		try {
+			return Integer.parseInt(value);
+		} catch (NumberFormatException e) {
+			return 0;
+		}
+	}
+
+	private static URL parseUrl(String value) {
+		try {
+			return new URL(value);
+		} catch (MalformedURLException e) {
 			return null;
 		}
 	}
@@ -824,10 +798,6 @@ public class Message extends AbstractEntity {
 
 	public boolean needsUploading() {
 		return isFileOrImage() && getFileParams().url == null;
-	}
-
-	public boolean isCall() {
-		return getType() == TYPE_CALL;
 	}
 
 	public class FileParams {
@@ -852,7 +822,7 @@ public class Message extends AbstractEntity {
 
 	public boolean isTrusted() {
 		FingerprintStatus s = conversation.getAccount().getAxolotlService().getFingerprintTrust(axolotlFingerprint);
-		return s != null && s.isTrustedAndActive();
+		return s != null && s.isTrusted();
 	}
 
 	private  int getPreviousEncryption() {

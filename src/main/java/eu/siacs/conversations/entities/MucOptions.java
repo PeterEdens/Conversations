@@ -3,12 +3,14 @@ package eu.siacs.conversations.entities;
 import android.annotation.SuppressLint;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import spreedbox.me.app.R;
+import eu.siacs.conversations.Config;
+import eu.siacs.conversations.xml.Namespace;
+import eu.siacs.conversations.xmpp.chatstate.ChatState;
 import eu.siacs.conversations.xmpp.forms.Data;
 import eu.siacs.conversations.xmpp.forms.Field;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
@@ -47,6 +49,18 @@ public class MucOptions {
 
 	public boolean autoPushConfiguration() {
 		return mAutoPushConfiguration;
+	}
+
+	public boolean isSelf(Jid counterpart) {
+		return counterpart.getResourcepart().equals(getActualNick());
+	}
+
+	public void resetChatState() {
+		synchronized (users) {
+			for(User user : users) {
+				user.chatState = Config.DEFAULT_CHATSTATE;
+			}
+		}
 	}
 
 	public enum Affiliation {
@@ -154,6 +168,7 @@ public class MucOptions {
 		private long pgpKeyId = 0;
 		private Avatar avatar;
 		private MucOptions options;
+		private ChatState chatState = Config.DEFAULT_CHATSTATE;
 
 		public User(MucOptions options, Jid from) {
 			this.options = options;
@@ -227,7 +242,13 @@ public class MucOptions {
 		}
 
 		public long getPgpKeyId() {
-			return this.pgpKeyId;
+			if (this.pgpKeyId != 0) {
+				return this.pgpKeyId;
+			} else if (realJid != null) {
+				return getAccount().getRoster().getContact(realJid).getPgpKeyId();
+			} else {
+				return 0;
+			}
 		}
 
 		public Contact getContact() {
@@ -319,6 +340,14 @@ public class MucOptions {
 		public Jid getRealJid() {
 			return realJid;
 		}
+
+		public boolean setChatState(ChatState chatState) {
+			if (this.chatState == chatState) {
+				return false;
+			}
+			this.chatState = chatState;
+			return true;
+		}
 	}
 
 	private Account account;
@@ -332,7 +361,6 @@ public class MucOptions {
 	private User self;
 	private String subject = null;
 	private String password = null;
-	public boolean mNickChangingInProgress = false;
 
 	public MucOptions(Conversation conversation) {
 		this.account = conversation.getAccount();
@@ -374,8 +402,11 @@ public class MucOptions {
 	}
 
 	public boolean mamSupport() {
-		// Update with "urn:xmpp:mam:1" once we support it
-		return hasFeature("urn:xmpp:mam:0");
+		return hasFeature(Namespace.MAM) || hasFeature(Namespace.MAM_LEGACY);
+	}
+
+	public boolean mamLegacy() {
+		return hasFeature(Namespace.MAM_LEGACY) && !hasFeature(Namespace.MAM);
 	}
 
 	public boolean nonanonymous() {
@@ -395,10 +426,20 @@ public class MucOptions {
 		if (user != null) {
 			synchronized (users) {
 				users.remove(user);
-				if (membersOnly() &&
-						nonanonymous() &&
-						user.affiliation.ranks(Affiliation.MEMBER) &&
-						user.realJid != null) {
+				boolean realJidInMuc = false;
+				for (User u : users) {
+					if (user.realJid != null && user.realJid.equals(u.realJid)) {
+						realJidInMuc = true;
+						break;
+					}
+				}
+				boolean self = user.realJid != null && user.realJid.equals(account.getJid().toBareJid());
+				if (membersOnly()
+						&& nonanonymous()
+						&& user.affiliation.ranks(Affiliation.MEMBER)
+						&& user.realJid != null
+						&& !realJidInMuc
+						&& !self) {
 					user.role = Role.NONE;
 					user.avatar = null;
 					user.fullJid = null;
@@ -409,13 +450,16 @@ public class MucOptions {
 		return user;
 	}
 
-	public void updateUser(User user) {
+	//returns true if real jid was new;
+	public boolean updateUser(User user) {
 		User old;
+		boolean realJidFound = false;
 		if (user.fullJid == null && user.realJid != null) {
 			old = findUserByRealJid(user.realJid);
+			realJidFound = old != null;
 			if (old != null) {
 				if (old.fullJid != null) {
-					return; //don't add. user already exists
+					return false; //don't add. user already exists
 				} else {
 					synchronized (users) {
 						users.remove(old);
@@ -424,6 +468,7 @@ public class MucOptions {
 			}
 		} else if (user.realJid != null) {
 			old = findUserByRealJid(user.realJid);
+			realJidFound = old != null;
 			synchronized (users) {
 				if (old != null && old.fullJid == null) {
 					users.remove(old);
@@ -435,11 +480,15 @@ public class MucOptions {
 			if (old != null) {
 				users.remove(old);
 			}
+			boolean fullJidIsSelf = isOnline && user.getFullJid() != null && user.getFullJid().equals(self.getFullJid());
 			if ((!membersOnly() || user.getAffiliation().ranks(Affiliation.MEMBER))
-					&& user.getAffiliation().outranks(Affiliation.OUTCAST)){
+					&& user.getAffiliation().outranks(Affiliation.OUTCAST)
+					&& !fullJidIsSelf){
 				this.users.add(user);
+				return !realJidFound && user.realJid != null;
 			}
 		}
+		return false;
 	}
 
 	public User findUserByFullJid(Jid jid) {
@@ -507,9 +556,36 @@ public class MucOptions {
 		}
 	}
 
+	public ArrayList<User> getUsersWithChatState(ChatState state, int max) {
+		synchronized (users) {
+			ArrayList<User> list = new ArrayList<>();
+			for(User user : users) {
+				if (user.chatState == state) {
+					list.add(user);
+					if (list.size() >= max) {
+						break;
+					}
+				}
+			}
+			return list;
+		}
+	}
+
 	public List<User> getUsers(int max) {
-		ArrayList<User> users = getUsers();
-		return users.subList(0, Math.min(max, users.size()));
+		ArrayList<User> subset = new ArrayList<>();
+		HashSet<Jid> jids = new HashSet<>();
+		jids.add(account.getJid().toBareJid());
+		synchronized (users) {
+			for(User user : users) {
+				if (user.getRealJid() == null || jids.add(user.getRealJid())) {
+					subset.add(user);
+				}
+				if (subset.size() >= max) {
+					break;
+				}
+			}
+		}
+		return subset;
 	}
 
 	public int getUserCount() {
@@ -572,20 +648,16 @@ public class MucOptions {
 
 	public String createNameFromParticipants() {
 		if (getUserCount() >= 2) {
-			List<String> names = new ArrayList<>();
+			StringBuilder builder = new StringBuilder();
 			for (User user : getUsers(5)) {
+				if (builder.length() != 0) {
+					builder.append(", ");
+				}
 				Contact contact = user.getContact();
 				if (contact != null && !contact.getDisplayName().isEmpty()) {
-					names.add(contact.getDisplayName().split("\\s+")[0]);
+					builder.append(contact.getDisplayName().split("\\s+")[0]);
 				} else if (user.getName() != null){
-					names.add(user.getName());
-				}
-			}
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < names.size(); ++i) {
-				builder.append(names.get(i));
-				if (i != names.size() - 1) {
-					builder.append(", ");
+					builder.append(user.getName());
 				}
 			}
 			return builder.toString();

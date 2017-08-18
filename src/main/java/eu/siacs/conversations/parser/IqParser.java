@@ -5,10 +5,10 @@ import android.util.Base64;
 import android.util.Log;
 import android.util.Pair;
 
-import org.whispersystems.libaxolotl.IdentityKey;
-import org.whispersystems.libaxolotl.ecc.Curve;
-import org.whispersystems.libaxolotl.ecc.ECPublicKey;
-import org.whispersystems.libaxolotl.state.PreKeyBundle;
+import org.whispersystems.libsignal.IdentityKey;
+import org.whispersystems.libsignal.ecc.Curve;
+import org.whispersystems.libsignal.ecc.ECPublicKey;
+import org.whispersystems.libsignal.state.PreKeyBundle;
 
 import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateException;
@@ -27,7 +27,7 @@ import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.utils.Xmlns;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xmpp.OnIqPacketReceived;
 import eu.siacs.conversations.xmpp.OnUpdateBlocklist;
@@ -59,16 +59,14 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 					contact.setServerName(name);
 					contact.parseGroupsFromElement(item);
 				}
-				if (subscription != null) {
-					if (subscription.equals("remove")) {
-						contact.resetOption(Contact.Options.IN_ROSTER);
-						contact.resetOption(Contact.Options.DIRTY_DELETE);
-						contact.resetOption(Contact.Options.PREEMPTIVE_GRANT);
-					} else {
-						contact.setOption(Contact.Options.IN_ROSTER);
-						contact.resetOption(Contact.Options.DIRTY_PUSH);
-						contact.parseSubscriptionFromElement(item);
-					}
+				if ("remove".equals(subscription)) {
+					contact.resetOption(Contact.Options.IN_ROSTER);
+					contact.resetOption(Contact.Options.DIRTY_DELETE);
+					contact.resetOption(Contact.Options.PREEMPTIVE_GRANT);
+				} else {
+					contact.setOption(Contact.Options.IN_ROSTER);
+					contact.resetOption(Contact.Options.DIRTY_PUSH);
+					contact.parseSubscriptionFromElement(item);
 				}
 				boolean both = contact.getOption(Contact.Options.TO) && contact.getOption(Contact.Options.FROM);
 				if ((both != bothPre) && both) {
@@ -83,6 +81,7 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 		}
 		mXmppConnectionService.updateConversationUi();
 		mXmppConnectionService.updateRosterUi();
+		mXmppConnectionService.getShortcutService().refresh();
 	}
 
 	public String avatarData(final IqPacket packet) {
@@ -286,19 +285,19 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 		final boolean isGet = packet.getType() == IqPacket.TYPE.GET;
 		if (packet.getType() == IqPacket.TYPE.ERROR || packet.getType() == IqPacket.TYPE.TIMEOUT) {
 			return;
-		} else if (packet.hasChild("query", Xmlns.ROSTER) && packet.fromServer(account)) {
+		} else if (packet.hasChild("query", Namespace.ROSTER) && packet.fromServer(account)) {
 			final Element query = packet.findChild("query");
 			// If this is in response to a query for the whole roster:
 			if (packet.getType() == IqPacket.TYPE.RESULT) {
 				account.getRoster().markAllAsNotInRoster();
 			}
 			this.rosterItems(account, query);
-		} else if ((packet.hasChild("block", Xmlns.BLOCKING) || packet.hasChild("blocklist", Xmlns.BLOCKING)) &&
+		} else if ((packet.hasChild("block", Namespace.BLOCKING) || packet.hasChild("blocklist", Namespace.BLOCKING)) &&
 				packet.fromServer(account)) {
 			// Block list or block push.
 			Log.d(Config.LOGTAG, "Received blocklist update from server");
-			final Element blocklist = packet.findChild("blocklist", Xmlns.BLOCKING);
-			final Element block = packet.findChild("block", Xmlns.BLOCKING);
+			final Element blocklist = packet.findChild("blocklist", Namespace.BLOCKING);
+			final Element block = packet.findChild("block", Namespace.BLOCKING);
 			final Collection<Element> items = blocklist != null ? blocklist.getChildren() :
 				(block != null ? block.getChildren() : null);
 			// If this is a response to a blocklist query, clear the block list and replace with the new one.
@@ -319,6 +318,15 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 					}
 				}
 				account.getBlocklist().addAll(jids);
+				if (packet.getType() == IqPacket.TYPE.SET) {
+					boolean removed = false;
+					for(Jid jid : jids) {
+						removed |= mXmppConnectionService.removeBlockedConversations(account,jid);
+					}
+					if (removed) {
+						mXmppConnectionService.updateConversationUi();
+					}
+				}
 			}
 			// Update the UI
 			mXmppConnectionService.updateBlocklistUi(OnUpdateBlocklist.Status.BLOCKED);
@@ -326,10 +334,10 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 				final IqPacket response = packet.generateResponse(IqPacket.TYPE.RESULT);
 				mXmppConnectionService.sendIqPacket(account, response, null);
 			}
-		} else if (packet.hasChild("unblock", Xmlns.BLOCKING) &&
+		} else if (packet.hasChild("unblock", Namespace.BLOCKING) &&
 				packet.fromServer(account) && packet.getType() == IqPacket.TYPE.SET) {
 			Log.d(Config.LOGTAG, "Received unblock update from server");
-			final Collection<Element> items = packet.findChild("unblock", Xmlns.BLOCKING).getChildren();
+			final Collection<Element> items = packet.findChild("unblock", Namespace.BLOCKING).getChildren();
 			if (items.size() == 0) {
 				// No children to unblock == unblock all
 				account.getBlocklist().clear();
@@ -349,7 +357,8 @@ public class IqParser extends AbstractParser implements OnIqPacketReceived {
 			final IqPacket response = packet.generateResponse(IqPacket.TYPE.RESULT);
 			mXmppConnectionService.sendIqPacket(account, response, null);
 		} else if (packet.hasChild("open", "http://jabber.org/protocol/ibb")
-				|| packet.hasChild("data", "http://jabber.org/protocol/ibb")) {
+				|| packet.hasChild("data", "http://jabber.org/protocol/ibb")
+				|| packet.hasChild("close","http://jabber.org/protocol/ibb")) {
 			mXmppConnectionService.getJingleConnectionManager()
 				.deliverIbbPacket(account, packet);
 		} else if (packet.hasChild("query", "http://jabber.org/protocol/disco#info")) {

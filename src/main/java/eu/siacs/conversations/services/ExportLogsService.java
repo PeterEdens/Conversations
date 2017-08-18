@@ -26,7 +26,7 @@ import eu.siacs.conversations.xmpp.jid.Jid;
 public class ExportLogsService extends Service {
 
 	private static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-	private static final String DIRECTORY_STRING_FORMAT = FileBackend.getConversationsFileDirectory() + "/logs/%s";
+	private static final String DIRECTORY_STRING_FORMAT = FileBackend.getConversationsLogsDirectory() + "/logs/%s";
 	private static final String MESSAGE_STRING_FORMAT = "(%s) %s: %s\n";
 	private static final int NOTIFICATION_ID = 1;
 	private static AtomicBoolean running = new AtomicBoolean(false);
@@ -84,6 +84,8 @@ public class ExportLogsService extends Service {
 		BufferedWriter bw = null;
 		try {
 			for (Message message : mDatabaseBackend.getMessagesIterable(conversation)) {
+				if (message == null)
+					continue;
 				if (message.getType() == Message.TYPE_TEXT || message.hasFileOnRemoteHost()) {
 					String date = simpleDateFormat.format(new Date(message.getTimeSent()));
 					if (bw == null) {

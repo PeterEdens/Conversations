@@ -1,6 +1,5 @@
 package eu.siacs.conversations.services;
 
-import android.annotation.TargetApi;
 import android.content.ComponentName;
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -11,7 +10,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Build;
 import android.os.CancellationSignal;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
@@ -20,31 +18,29 @@ import android.util.Log;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.EncodeHintType;
-import com.google.zxing.aztec.AztecWriter;
 import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Hashtable;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.utils.CryptoHelper;
-import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
 public class BarcodeProvider extends ContentProvider implements ServiceConnection {
 
-    private static final String AUTHORITY = "spreedbox.me.app.barcodes";
+    private static final String AUTHORITY = ".barcodes";
 
     private final Object lock = new Object();
 
     private XmppConnectionService mXmppConnectionService;
+    private boolean mBindingInProcess = false;
 
     @Override
     public boolean onCreate() {
@@ -111,7 +107,7 @@ public class BarcodeProvider extends ContentProvider implements ServiceConnectio
                         if (!file.exists()) {
                             file.getParentFile().mkdirs();
                             file.createNewFile();
-                            Bitmap bitmap = createAztecBitmap(account.getShareableUri(), 1024);
+                            Bitmap bitmap = create2dBarcodeBitmap(account.getShareableUri(), 1024);
                             OutputStream outputStream = new FileOutputStream(file);
                             bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
                             outputStream.close();
@@ -129,14 +125,19 @@ public class BarcodeProvider extends ContentProvider implements ServiceConnectio
 
     private boolean connectAndWait() {
         Intent intent = new Intent(getContext(), XmppConnectionService.class);
-        intent.setAction("contact_chooser");
+        intent.setAction(this.getClass().getSimpleName());
         Context context = getContext();
         if (context != null) {
-            context.startService(intent);
-            context.bindService(intent, this, Context.BIND_AUTO_CREATE);
+            synchronized (this) {
+                if (mXmppConnectionService == null && !mBindingInProcess) {
+                    Log.d(Config.LOGTAG,"calling to bind service");
+                    context.startService(intent);
+                    context.bindService(intent, this, Context.BIND_AUTO_CREATE);
+                    this.mBindingInProcess = true;
+                }
+            }
             try {
                 waitForService();
-                Log.d(Config.LOGTAG, "service initialized");
                 return true;
             } catch (InterruptedException e) {
                 return false;
@@ -149,16 +150,21 @@ public class BarcodeProvider extends ContentProvider implements ServiceConnectio
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        XmppConnectionService.XmppConnectionBinder binder = (XmppConnectionService.XmppConnectionBinder) service;
-        mXmppConnectionService = binder.getService();
-        synchronized (this.lock) {
-            lock.notifyAll();
+        synchronized (this) {
+            XmppConnectionService.XmppConnectionBinder binder = (XmppConnectionService.XmppConnectionBinder) service;
+            mXmppConnectionService = binder.getService();
+            mBindingInProcess = false;
+            synchronized (this.lock) {
+                lock.notifyAll();
+            }
         }
     }
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        mXmppConnectionService = null;
+        synchronized (this) {
+            mXmppConnectionService = null;
+        }
     }
 
     private void waitForService() throws InterruptedException {
@@ -166,19 +172,22 @@ public class BarcodeProvider extends ContentProvider implements ServiceConnectio
             synchronized (this.lock) {
                 lock.wait();
             }
+        } else {
+            Log.d(Config.LOGTAG,"not waiting for service because already initialized");
         }
     }
 
-    public static Uri getUriForAccount(Account account) {
-        return Uri.parse("content://" + AUTHORITY + "/" + account.getJid().toBareJid() + ".png");
+    public static Uri getUriForAccount(Context context, Account account) {
+        final String packageId = context.getPackageName();
+        return Uri.parse("content://" + packageId + AUTHORITY + "/" + account.getJid().toBareJid() + ".png");
     }
 
-    public static Bitmap createAztecBitmap(String input, int size) {
+    public static Bitmap create2dBarcodeBitmap(String input, int size) {
         try {
-            final AztecWriter AZTEC_WRITER = new AztecWriter();
+            final QRCodeWriter barcodeWriter = new QRCodeWriter();
             final Hashtable<EncodeHintType, Object> hints = new Hashtable<>();
-            hints.put(EncodeHintType.ERROR_CORRECTION, 10);
-            final BitMatrix result = AZTEC_WRITER.encode(input, BarcodeFormat.AZTEC, size, size, hints);
+            hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+            final BitMatrix result = barcodeWriter.encode(input, BarcodeFormat.QR_CODE, size, size, hints);
             final int width = result.getWidth();
             final int height = result.getHeight();
             final int[] pixels = new int[width * height];
@@ -192,6 +201,7 @@ public class BarcodeProvider extends ContentProvider implements ServiceConnectio
             bitmap.setPixels(pixels, 0, width, 0, 0, width, height);
             return bitmap;
         } catch (final Exception e) {
+            e.printStackTrace();
             return null;
         }
     }

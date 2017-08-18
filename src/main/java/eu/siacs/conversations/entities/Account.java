@@ -57,6 +57,8 @@ public class Account extends AbstractEntity {
 	public static final int OPTION_REGISTER = 2;
 	public static final int OPTION_USECOMPRESSION = 3;
 	public static final int OPTION_MAGIC_CREATE = 4;
+	public static final int OPTION_REQUIRES_ACCESS_MODE_CHANGE = 5;
+	public static final int OPTION_LOGGED_IN_SUCCESSFULLY = 6;
 	public final HashSet<Pair<String, String>> inProgressDiscoFetches = new HashSet<>();
 
 	public boolean httpUploadAvailable(long filesize) {
@@ -107,41 +109,55 @@ public class Account extends AbstractEntity {
 	}
 
 	public enum State {
-		DISABLED,
-		OFFLINE,
-		CONNECTING,
-		ONLINE,
-		NO_INTERNET,
-		UNAUTHORIZED(true),
-		SERVER_NOT_FOUND(true),
-		REGISTRATION_FAILED(true),
-		REGISTRATION_CONFLICT(true),
-		REGISTRATION_SUCCESSFUL,
-		REGISTRATION_NOT_SUPPORTED(true),
-		SECURITY_ERROR(true),
-		INCOMPATIBLE_SERVER(true),
-		TOR_NOT_AVAILABLE(true),
-		BIND_FAILURE(true),
-		HOST_UNKNOWN(true),
-		REGISTRATION_PLEASE_WAIT(true),
-		STREAM_ERROR(true),
-		POLICY_VIOLATION(true),
-		REGISTRATION_PASSWORD_TOO_WEAK(true),
-		PAYMENT_REQUIRED(true),
-		MISSING_INTERNET_PERMISSION(true);
+		DISABLED(false,false),
+		OFFLINE(false),
+		CONNECTING(false),
+		ONLINE(false),
+		NO_INTERNET(false),
+		UNAUTHORIZED,
+		SERVER_NOT_FOUND,
+		REGISTRATION_SUCCESSFUL(false),
+		REGISTRATION_FAILED(true,false),
+		REGISTRATION_WEB(true,false),
+		REGISTRATION_CONFLICT(true,false),
+		REGISTRATION_NOT_SUPPORTED(true,false),
+		REGISTRATION_PLEASE_WAIT(true,false),
+		REGISTRATION_PASSWORD_TOO_WEAK(true,false),
+		TLS_ERROR,
+		INCOMPATIBLE_SERVER,
+		TOR_NOT_AVAILABLE,
+		DOWNGRADE_ATTACK,
+		SESSION_FAILURE,
+		BIND_FAILURE,
+		HOST_UNKNOWN,
+		STREAM_ERROR,
+		POLICY_VIOLATION,
+		PAYMENT_REQUIRED,
+		MISSING_INTERNET_PERMISSION(false),
+		NETWORK_IS_UNREACHABLE(false);
 
 		private final boolean isError;
+		private final boolean attemptReconnect;
 
 		public boolean isError() {
 			return this.isError;
 		}
 
+		public boolean isAttemptReconnect() {
+			return this.attemptReconnect;
+		}
+
 		State(final boolean isError) {
+			this(isError,true);
+		}
+
+		State(final boolean isError, final boolean reconnect) {
 			this.isError = isError;
+			this.attemptReconnect = reconnect;
 		}
 
 		State() {
-			this(false);
+			this(true,true);
 		}
 
 		public int getReadableId() {
@@ -162,20 +178,26 @@ public class Account extends AbstractEntity {
 					return R.string.account_status_no_internet;
 				case REGISTRATION_FAILED:
 					return R.string.account_status_regis_fail;
+				case REGISTRATION_WEB:
+					return R.string.account_status_regis_web;
 				case REGISTRATION_CONFLICT:
 					return R.string.account_status_regis_conflict;
 				case REGISTRATION_SUCCESSFUL:
 					return R.string.account_status_regis_success;
 				case REGISTRATION_NOT_SUPPORTED:
 					return R.string.account_status_regis_not_sup;
-				case SECURITY_ERROR:
-					return R.string.account_status_security_error;
+				case TLS_ERROR:
+					return R.string.account_status_tls_error;
 				case INCOMPATIBLE_SERVER:
 					return R.string.account_status_incompatible_server;
 				case TOR_NOT_AVAILABLE:
 					return R.string.account_status_tor_unavailable;
 				case BIND_FAILURE:
 					return R.string.account_status_bind_failure;
+				case SESSION_FAILURE:
+					return R.string.session_failure;
+				case DOWNGRADE_ATTACK:
+					return R.string.sasl_downgrade;
 				case HOST_UNKNOWN:
 					return R.string.account_status_host_unknown;
 				case POLICY_VIOLATION:
@@ -190,6 +212,8 @@ public class Account extends AbstractEntity {
 					return R.string.payment_required;
 				case MISSING_INTERNET_PERMISSION:
 					return R.string.missing_internet_permission;
+				case NETWORK_IS_UNREACHABLE:
+					return R.string.network_is_unreachable;
 				default:
 					return R.string.account_status_unknown;
 			}
@@ -282,12 +306,14 @@ public class Account extends AbstractEntity {
 		return ((options & (1 << option)) != 0);
 	}
 
-	public void setOption(final int option, final boolean value) {
+	public boolean setOption(final int option, final boolean value) {
+		final int before = this.options;
 		if (value) {
 			this.options |= 1 << option;
 		} else {
 			this.options &= ~(1 << option);
 		}
+		return before != this.options;
 	}
 
 	public String getUsername() {
@@ -296,8 +322,17 @@ public class Account extends AbstractEntity {
 
 	public boolean setJid(final Jid next) {
 		final Jid prev = this.jid != null ? this.jid.toBareJid() : null;
+		final boolean changed = prev == null || (next != null && !prev.equals(next.toBareJid()));
+		if (changed) {
+			final AxolotlService oldAxolotlService = this.axolotlService;
+			if (oldAxolotlService != null) {
+				oldAxolotlService.destroy();
+				this.jid = next;
+				this.axolotlService = oldAxolotlService.makeNew();
+			}
+		}
 		this.jid = next;
-		return prev == null || (next != null && !prev.equals(next.toBareJid()));
+		return changed;
 	}
 
 	public Jid getServer() {
@@ -339,6 +374,10 @@ public class Account extends AbstractEntity {
 		} else {
 			return this.status;
 		}
+	}
+
+	public State getTrueStatus() {
+		return this.status;
 	}
 
 	public void setStatus(final State status) {
@@ -547,7 +586,11 @@ public class Account extends AbstractEntity {
 	public boolean setPgpSignId(long pgpID) {
 		synchronized (this.keys) {
 			try {
-				keys.put(KEY_PGP_ID, pgpID);
+				if (pgpID == 0) {
+					keys.remove(KEY_PGP_ID);
+				} else {
+					keys.put(KEY_PGP_ID, pgpID);
+				}
 			} catch (JSONException e) {
 				return false;
 			}
@@ -606,23 +649,17 @@ public class Account extends AbstractEntity {
 		List<XmppUri.Fingerprint> fingerprints = this.getFingerprints();
 		String uri = "xmpp:"+this.getJid().toBareJid().toString();
 		if (fingerprints.size() > 0) {
-			StringBuilder builder = new StringBuilder(uri);
-			builder.append('?');
-			for(int i = 0; i < fingerprints.size(); ++i) {
-				XmppUri.FingerprintType type = fingerprints.get(i).type;
-				if (type == XmppUri.FingerprintType.OMEMO) {
-					builder.append(XmppUri.OMEMO_URI_PARAM);
-					builder.append(fingerprints.get(i).deviceId);
-				} else if (type == XmppUri.FingerprintType.OTR) {
-					builder.append(XmppUri.OTR_URI_PARAM);
-				}
-				builder.append('=');
-				builder.append(fingerprints.get(i).fingerprint);
-				if (i != fingerprints.size() -1) {
-					builder.append(';');
-				}
-			}
-			return builder.toString();
+			return XmppUri.getFingerprintUri(uri,fingerprints,';');
+		} else {
+			return uri;
+		}
+	}
+
+	public String getShareableLink() {
+		List<XmppUri.Fingerprint> fingerprints = this.getFingerprints();
+		String uri = "https://conversations.im/i/"+this.getJid().toBareJid().toString();
+		if (fingerprints.size() > 0) {
+			return XmppUri.getFingerprintUri(uri,fingerprints,'&');
 		} else {
 			return uri;
 		}
@@ -634,12 +671,13 @@ public class Account extends AbstractEntity {
 		if (otr != null) {
 			fingerprints.add(new XmppUri.Fingerprint(XmppUri.FingerprintType.OTR,otr));
 		}
-		if (axolotlService != null) {
-			fingerprints.add(new XmppUri.Fingerprint(XmppUri.FingerprintType.OMEMO,axolotlService.getOwnFingerprint().substring(2),axolotlService.getOwnDeviceId()));
-			for(XmppAxolotlSession session : axolotlService.findOwnSessions()) {
-				if (session.getTrust().isVerified() && session.getTrust().isActive()) {
-					fingerprints.add(new XmppUri.Fingerprint(XmppUri.FingerprintType.OMEMO, session.getFingerprint().substring(2).replaceAll("\\s", ""), session.getRemoteAddress().getDeviceId()));
-				}
+		if (axolotlService == null) {
+			return fingerprints;
+		}
+		fingerprints.add(new XmppUri.Fingerprint(XmppUri.FingerprintType.OMEMO,axolotlService.getOwnFingerprint().substring(2),axolotlService.getOwnDeviceId()));
+		for(XmppAxolotlSession session : axolotlService.findOwnSessions()) {
+			if (session.getTrust().isVerified() && session.getTrust().isActive()) {
+				fingerprints.add(new XmppUri.Fingerprint(XmppUri.FingerprintType.OMEMO,session.getFingerprint().substring(2).replaceAll("\\s",""),session.getRemoteAddress().getDeviceId()));
 			}
 		}
 		return fingerprints;

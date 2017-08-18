@@ -42,6 +42,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.DisplayMetrics;
@@ -71,6 +72,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import eu.siacs.conversations.Config;
+import eu.siacs.conversations.crypto.PgpEngine;
 import spreedbox.me.app.R;
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
@@ -387,29 +389,28 @@ public abstract class XmppActivity extends AppCompatActivity {
 		metrics = getResources().getDisplayMetrics();
 		//ExceptionHelper.init(getApplicationContext());
 
-		mPrimaryTextColor = getResources().getColor(R.color.black87);
-		mSecondaryTextColor = getResources().getColor(R.color.black54);
-		mTertiaryTextColor = getResources().getColor(R.color.black12);
-		mColorRed = getResources().getColor(R.color.red800);
-		mColorOrange = getResources().getColor(R.color.orange500);
-		mColorGreen = getResources().getColor(R.color.green500);
-		mPrimaryColor = getResources().getColor(R.color.primary500);
-		mPrimaryBackgroundColor = getResources().getColor(R.color.grey50);
-		mSecondaryBackgroundColor = getResources().getColor(R.color.grey200);
-
-		if(isDarkTheme()) {
-			mPrimaryTextColor = getResources().getColor(R.color.white);
-			mSecondaryTextColor = getResources().getColor(R.color.white70);
-			mTertiaryTextColor = getResources().getColor(R.color.white12);
-			mPrimaryBackgroundColor = getResources().getColor(R.color.grey800);
-			mSecondaryBackgroundColor = getResources().getColor(R.color.grey900);
-		}
+		mPrimaryTextColor = ContextCompat.getColor(this, R.color.black87);
+		mSecondaryTextColor = ContextCompat.getColor(this, R.color.black54);
+		mTertiaryTextColor = ContextCompat.getColor(this, R.color.black12);
+		mColorRed = ContextCompat.getColor(this, R.color.red800);
+		mColorOrange = ContextCompat.getColor(this, R.color.orange500);
+		mColorGreen = ContextCompat.getColor(this, R.color.green500);
+		mPrimaryColor = ContextCompat.getColor(this, R.color.primary500);
+		mPrimaryBackgroundColor = ContextCompat.getColor(this, R.color.grey50);
+		mSecondaryBackgroundColor = ContextCompat.getColor(this, R.color.grey200);
 
 		this.mTheme = findTheme();
+		if(isDarkTheme()) {
+			mPrimaryTextColor = ContextCompat.getColor(this, R.color.white);
+			mSecondaryTextColor = ContextCompat.getColor(this, R.color.white70);
+			mTertiaryTextColor = ContextCompat.getColor(this, R.color.white12);
+			mPrimaryBackgroundColor = ContextCompat.getColor(this, R.color.grey800);
+			mSecondaryBackgroundColor = ContextCompat.getColor(this, R.color.grey900);
+		}
 		setTheme(this.mTheme);
 
 		this.mUsingEnterKey = usingEnterKey();
-		mUseSubject = getPreferences().getBoolean("use_subject", true);
+		mUseSubject = getPreferences().getBoolean("use_subject", getResources().getBoolean(R.bool.use_subject));
 		final ActionBar ab = getActionBar();
 		if (ab!=null) {
 			ab.setDisplayHomeAsUpEnabled(true);
@@ -417,7 +418,7 @@ public abstract class XmppActivity extends AppCompatActivity {
 	}
 
 	public boolean isDarkTheme() {
-		return getPreferences().getString("theme", "light").equals("dark");
+		return this.mTheme == R.style.ConversationsTheme_Dark || this.mTheme == R.style.ConversationsTheme_Dark_LargerText;
 	}
 
 	public int getThemeResource(int r_attr_name, int r_drawable_def) {
@@ -450,7 +451,7 @@ public abstract class XmppActivity extends AppCompatActivity {
 	}
 
 	protected boolean usingEnterKey() {
-		return getPreferences().getBoolean("display_enter_key", false);
+		return getPreferences().getBoolean("display_enter_key", getResources().getBoolean(R.bool.display_enter_key));
 	}
 
 	protected SharedPreferences getPreferences() {
@@ -990,11 +991,11 @@ public abstract class XmppActivity extends AppCompatActivity {
 	}
 
 	protected boolean neverCompressPictures() {
-		return getPreferences().getString("picture_compression", "auto").equals("never");
+		return getPreferences().getString("picture_compression", getResources().getString(R.string.picture_compression)).equals("never");
 	}
 
 	protected boolean manuallyChangePresence() {
-		return getPreferences().getBoolean(SettingsActivity.MANUALLY_CHANGE_PRESENCE, false);
+		return getPreferences().getBoolean(SettingsActivity.MANUALLY_CHANGE_PRESENCE, getResources().getBoolean(R.bool.manually_change_presence));
 	}
 
 	protected void unregisterNdefPushMessageCallback() {
@@ -1024,6 +1025,17 @@ public abstract class XmppActivity extends AppCompatActivity {
 		}
 	}
 
+	protected void launchOpenKeyChain(long keyId) {
+		PgpEngine pgp = XmppActivity.this.xmppConnectionService.getPgpEngine();
+		try {
+			startIntentSenderForResult(
+					pgp.getIntentForKey(keyId).getIntentSender(), 0, null, 0,
+					0, 0);
+		} catch (Throwable e) {
+			Toast.makeText(XmppActivity.this,R.string.openpgp_error,Toast.LENGTH_SHORT).show();
+		}
+	}
+
 	@Override
 	public void onResume() {
 		super.onResume();
@@ -1033,8 +1045,8 @@ public abstract class XmppActivity extends AppCompatActivity {
 	}
 
 	protected int findTheme() {
-		Boolean dark   = getPreferences().getString("theme", "light").equals("dark");
-		Boolean larger = getPreferences().getBoolean("use_larger_font", false);
+		Boolean dark   = getPreferences().getString(SettingsActivity.THEME, getResources().getString(R.string.theme)).equals("dark");
+		Boolean larger = getPreferences().getBoolean("use_larger_font", getResources().getBoolean(R.bool.use_larger_font));
 
 		if(dark) {
 			if(larger)
@@ -1061,7 +1073,7 @@ public abstract class XmppActivity extends AppCompatActivity {
 			Point size = new Point();
 			getWindowManager().getDefaultDisplay().getSize(size);
 			final int width = (size.x < size.y ? size.x : size.y);
-			Bitmap bitmap = BarcodeProvider.createAztecBitmap(uri, width);
+			Bitmap bitmap = BarcodeProvider.create2dBarcodeBitmap(uri, width);
 			ImageView view = new ImageView(this);
 			view.setBackgroundColor(Color.WHITE);
 			view.setImageBitmap(bitmap);
@@ -1118,8 +1130,7 @@ public abstract class XmppActivity extends AppCompatActivity {
 				return false;
 			} else {
 				jids.add(conversation.getJid().toBareJid());
-				service.createAdhocConference(conversation.getAccount(), null, jids, activity.adhocCallback);
-				return true;
+				return service.createAdhocConference(conversation.getAccount(), null, jids, activity.adhocCallback);
 			}
 		}
 	}

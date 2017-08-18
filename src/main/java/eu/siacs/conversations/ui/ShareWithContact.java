@@ -162,7 +162,7 @@ public class ShareWithContact extends XmppActivity implements XmppConnectionServ
                 Contact contact = (Contact)contacts.get(position);
                 final Conversation conversation = xmppConnectionService
                         .findOrCreateConversation(contact.getAccount(),
-                                contact.getJid(), false);
+                                contact.getJid(), false, false);
                 share(conversation);
             }
         });
@@ -265,7 +265,7 @@ public class ShareWithContact extends XmppActivity implements XmppConnectionServ
 
             try {
                 conversation = xmppConnectionService
-                        .findOrCreateConversation(account, Jid.fromString(share.contact), false);
+                        .findOrCreateConversation(account, Jid.fromString(share.contact), false, false);
             } catch (final InvalidJidException e) {
                 return;
             }

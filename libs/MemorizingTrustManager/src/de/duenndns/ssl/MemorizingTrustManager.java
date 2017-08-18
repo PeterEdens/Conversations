@@ -28,22 +28,36 @@ package de.duenndns.ssl;
 
 import android.app.Activity;
 import android.app.Application;
-import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
-import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.preference.PreferenceManager;
+import android.util.Base64;
+import android.util.Log;
 import android.util.SparseArray;
 import android.os.Handler;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.*;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
+import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.text.SimpleDateFormat;
@@ -51,8 +65,10 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
@@ -68,7 +84,15 @@ import javax.net.ssl.X509TrustManager;
  * <b>WARNING:</b> This only works if a dedicated thread is used for
  * opening sockets!
  */
-public class MemorizingTrustManager implements X509TrustManager {
+public class MemorizingTrustManager {
+
+
+	private static final Pattern PATTERN_IPV4 = Pattern.compile("\\A(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
+	private static final Pattern PATTERN_IPV6_HEX4DECCOMPRESSED = Pattern.compile("\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?) ::((?:[0-9A-Fa-f]{1,4}:)*)(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
+	private static final Pattern PATTERN_IPV6_6HEX4DEC = Pattern.compile("\\A((?:[0-9A-Fa-f]{1,4}:){6,6})(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)(\\.(25[0-5]|2[0-4]\\d|[0-1]?\\d?\\d)){3}\\z");
+	private static final Pattern PATTERN_IPV6_HEXCOMPRESSED = Pattern.compile("\\A((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)::((?:[0-9A-Fa-f]{1,4}(?::[0-9A-Fa-f]{1,4})*)?)\\z");
+	private static final Pattern PATTERN_IPV6 = Pattern.compile("\\A(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\\z");
+
 	final static String DECISION_INTENT = "de.duenndns.ssl.DECISION";
 	final static String DECISION_INTENT_ID     = DECISION_INTENT + ".decisionId";
 	final static String DECISION_INTENT_CERT   = DECISION_INTENT + ".cert";
@@ -94,6 +118,7 @@ public class MemorizingTrustManager implements X509TrustManager {
 	private KeyStore appKeyStore;
 	private X509TrustManager defaultTrustManager;
 	private X509TrustManager appTrustManager;
+	private String poshCacheDir;
 
 	/** Creates an instance of the MemorizingTrustManager class that falls back to a custom TrustManager.
 	 *
@@ -149,28 +174,11 @@ public class MemorizingTrustManager implements X509TrustManager {
 		File dir = app.getDir(KEYSTORE_DIR, Context.MODE_PRIVATE);
 		keyStoreFile = new File(dir + File.separator + KEYSTORE_FILE);
 
+		poshCacheDir = app.getFilesDir().getAbsolutePath()+"/posh_cache/";
+
 		appKeyStore = loadAppKeyStore();
 	}
 
-	
-	/**
-	 * Returns a X509TrustManager list containing a new instance of
-	 * TrustManagerFactory.
-	 *
-	 * This function is meant for convenience only. You can use it
-	 * as follows to integrate TrustManagerFactory for HTTPS sockets:
-	 *
-	 * <pre>
-	 *     SSLContext sc = SSLContext.getInstance("TLS");
-	 *     sc.init(null, MemorizingTrustManager.getInstanceList(this),
-	 *         new java.security.SecureRandom());
-	 *     HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-	 * </pre>
-	 * @param c Activity or Service to show the Dialog / Notification
-	 */
-	public static X509TrustManager[] getInstanceList(Context c) {
-		return new X509TrustManager[] { new MemorizingTrustManager(c) };
-	}
 
 	/**
 	 * Binds an Activity to the MTM for displaying the query dialog.
@@ -284,18 +292,11 @@ public class MemorizingTrustManager implements X509TrustManager {
 	 *
 	 * @throws IllegalArgumentException if the defaultVerifier parameter is null
 	 */
-	public HostnameVerifier wrapHostnameVerifier(final HostnameVerifier defaultVerifier) {
+	public DomainHostnameVerifier wrapHostnameVerifier(final HostnameVerifier defaultVerifier, final boolean interactive) {
 		if (defaultVerifier == null)
 			throw new IllegalArgumentException("The default verifier may not be null");
 		
-		return new MemorizingHostnameVerifier(defaultVerifier);
-	}
-	
-	public HostnameVerifier wrapHostnameVerifierNonInteractive(final HostnameVerifier defaultVerifier) {
-		if (defaultVerifier == null)
-			throw new IllegalArgumentException("The default verifier may not be null");
-		
-		return new NonInteractiveMemorizingHostnameVerifier(defaultVerifier);
+		return new MemorizingHostnameVerifier(defaultVerifier, interactive);
 	}
 	
 	X509TrustManager getTrustManager(KeyStore ks) {
@@ -389,7 +390,7 @@ public class MemorizingTrustManager implements X509TrustManager {
 		return false;
 	}
 
-	public void checkCertTrusted(X509Certificate[] chain, String authType, boolean isServer, boolean interactive)
+	public void checkCertTrusted(X509Certificate[] chain, String authType, String domain, boolean isServer, boolean interactive)
 		throws CertificateException
 	{
 		LOGGER.log(Level.FINE, "checkCertTrusted(" + chain + ", " + authType + ", " + isServer + ")");
@@ -419,6 +420,15 @@ public class MemorizingTrustManager implements X509TrustManager {
 				else
 					defaultTrustManager.checkClientTrusted(chain, authType);
 			} catch (CertificateException e) {
+				boolean trustSystemCAs = !PreferenceManager.getDefaultSharedPreferences(master).getBoolean("dont_trust_system_cas", false);
+				if (domain != null && isServer && trustSystemCAs && !isIp(domain)) {
+					String hash = getBase64Hash(chain[0],"SHA-256");
+					List<String> fingerprints = getPoshFingerprints(domain);
+					if (hash != null && fingerprints.contains(hash)) {
+						Log.d("mtm","trusted cert fingerprint of "+domain+" via posh");
+						return;
+					}
+				}
 				e.printStackTrace();
 				if (interactive) {
 					interactCert(chain, authType, e);
@@ -429,28 +439,155 @@ public class MemorizingTrustManager implements X509TrustManager {
 		}
 	}
 
-	public void checkClientTrusted(X509Certificate[] chain, String authType)
-		throws CertificateException
-	{
-		checkCertTrusted(chain, authType, false,true);
+	private List<String> getPoshFingerprints(String domain) {
+		List<String> cached = getPoshFingerprintsFromCache(domain);
+		if (cached == null) {
+			return getPoshFingerprintsFromServer(domain);
+		} else {
+			return cached;
+		}
 	}
 
-	public void checkServerTrusted(X509Certificate[] chain, String authType)
-		throws CertificateException
-	{
-		checkCertTrusted(chain, authType, true,true);
+	private List<String> getPoshFingerprintsFromServer(String domain) {
+		return getPoshFingerprintsFromServer(domain, "https://"+domain+"/.well-known/posh/xmpp-client.json",-1,true);
 	}
 
-	public X509Certificate[] getAcceptedIssuers()
-	{
+	private List<String> getPoshFingerprintsFromServer(String domain, String url, int maxTtl, boolean followUrl) {
+		Log.d("mtm","downloading json for "+domain+" from "+url);
+		try {
+			List<String> results = new ArrayList<>();
+			HttpsURLConnection connection = (HttpsURLConnection) new URL(url).openConnection();
+			connection.setConnectTimeout(5000);
+			connection.setReadTimeout(5000);
+			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			String inputLine;
+			StringBuilder builder = new StringBuilder();
+			while ((inputLine = in.readLine()) != null) {
+				builder.append(inputLine);
+			}
+			JSONObject jsonObject = new JSONObject(builder.toString());
+			in.close();
+			int expires = jsonObject.getInt("expires");
+			if (expires <= 0) {
+				return new ArrayList<>();
+			}
+			if (maxTtl >= 0) {
+				expires = Math.min(maxTtl,expires);
+			}
+			String redirect;
+			try {
+				redirect = jsonObject.getString("url");
+			} catch (JSONException e) {
+				redirect = null;
+			}
+			if (followUrl && redirect != null && redirect.toLowerCase().startsWith("https")) {
+				return getPoshFingerprintsFromServer(domain, redirect, expires, false);
+			}
+			JSONArray fingerprints = jsonObject.getJSONArray("fingerprints");
+			for(int i = 0; i < fingerprints.length(); i++) {
+				JSONObject fingerprint = fingerprints.getJSONObject(i);
+				String sha256 = fingerprint.getString("sha-256");
+				if (sha256 != null) {
+					results.add(sha256);
+				}
+			}
+			writeFingerprintsToCache(domain, results,1000L * expires+System.currentTimeMillis());
+			return results;
+		} catch (Exception e) {
+			Log.d("mtm","error fetching posh "+e.getMessage());
+			return new ArrayList<>();
+		}
+	}
+
+	private File getPoshCacheFile(String domain) {
+		return new File(poshCacheDir+domain+".json");
+	}
+
+	private void writeFingerprintsToCache(String domain, List<String> results, long expires) {
+		File file = getPoshCacheFile(domain);
+		file.getParentFile().mkdirs();
+		try {
+			file.createNewFile();
+			JSONObject jsonObject = new JSONObject();
+			jsonObject.put("expires",expires);
+			jsonObject.put("fingerprints",new JSONArray(results));
+			FileOutputStream outputStream = new FileOutputStream(file);
+			outputStream.write(jsonObject.toString().getBytes());
+			outputStream.flush();
+			outputStream.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private List<String> getPoshFingerprintsFromCache(String domain) {
+		File file = getPoshCacheFile(domain);
+		try {
+			InputStream is = new FileInputStream(file);
+			BufferedReader buf = new BufferedReader(new InputStreamReader(is));
+
+			String line = buf.readLine();
+			StringBuilder sb = new StringBuilder();
+
+			while(line != null){
+				sb.append(line).append("\n");
+				line = buf.readLine();
+			}
+			JSONObject jsonObject = new JSONObject(sb.toString());
+			is.close();
+			long expires = jsonObject.getLong("expires");
+			long expiresIn = expires - System.currentTimeMillis();
+			if (expiresIn < 0) {
+				file.delete();
+				return null;
+			} else {
+				Log.d("mtm","posh fingerprints expire in "+(expiresIn/1000)+"s");
+			}
+			List<String> result = new ArrayList<>();
+			JSONArray jsonArray = jsonObject.getJSONArray("fingerprints");
+			for(int i = 0; i < jsonArray.length(); ++i) {
+				result.add(jsonArray.getString(i));
+			}
+			return result;
+		} catch (FileNotFoundException e) {
+			return null;
+		} catch (IOException e) {
+			return null;
+		} catch (JSONException e) {
+			file.delete();
+			return null;
+		}
+	}
+
+	private static boolean isIp(final String server) {
+		return server != null && (
+				PATTERN_IPV4.matcher(server).matches()
+						|| PATTERN_IPV6.matcher(server).matches()
+						|| PATTERN_IPV6_6HEX4DEC.matcher(server).matches()
+						|| PATTERN_IPV6_HEX4DECCOMPRESSED.matcher(server).matches()
+						|| PATTERN_IPV6_HEXCOMPRESSED.matcher(server).matches());
+	}
+
+	private static String getBase64Hash(X509Certificate certificate, String digest) throws CertificateEncodingException {
+		MessageDigest md;
+		try {
+			md = MessageDigest.getInstance(digest);
+		} catch (NoSuchAlgorithmException e) {
+			return null;
+		}
+		md.update(certificate.getEncoded());
+		return Base64.encodeToString(md.digest(),Base64.NO_WRAP);
+	}
+
+	private X509Certificate[] getAcceptedIssuers() {
 		LOGGER.log(Level.FINE, "getAcceptedIssuers()");
 		return defaultTrustManager.getAcceptedIssuers();
 	}
 
-	private int createDecisionId(String message, MTMDecision d) {
+	private int createDecisionId(MTMDecision d) {
 		int myId;
 		synchronized(openDecisions) {
-			myId = message.hashCode();
+			myId = decisionId;
 			openDecisions.put(myId, d);
 			decisionId += 1;
 		}
@@ -553,22 +690,6 @@ public class MemorizingTrustManager implements X509TrustManager {
 		certDetails(si, cert);
 		return si.toString();
 	}
-
-	// We can use Notification.Builder once MTM's minSDK is >= 11
-	@SuppressWarnings("deprecation")
-	void startActivityNotification(Intent intent, int decisionId, String certName) {
-		Notification n = new Notification(android.R.drawable.ic_lock_lock,
-				master.getString(R.string.mtm_notification),
-				System.currentTimeMillis());
-		PendingIntent call = PendingIntent.getActivity(master, 0, intent, 0);
-		n.setLatestEventInfo(master.getApplicationContext(),
-				master.getString(R.string.mtm_notification),
-				certName, call);
-		n.flags |= Notification.FLAG_AUTO_CANCEL;
-
-		notificationManager.notify(NOTIFICATION_ID + decisionId, n);
-	}
-
 	/**
 	 * Returns the top-most entry of the activity stack.
 	 *
@@ -580,38 +701,27 @@ public class MemorizingTrustManager implements X509TrustManager {
 
 	int interact(final String message, final int titleId) {
 		/* prepare the MTMDecision blocker object */
-		MTMDecision choice = null;
-		int myId = 0;
-		synchronized(openDecisions) {
-			myId = message.hashCode();
-			choice = openDecisions.get(myId);
-		}
+		MTMDecision choice = new MTMDecision();
+		final int myId = createDecisionId(choice);
 
-		if (choice == null) {
-			choice = new MTMDecision();
-			myId = createDecisionId(message, choice);
-			final int notId = myId;
+		masterHandler.post(new Runnable() {
+			public void run() {
+				Intent ni = new Intent(master, MemorizingActivity.class);
+				ni.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				ni.setData(Uri.parse(MemorizingTrustManager.class.getName() + "/" + myId));
+				ni.putExtra(DECISION_INTENT_ID, myId);
+				ni.putExtra(DECISION_INTENT_CERT, message);
+				ni.putExtra(DECISION_TITLE_ID, titleId);
 
-			masterHandler.post(new Runnable() {
-				public void run() {
-					Intent ni = new Intent(master, MemorizingActivity.class);
-					ni.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					ni.setData(Uri.parse(MemorizingTrustManager.class.getName() + "/" + notId));
-					ni.putExtra(DECISION_INTENT_ID, notId);
-					ni.putExtra(DECISION_INTENT_CERT, message);
-					ni.putExtra(DECISION_TITLE_ID, titleId);
-
-					// we try to directly start the activity and fall back to
-					// making a notification
-					try {
-						getUI().startActivity(ni);
-					} catch (Exception e) {
-						LOGGER.log(Level.FINE, "startActivity(MemorizingActivity)", e);
-						startActivityNotification(ni, notId, message);
-					}
+				// we try to directly start the activity and fall back to
+				// making a notification
+				try {
+					getUI().startActivity(ni);
+				} catch (Exception e) {
+					LOGGER.log(Level.FINE, "startActivity(MemorizingActivity)", e);
 				}
-			});
-		}
+			}
+		});
 
 		LOGGER.log(Level.FINE, "openDecisions: " + openDecisions + ", waiting on " + myId);
 		try {
@@ -660,35 +770,45 @@ public class MemorizingTrustManager implements X509TrustManager {
 		}
 		synchronized(d) {
 			d.state = choice;
-			d.notifyAll();
+			d.notify();
 		}
 	}
 	
-	class MemorizingHostnameVerifier implements HostnameVerifier {
-		private HostnameVerifier defaultVerifier;
+	class MemorizingHostnameVerifier implements DomainHostnameVerifier {
+		private final HostnameVerifier defaultVerifier;
+		private final boolean interactive;
 		
-		public MemorizingHostnameVerifier(HostnameVerifier wrapped) {
-			defaultVerifier = wrapped;
+		public MemorizingHostnameVerifier(HostnameVerifier wrapped, boolean interactive) {
+			this.defaultVerifier = wrapped;
+			this.interactive = interactive;
 		}
 
-		protected boolean verify(String hostname, SSLSession session, boolean interactive) {
-			LOGGER.log(Level.FINE, "hostname verifier for " + hostname + ", trying default verifier first");
+		@Override
+		public boolean verify(String domain, String hostname, SSLSession session) {
+			LOGGER.log(Level.FINE, "hostname verifier for " + domain + ", trying default verifier first");
 			// if the default verifier accepts the hostname, we are done
-			if (defaultVerifier.verify(hostname, session)) {
-				LOGGER.log(Level.FINE, "default verifier accepted " + hostname);
-				return true;
+			if (defaultVerifier instanceof DomainHostnameVerifier) {
+				if (((DomainHostnameVerifier) defaultVerifier).verify(domain,hostname, session)) {
+					return true;
+				}
+			} else {
+				if (defaultVerifier.verify(domain, session)) {
+					return true;
+				}
 			}
+
+
 			// otherwise, we check if the hostname is an alias for this cert in our keystore
 			try {
 				X509Certificate cert = (X509Certificate)session.getPeerCertificates()[0];
 				//Log.d(TAG, "cert: " + cert);
-				if (cert.equals(appKeyStore.getCertificate(hostname.toLowerCase(Locale.US)))) {
-					LOGGER.log(Level.FINE, "certificate for " + hostname + " is in our keystore. accepting.");
+				if (cert.equals(appKeyStore.getCertificate(domain.toLowerCase(Locale.US)))) {
+					LOGGER.log(Level.FINE, "certificate for " + domain + " is in our keystore. accepting.");
 					return true;
 				} else {
-					LOGGER.log(Level.FINE, "server " + hostname + " provided wrong certificate, asking user.");
+					LOGGER.log(Level.FINE, "server " + domain + " provided wrong certificate, asking user.");
 					if (interactive) {
-						return interactHostname(cert, hostname);
+						return interactHostname(cert, domain);
 					} else {
 						return false;
 					}
@@ -698,42 +818,47 @@ public class MemorizingTrustManager implements X509TrustManager {
 				return false;
 			}
 		}
-		
-		@Override
-		public boolean verify(String hostname, SSLSession session) {
-			return verify(hostname, session, true);
-		}
-	}
-	
-	class NonInteractiveMemorizingHostnameVerifier extends MemorizingHostnameVerifier {
 
-		public NonInteractiveMemorizingHostnameVerifier(HostnameVerifier wrapped) {
-			super(wrapped);
-		}
 		@Override
-		public boolean verify(String hostname, SSLSession session) {
-			return verify(hostname, session, false);
+		public boolean verify(String domain, SSLSession sslSession) {
+			return verify(domain,null,sslSession);
 		}
-		
-		
 	}
+
 	
+	public X509TrustManager getNonInteractive(String domain) {
+		return new NonInteractiveMemorizingTrustManager(domain);
+	}
+
+	public X509TrustManager getInteractive(String domain) {
+		return new InteractiveMemorizingTrustManager(domain);
+	}
+
 	public X509TrustManager getNonInteractive() {
-		return new NonInteractiveMemorizingTrustManager();
+		return new NonInteractiveMemorizingTrustManager(null);
+	}
+
+	public X509TrustManager getInteractive() {
+		return new InteractiveMemorizingTrustManager(null);
 	}
 	
 	private class NonInteractiveMemorizingTrustManager implements X509TrustManager {
 
+		private final String domain;
+
+		public NonInteractiveMemorizingTrustManager(String domain) {
+			this.domain = domain;
+		}
+
 		@Override
-		public void checkClientTrusted(X509Certificate[] chain, String authType)
-				throws CertificateException {
-			MemorizingTrustManager.this.checkCertTrusted(chain, authType, false, false);
+		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			MemorizingTrustManager.this.checkCertTrusted(chain, authType, domain, false, false);
 		}
 
 		@Override
 		public void checkServerTrusted(X509Certificate[] chain, String authType)
 				throws CertificateException {
-			MemorizingTrustManager.this.checkCertTrusted(chain, authType, true, false);
+			MemorizingTrustManager.this.checkCertTrusted(chain, authType, domain, true, false);
 		}
 
 		@Override
@@ -741,5 +866,29 @@ public class MemorizingTrustManager implements X509TrustManager {
 			return MemorizingTrustManager.this.getAcceptedIssuers();
 		}
 		
+	}
+
+	private class InteractiveMemorizingTrustManager implements X509TrustManager {
+		private final String domain;
+
+		public InteractiveMemorizingTrustManager(String domain) {
+			this.domain = domain;
+		}
+
+		@Override
+		public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+			MemorizingTrustManager.this.checkCertTrusted(chain, authType, domain, false, true);
+		}
+
+		@Override
+		public void checkServerTrusted(X509Certificate[] chain, String authType)
+				throws CertificateException {
+			MemorizingTrustManager.this.checkCertTrusted(chain, authType, domain, true, true);
+		}
+
+		@Override
+		public X509Certificate[] getAcceptedIssuers() {
+			return MemorizingTrustManager.this.getAcceptedIssuers();
+		}
 	}
 }

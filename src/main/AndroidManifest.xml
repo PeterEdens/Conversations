@@ -27,6 +27,8 @@
         android:name="android.permission.READ_PHONE_STATE"
         tools:node="remove" />
 
+    <uses-sdk tools:overrideLibrary="net.ypresto.androidtranscoder" />
+
     <application
         android:name="eu.siacs.conversations.SpreedboxApplication"
         android:allowBackup="true"
@@ -137,7 +139,6 @@
         <activity
             android:name="eu.siacs.conversations.qr_reader.DecoderActivity"
             android:label="@string/app_name"
-            android:launchMode="singleTask"
             android:theme="@style/AppCompatTheme" />
         <activity
             android:name="eu.siacs.conversations.ui.WelcomeActivity"
@@ -513,7 +514,7 @@
             android:name="eu.siacs.conversations.ui.ChooserActivity"
             android:configChanges="keyboardHidden|screenSize"
             android:label="@string/app_name"
-            android:theme="@style/FullscreenTheme">
+            android:theme="@style/AppCompatThemeNoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

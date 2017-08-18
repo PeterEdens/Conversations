@@ -112,16 +112,16 @@ public class Contact implements ListItem, Blockable {
 	}
 
 	public String getDisplayName() {
-		if (this.commonName != null && Config.X509_VERIFICATION) {
+		if (Config.X509_VERIFICATION && this.commonName != null && !this.commonName.isEmpty()) {
 			return this.commonName;
-		} else if (this.systemName != null) {
+		} else if (this.systemName != null && !this.systemName.isEmpty()) {
 			return this.systemName;
-		} else if (this.serverName != null) {
+		} else if (this.serverName != null && !this.serverName.isEmpty()) {
 			return this.serverName;
-		} else if (this.presenceName != null && mutualPresenceSubscription()) {
+		} else if (this.presenceName != null && !this.presenceName.isEmpty() && mutualPresenceSubscription() ) {
 			return this.presenceName;
 		} else if (jid.hasLocalpart()) {
-			return jid.getLocalpart();
+			return jid.getUnescapedLocalpart();
 		} else {
 			return jid.getDomainpart();
 		}
@@ -255,8 +255,10 @@ public class Contact implements ListItem, Blockable {
 		this.serverName = serverName;
 	}
 
-	public void setSystemName(String systemName) {
+	public boolean setSystemName(String systemName) {
+		String old = this.systemName;
 		this.systemName = systemName;
+		return (old == null && systemName != null) || (old != null && !old.equals(systemName));
 	}
 
 	public void setPresenceName(String presenceName) {
@@ -526,8 +528,13 @@ public class Contact implements ListItem, Blockable {
 		return this.mActive;
 	}
 
-	public void setLastseen(long timestamp) {
-		this.mLastseen = Math.max(timestamp, mLastseen);
+	public boolean setLastseen(long timestamp) {
+		if (timestamp > this.mLastseen) {
+			this.mLastseen = timestamp;
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public long getLastseen() {

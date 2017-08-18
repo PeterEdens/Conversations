@@ -98,7 +98,6 @@
 
             <RelativeLayout
                 android:id="@+id/chat_controls"
-                style="?metaButtonBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="top"
@@ -161,7 +160,6 @@
 
             <RelativeLayout
                 android:id="@+id/files_controls"
-                style="?metaButtonBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/ring"
@@ -194,7 +192,6 @@
 
             <RelativeLayout
                 android:id="@+id/video_call_controls"
-                style="?metaButtonBarStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_below="@+id/files_controls"
@@ -253,7 +250,6 @@
 
         <RelativeLayout
             android:id="@+id/settings_controls"
-            style="?metaButtonBarStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="30dp"

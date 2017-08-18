@@ -2,6 +2,7 @@ package eu.siacs.conversations.entities;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.support.annotation.NonNull;
 
 import net.java.otr4j.OtrException;
 import net.java.otr4j.crypto.OtrCryptoException;
@@ -15,12 +16,13 @@ import org.json.JSONObject;
 
 import java.security.interfaces.DSAPublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.PgpDecryptionService;
@@ -28,6 +30,7 @@ import eu.siacs.conversations.crypto.axolotl.AxolotlService;
 import eu.siacs.conversations.xmpp.chatstate.ChatState;
 import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
+import eu.siacs.conversations.xmpp.mam.MamReference;
 
 
 public class Conversation extends AbstractEntity implements Blockable, Comparable<Conversation> {
@@ -35,7 +38,6 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 
 	public static final int STATUS_AVAILABLE = 0;
 	public static final int STATUS_ARCHIVED = 1;
-	public static final int STATUS_DELETED = 2;
 
 	public static final int MODE_MULTI = 1;
 	public static final int MODE_SINGLE = 0;
@@ -49,13 +51,16 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	public static final String MODE = "mode";
 	public static final String ATTRIBUTES = "attributes";
 
-	public static final String ATTRIBUTE_NEXT_ENCRYPTION = "next_encryption";
-	public static final String ATTRIBUTE_MUC_PASSWORD = "muc_password";
 	public static final String ATTRIBUTE_MUTED_TILL = "muted_till";
 	public static final String ATTRIBUTE_ALWAYS_NOTIFY = "always_notify";
-	public static final String ATTRIBUTE_CRYPTO_TARGETS = "crypto_targets";
 	public static final String ATTRIBUTE_LAST_CLEAR_HISTORY = "last_clear_history";
 
+	private static final String ATTRIBUTE_CRYPTO_TARGETS = "crypto_targets";
+
+	private static final String ATTRIBUTE_NEXT_ENCRYPTION = "next_encryption";
+	static final String ATTRIBUTE_MUC_PASSWORD = "muc_password";
+
+	private String draftMessage;
 	private String name;
 	private String contactUuid;
 	private String accountUuid;
@@ -90,6 +95,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	private String mLastReceivedOtrMessageId = null;
 	private String mFirstMamReference = null;
 	private Message correctingMessage;
+	public AtomicBoolean messagesLoaded = new AtomicBoolean(true);
 
 	public boolean hasMessagesLeftOnServer() {
 		return messagesLeftOnServer;
@@ -162,7 +168,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 			for (final Message message : this.messages) {
 				if (message.getUuid().equals(uuid)
 						&& message.getEncryption() != Message.ENCRYPTION_PGP
-						&& (message.getType() == Message.TYPE_IMAGE || message.getType() == Message.TYPE_FILE || message.treatAsDownloadable() != Message.Decision.NEVER)) {
+						&& (message.getType() == Message.TYPE_IMAGE || message.getType() == Message.TYPE_FILE || message.treatAsDownloadable())) {
 					return message;
 				}
 			}
@@ -189,7 +195,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	}
 
 	public boolean setOutgoingChatState(ChatState state) {
-		if (mode == MODE_MULTI) {
+		if (mode == MODE_MULTI && (getNextCounterpart() != null || !isPnNA())) {
 			return false;
 		}
 		if (this.mOutgoingChatState != state) {
@@ -262,7 +268,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 				if (counterpart.equals(message.getCounterpart())
 						&& ((message.getStatus() == Message.STATUS_RECEIVED) == received)
 						&& (carbon == message.isCarbon() || received) ) {
-					if (id.equals(message.getRemoteMsgId())) {
+					if (id.equals(message.getRemoteMsgId()) && !message.isFileOrImage() && !message.treatAsDownloadable()) {
 						return message;
 					} else {
 						return null;
@@ -282,6 +288,17 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 			}
 		}
 		return null;
+	}
+
+	public boolean hasMessageWithCounterpart(Jid counterpart) {
+		synchronized (this.messages) {
+			for(Message message : this.messages) {
+				if (counterpart.equals(message.getCounterpart())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public void populateWithMessages(final List<Message> messages) {
@@ -333,17 +350,21 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		return this.mFirstMamReference;
 	}
 
-	public void setLastClearHistory(long time) {
-		setAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY,String.valueOf(time));
+	public void setLastClearHistory(long time,String reference) {
+		if (reference != null) {
+			setAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY, String.valueOf(time) + ":" + reference);
+		} else {
+			setAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY, String.valueOf(time));
+		}
 	}
 
-	public long getLastClearHistory() {
-		return getLongAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY, 0);
+	public MamReference getLastClearHistory() {
+		return MamReference.fromAttribute(getAttribute(ATTRIBUTE_LAST_CLEAR_HISTORY));
 	}
 
 	public List<Jid> getAcceptedCryptoTargets() {
 		if (mode == MODE_SINGLE) {
-			return Arrays.asList(getJid().toBareJid());
+			return Collections.singletonList(getJid().toBareJid());
 		} else {
 			return getJidListAttribute(ATTRIBUTE_CRYPTO_TARGETS);
 		}
@@ -353,8 +374,9 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		setAttribute(ATTRIBUTE_CRYPTO_TARGETS, acceptedTargets);
 	}
 
-	public void setCorrectingMessage(Message correctingMessage) {
+	public boolean setCorrectingMessage(Message correctingMessage) {
 		this.correctingMessage = correctingMessage;
+		return correctingMessage == null && draftMessage != null;
 	}
 
 	public Message getCorrectingMessage() {
@@ -366,7 +388,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	}
 
 	@Override
-	public int compareTo(Conversation another) {
+	public int compareTo(@NonNull Conversation another) {
 		final Message left = getLatestMessage();
 		final Message right = another.getLatestMessage();
 		if (left.getTimeSent() > right.getTimeSent()) {
@@ -376,6 +398,14 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		} else {
 			return 0;
 		}
+	}
+
+	public void setDraftMessage(String draftMessage) {
+		this.draftMessage = draftMessage;
+	}
+
+	public String getDraftMessage() {
+		return draftMessage;
 	}
 
 	public interface OnMessageFound {
@@ -426,28 +456,27 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	}
 
 	public Message getLatestMarkableMessage() {
-		for (int i = this.messages.size() - 1; i >= 0; --i) {
-			if (this.messages.get(i).getStatus() <= Message.STATUS_RECEIVED
-					&& this.messages.get(i).markable) {
-				if (this.messages.get(i).isRead()) {
-					return null;
-				} else {
-					return this.messages.get(i);
+		synchronized (this.messages) {
+			for (int i = this.messages.size() - 1; i >= 0; --i) {
+				final Message message = this.messages.get(i);
+				if (message.getStatus() <= Message.STATUS_RECEIVED && message.markable) {
+					return message.isRead() ? null : message;
 				}
-					}
+			}
 		}
 		return null;
 	}
 
 	public Message getLatestMessage() {
-		if (this.messages.size() == 0) {
-			Message message = new Message(this, "", Message.ENCRYPTION_NONE);
-			message.setTime(getCreated());
-			return message;
-		} else {
-			Message message = this.messages.get(this.messages.size() - 1);
-			message.setConversation(this);
-			return message;
+		synchronized (this.messages) {
+			if (this.messages.size() == 0) {
+				Message message = new Message(this, "", Message.ENCRYPTION_NONE);
+				message.setType(Message.TYPE_STATUS);
+				message.setTime(Math.max(getCreated(), getLastClearHistory().getTimestamp()));
+				return message;
+			} else {
+				return this.messages.get(this.messages.size() - 1);
+			}
 		}
 	}
 
@@ -464,9 +493,11 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 				if (generatedName != null) {
 					return generatedName;
 				} else {
-					return getJid().getLocalpart();
+					return getJid().getUnescapedLocalpart();
 				}
 			}
+		} else if (isWithStranger()) {
+			return contactJid.toBareJid().toString();
 		} else {
 			return this.getContact().getDisplayName();
 		}
@@ -680,25 +711,41 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		return this.nextCounterpart;
 	}
 
-	private int getMostRecentlyUsedIncomingEncryption() {
-		synchronized (this.messages) {
-			for(int i = this.messages.size() -1; i >= 0; --i) {
-				final Message m = this.messages.get(i);
-				if (m.getStatus() == Message.STATUS_RECEIVED) {
-					final int e = m.getEncryption();
-					if (e == Message.ENCRYPTION_DECRYPTED || e == Message.ENCRYPTION_DECRYPTION_FAILED) {
-						return Message.ENCRYPTION_PGP;
-					} else {
-						return e;
-					}
-				}
-			}
-		}
-		return Message.ENCRYPTION_NONE;
+	public int getNextEncryption() {
+		return fixAvailableEncryption(this.getIntAttribute(ATTRIBUTE_NEXT_ENCRYPTION, getDefaultEncryption()));
 	}
 
-	public int getNextEncryption() {
-		return Math.max(this.getIntAttribute(ATTRIBUTE_NEXT_ENCRYPTION, Message.ENCRYPTION_NONE), Message.ENCRYPTION_NONE);
+	private int fixAvailableEncryption(int selectedEncryption) {
+		switch(selectedEncryption) {
+			case Message.ENCRYPTION_NONE:
+				return Config.supportUnencrypted() ? selectedEncryption : getDefaultEncryption();
+			case Message.ENCRYPTION_AXOLOTL:
+				return Config.supportOmemo() ? selectedEncryption : getDefaultEncryption();
+			case Message.ENCRYPTION_OTR:
+				return Config.supportOtr() ? selectedEncryption : getDefaultEncryption();
+			case Message.ENCRYPTION_PGP:
+			case Message.ENCRYPTION_DECRYPTED:
+			case Message.ENCRYPTION_DECRYPTION_FAILED:
+				return Config.supportOpenPgp() ? Message.ENCRYPTION_PGP : getDefaultEncryption();
+			default:
+				return getDefaultEncryption();
+		}
+	}
+
+	private int getDefaultEncryption() {
+		AxolotlService axolotlService = account.getAxolotlService();
+		if (Config.supportUnencrypted()) {
+			return Message.ENCRYPTION_NONE;
+		} else if (Config.supportOmemo()
+				&& (axolotlService != null && axolotlService.isConversationAxolotlCapable(this) || !Config.multipleEncryptionChoices())) {
+			return Message.ENCRYPTION_AXOLOTL;
+		} else if (Config.supportOtr() && mode == MODE_SINGLE) {
+			return Message.ENCRYPTION_OTR;
+		} else if (Config.supportOpenPgp()) {
+			return Message.ENCRYPTION_PGP;
+		} else {
+			return Message.ENCRYPTION_NONE;
+		}
 	}
 
 	public void setNextEncryption(int encryption) {
@@ -738,6 +785,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		if (this.bookmark != null) {
 			this.bookmark.setConversation(null);
 		}
+		this.bookmark = null;
 	}
 
 	public Bookmark getBookmark() {
@@ -775,19 +823,19 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		}
 	}
 
-	public long getLastMessageTransmitted() {
-		final long last_clear = getLastClearHistory();
-		long last_received = 0;
+	public MamReference getLastMessageTransmitted() {
+		final MamReference lastClear = getLastClearHistory();
+		MamReference lastReceived = new MamReference(0);
 		synchronized (this.messages) {
 			for(int i = this.messages.size() - 1; i >= 0; --i) {
 				Message message = this.messages.get(i);
 				if (message.getStatus() == Message.STATUS_RECEIVED || message.isCarbon()) {
-					last_received = message.getTimeSent();
+					lastReceived = new MamReference(message.getTimeSent(),message.getServerMsgId());
 					break;
 				}
 			}
 		}
-		return Math.max(last_clear,last_received);
+		return MamReference.max(lastClear,lastReceived);
 	}
 
 	public void setMutedTill(long value) {
@@ -839,7 +887,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		}
 	}
 
-	public List<Jid> getJidListAttribute(String key) {
+	private List<Jid> getJidListAttribute(String key) {
 		ArrayList<Jid> list = new ArrayList<>();
 		synchronized (this.attributes) {
 			try {
@@ -858,7 +906,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		return list;
 	}
 
-	public int getIntAttribute(String key, int defaultValue) {
+	private int getIntAttribute(String key, int defaultValue) {
 		String value = this.getAttribute(key);
 		if (value == null) {
 			return defaultValue;
@@ -884,7 +932,7 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 		}
 	}
 
-	public boolean getBooleanAttribute(String key, boolean defaultValue) {
+	private boolean getBooleanAttribute(String key, boolean defaultValue) {
 		String value = this.getAttribute(key);
 		if (value == null) {
 			return defaultValue;
@@ -894,14 +942,12 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 	}
 
 	public void add(Message message) {
-		message.setConversation(this);
 		synchronized (this.messages) {
 			this.messages.add(message);
 		}
 	}
 
 	public void prepend(Message message) {
-		message.setConversation(this);
 		synchronized (this.messages) {
 			this.messages.add(0,message);
 		}
@@ -912,6 +958,17 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 			this.messages.addAll(index, messages);
 		}
 		account.getPgpDecryptionService().decrypt(messages);
+	}
+
+	public void expireOldMessages(long timestamp) {
+		synchronized (this.messages) {
+			for(ListIterator<Message> iterator = this.messages.listIterator(); iterator.hasNext();) {
+				if (iterator.next().getTimeSent() < timestamp) {
+					iterator.remove();
+				}
+			}
+			untieMessages();
+		}
 	}
 
 	public void sort() {
@@ -949,6 +1006,37 @@ public class Conversation extends AbstractEntity implements Blockable, Comparabl
 			}
 			return count;
 		}
+	}
+
+	public int receivedMessagesCount() {
+		int count = 0;
+		synchronized (this.messages) {
+			for(Message message : messages) {
+				if (message.getStatus() == Message.STATUS_RECEIVED) {
+					++count;
+				}
+			}
+		}
+		return count;
+	}
+
+	private int sentMessagesCount() {
+		int count = 0;
+		synchronized (this.messages) {
+			for(Message message : messages) {
+				if (message.getStatus() != Message.STATUS_RECEIVED) {
+					++count;
+				}
+			}
+		}
+		return count;
+	}
+
+	public boolean isWithStranger() {
+		return mode == MODE_SINGLE
+				&& !getJid().equals(account.getJid().toDomainJid())
+				&& !getContact().showInRoster()
+				&& sentMessagesCount() == 0;
 	}
 
 	public class Smp {

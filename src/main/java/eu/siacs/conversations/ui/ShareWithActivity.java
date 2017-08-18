@@ -59,7 +59,17 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 	private Toast mToast;
 	private AtomicInteger attachmentCounter = new AtomicInteger(0);
 
-	private UiCallback<Message> attachFileCallback = new UiCallback<Message>() {
+	private UiInformableCallback<Message> attachFileCallback = new UiInformableCallback<Message>() {
+
+		@Override
+		public void inform(final String text) {
+			runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+					replaceToast(text);
+				}
+			});
+		}
 
 		@Override
 		public void userInputRequried(PendingIntent pi, Message object) {
@@ -184,7 +194,7 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 		if (intent == null) {
 			return;
 		}
-		this.mReturnToPrevious = getPreferences().getBoolean("return_to_previous", false);
+		this.mReturnToPrevious = getPreferences().getBoolean("return_to_previous", getResources().getBoolean(R.bool.return_to_previous));
 		final String type = intent.getType();
 		final String action = intent.getAction();
 		Log.d(Config.LOGTAG, "action: "+action+ ", type:"+type);
@@ -255,7 +265,7 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 
 			try {
 				conversation = xmppConnectionService
-						.findOrCreateConversation(account, Jid.fromString(share.contact), false);
+						.findOrCreateConversation(account, Jid.fromString(share.contact), false,true);
 			} catch (final InvalidJidException e) {
 				return;
 			}
@@ -293,8 +303,7 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 					} else {
 						replaceToast(getString(R.string.preparing_file));
 						ShareWithActivity.this.xmppConnectionService
-								.attachFileToConversation(conversation, share.uris.get(0),
-										attachFileCallback);
+								.attachFileToConversation(conversation, share.uris.get(0), attachFileCallback);
 					}
 				}
 			};
@@ -310,15 +319,61 @@ public class ShareWithActivity extends XmppActivity implements XmppConnectionSer
 		} else {
 			if (mReturnToPrevious && this.share.text != null && !this.share.text.isEmpty() ) {
 				final OnPresenceSelected callback = new OnPresenceSelected() {
-					@Override
-					public void onPresenceSelected() {
-						Message message = new Message(conversation,share.text, conversation.getNextEncryption());
-						if (conversation.getNextEncryption() == Message.ENCRYPTION_OTR) {
-							message.setCounterpart(conversation.getNextCounterpart());
-						}
+
+					private void finishAndSend(Message message) {
 						xmppConnectionService.sendMessage(message);
 						replaceToast(getString(R.string.shared_text_with_x, conversation.getName()));
 						finish();
+					}
+
+					private UiCallback<Message> messageEncryptionCallback = new UiCallback<Message>() {
+						@Override
+						public void success(final Message message) {
+							message.setEncryption(Message.ENCRYPTION_DECRYPTED);
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									finishAndSend(message);
+								}
+							});
+						}
+
+						@Override
+						public void error(final int errorCode, Message object) {
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									replaceToast(getString(errorCode));
+									finish();
+								}
+							});
+						}
+
+						@Override
+						public void userInputRequried(PendingIntent pi, Message object) {
+							finish();
+						}
+					};
+
+					@Override
+					public void onPresenceSelected() {
+
+						final int encryption = conversation.getNextEncryption();
+
+						Message message = new Message(conversation,share.text, encryption);
+
+						Log.d(Config.LOGTAG,"on presence selected encrpytion="+encryption);
+
+						if (encryption == Message.ENCRYPTION_PGP) {
+							replaceToast(getString(R.string.encrypting_message));
+							xmppConnectionService.getPgpEngine().encrypt(message,messageEncryptionCallback);
+							return;
+						}
+
+						if (encryption == Message.ENCRYPTION_OTR) {
+							message.setCounterpart(conversation.getNextCounterpart());
+						}
+						finishAndSend(message);
 					}
 				};
 				if (conversation.getNextEncryption() == Message.ENCRYPTION_OTR) {

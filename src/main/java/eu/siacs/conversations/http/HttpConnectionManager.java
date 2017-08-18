@@ -1,7 +1,5 @@
 package eu.siacs.conversations.http;
 
-import android.os.Build;
-
 import org.apache.http.conn.ssl.StrictHostnameVerifier;
 
 import java.io.IOException;
@@ -15,15 +13,12 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
 import eu.siacs.conversations.entities.Message;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.utils.CryptoHelper;
-import eu.siacs.conversations.utils.SSLSocketHelper;
 import eu.siacs.conversations.utils.TLSSocketFactory;
 
 public class HttpConnectionManager extends AbstractConnectionManager {
@@ -63,19 +58,11 @@ public class HttpConnectionManager extends AbstractConnectionManager {
 
 	public void setupTrustManager(final HttpsURLConnection connection, final boolean interactive) {
 		final X509TrustManager trustManager;
-		final HostnameVerifier hostnameVerifier;
+		final HostnameVerifier hostnameVerifier = mXmppConnectionService.getMemorizingTrustManager().wrapHostnameVerifier(new StrictHostnameVerifier(), interactive);
 		if (interactive) {
-			trustManager = mXmppConnectionService.getMemorizingTrustManager();
-			hostnameVerifier = mXmppConnectionService
-					.getMemorizingTrustManager().wrapHostnameVerifier(
-							new StrictHostnameVerifier());
+			trustManager = mXmppConnectionService.getMemorizingTrustManager().getInteractive();
 		} else {
-			trustManager = mXmppConnectionService.getMemorizingTrustManager()
-					.getNonInteractive();
-			hostnameVerifier = mXmppConnectionService
-					.getMemorizingTrustManager()
-					.wrapHostnameVerifierNonInteractive(
-							new StrictHostnameVerifier());
+			trustManager = mXmppConnectionService.getMemorizingTrustManager().getNonInteractive();
 		}
 		try {
 			final SSLSocketFactory sf = new TLSSocketFactory(new X509TrustManager[]{trustManager}, mXmppConnectionService.getRNG());

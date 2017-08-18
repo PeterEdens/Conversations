@@ -4,11 +4,14 @@ import android.content.Context;
 import android.text.format.DateFormat;
 import android.text.format.DateUtils;
 import android.util.Pair;
+import android.widget.PopupMenu;
 
-import java.util.ArrayList;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import eu.siacs.conversations.Config;
@@ -18,20 +21,14 @@ import eu.siacs.conversations.entities.Contact;
 import eu.siacs.conversations.entities.Conversation;
 import eu.siacs.conversations.entities.ListItem;
 import eu.siacs.conversations.entities.Message;
+import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Presence;
 import eu.siacs.conversations.entities.Transferable;
-import eu.siacs.conversations.ui.XmppActivity;
 import eu.siacs.conversations.xmpp.jid.Jid;
 
 public class UIHelper {
 
-	private static String BLACK_HEART_SUIT = "\u2665";
-	private static String HEAVY_BLACK_HEART_SUIT = "\u2764";
-	private static String WHITE_HEART_SUIT = "\u2661";
-
-	public static final ArrayList<String> HEARTS = new ArrayList<>(Arrays.asList(BLACK_HEART_SUIT,HEAVY_BLACK_HEART_SUIT,WHITE_HEART_SUIT));
-
-	private static final ArrayList<String> LOCATION_QUESTIONS = new ArrayList<>(Arrays.asList(
+	private static final List<String> LOCATION_QUESTIONS = Arrays.asList(
 			"where are you", //en
 			"where are you now", //en
 			"where are you right now", //en
@@ -49,7 +46,9 @@ public class UIHelper {
 			"wo seid ihr gerade", //de
 			"dónde estás", //es
 			"donde estas" //es
-		));
+		);
+
+	private static final List<Character> PUNCTIONATION = Arrays.asList('.',',','?','!',';',':');
 
 	private static final int SHORT_DATE_FLAGS = DateUtils.FORMAT_SHOW_DATE
 		| DateUtils.FORMAT_NO_YEAR | DateUtils.FORMAT_ABBREV_ALL;
@@ -95,6 +94,24 @@ public class UIHelper {
 		return sameDay(date,new Date(System.currentTimeMillis()));
 	}
 
+	public static boolean today(long date) {
+		return sameDay(date,System.currentTimeMillis());
+	}
+
+	public static boolean yesterday(long date) {
+		Calendar cal1 = Calendar.getInstance();
+		Calendar cal2 = Calendar.getInstance();
+		cal1.add(Calendar.DAY_OF_YEAR,-1);
+		cal2.setTime(new Date(date));
+		return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR)
+				&& cal1.get(Calendar.DAY_OF_YEAR) == cal2
+				.get(Calendar.DAY_OF_YEAR);
+	}
+
+	public static boolean sameDay(long a, long b) {
+		return sameDay(new Date(a),new Date(b));
+	}
+
 	private static boolean sameDay(Date a, Date b) {
 		Calendar cal1 = Calendar.getInstance();
 		Calendar cal2 = Calendar.getInstance();
@@ -107,8 +124,9 @@ public class UIHelper {
 
 	public static String lastseen(Context context, boolean active, long time) {
 		long difference = (System.currentTimeMillis() - time) / 1000;
-		active = active && difference <= 300;
-		if (active || difference < 60) {
+		if (active) {
+			return context.getString(R.string.online_right_now);
+		} else if (difference < 60) {
 			return context.getString(R.string.last_seen_now);
 		} else if (difference < 60 * 2) {
 			return context.getString(R.string.last_seen_min);
@@ -180,25 +198,121 @@ public class UIHelper {
 				return new Pair<>(getFileDescriptionString(context,message),true);
 			}
 		} else {
-			String body = message.getBody();
-			if (body.length() > 256) {
-				body = body.substring(0,256);
-			}
+			final String body = message.getBody();
 			if (body.startsWith(Message.ME_COMMAND)) {
 				return new Pair<>(body.replaceAll("^" + Message.ME_COMMAND,
 						UIHelper.getMessageDisplayName(message) + " "), false);
-			} else if (GeoHelper.isGeoUri(message.getBody())) {
+			} else if (message.isGeoUri()) {
 				if (message.getStatus() == Message.STATUS_RECEIVED) {
 					return new Pair<>(context.getString(R.string.received_location), true);
 				} else {
 					return new Pair<>(context.getString(R.string.location), true);
 				}
-			} else if (message.treatAsDownloadable() == Message.Decision.MUST) {
+			} else if (message.treatAsDownloadable()) {
 				return new Pair<>(context.getString(R.string.x_file_offered_for_download,
 						getFileDescriptionString(context,message)),true);
-			} else{
-				return new Pair<>(body.trim(), false);
+			} else {
+				String[] lines = body.split("\n");
+				StringBuilder builder = new StringBuilder();
+				for(String l : lines) {
+					if (l.length() > 0) {
+						char first = l.charAt(0);
+						if ((first != '>' || !isPositionFollowedByQuoteableCharacter(l,0)) && first != '\u00bb') {
+							String line = l.trim();
+							if (line.isEmpty()) {
+								continue;
+							}
+							char last = line.charAt(line.length()-1);
+							if (builder.length() != 0) {
+								builder.append(' ');
+							}
+							builder.append(line);
+							if (!PUNCTIONATION.contains(last)) {
+								break;
+							}
+						}
+					}
+				}
+				if (builder.length() == 0) {
+					builder.append(body.trim());
+				}
+				return new Pair<>(builder.length() > 256 ? builder.substring(0,256) : builder.toString(), false);
 			}
+		}
+	}
+
+	public static boolean isPositionFollowedByQuoteableCharacter(CharSequence body, int pos) {
+		return !isPositionFollowedByNumber(body, pos)
+				&& !isPositionFollowedByEmoticon(body,pos)
+				&& !isPositionFollowedByEquals(body,pos);
+	}
+
+	private static boolean isPositionFollowedByNumber(CharSequence body, int pos) {
+		boolean previousWasNumber = false;
+		for (int i = pos +1; i < body.length(); i++) {
+			char c = body.charAt(i);
+			if (Character.isDigit(body.charAt(i))) {
+				previousWasNumber = true;
+			} else if (previousWasNumber && (c == '.' || c == ',')) {
+				previousWasNumber = false;
+			} else {
+				return (Character.isWhitespace(c) || c == '%' || c == '+') && previousWasNumber;
+			}
+		}
+		return previousWasNumber;
+	}
+
+	private static boolean isPositionFollowedByEquals(CharSequence body, int pos) {
+		return body.length() > pos + 1 && body.charAt(pos+1) == '=';
+	}
+
+	private static boolean isPositionFollowedByEmoticon(CharSequence body, int pos) {
+		if (body.length() <= pos +1) {
+			return false;
+		} else {
+			final char first = body.charAt(pos +1);
+			return first == ';'
+				|| first == ':'
+				|| smallerThanBeforeWhitespace(body,pos+1);
+		}
+	}
+
+	private static boolean smallerThanBeforeWhitespace(CharSequence body, int pos) {
+		for(int i = pos; i < body.length(); ++i) {
+			final char c = body.charAt(i);
+			if (Character.isWhitespace(c)) {
+				return false;
+			} else if (c == '<') {
+				return body.length() == i + 1 || Character.isWhitespace(body.charAt(i + 1));
+			}
+		}
+		return false;
+	}
+
+	public static boolean isPositionFollowedByQuote(CharSequence body, int pos) {
+		if (body.length() <= pos + 1 || Character.isWhitespace(body.charAt(pos+1))) {
+			return false;
+		}
+		boolean previousWasWhitespace = false;
+		for (int i = pos +1; i < body.length(); i++) {
+			char c = body.charAt(i);
+			if (c == '\n' || c == '»') {
+				return false;
+			} else if (c == '«' && !previousWasWhitespace) {
+				return true;
+			} else {
+				previousWasWhitespace = Character.isWhitespace(c);
+			}
+		}
+		return false;
+	}
+
+	public static String getDisplayName(MucOptions.User user) {
+		Contact contact = user.getContact();
+		if (contact != null) {
+			return contact.getDisplayName();
+		} else {
+			return user.getName();
 		}
 	}
 
@@ -323,6 +437,21 @@ public class UIHelper {
 				return context.getString(R.string.type_console);
 			default:
 				return type;
+		}
+	}
+
+	public static boolean showIconsInPopup(PopupMenu attachFilePopup) {
+		try {
+			Field field = attachFilePopup.getClass().getDeclaredField("mPopup");
+			field.setAccessible(true);
+			Object menuPopupHelper = field.get(attachFilePopup);
+			Class<?> cls = Class.forName("com.android.internal.view.menu.MenuPopupHelper");
+			Method method = cls.getDeclaredMethod("setForceShowIcon", new Class[]{boolean.class});
+			method.setAccessible(true);
+			method.invoke(menuPopupHelper, new Object[]{true});
+			return true;
+		} catch (Exception e) {
+			return false;
 		}
 	}
 }

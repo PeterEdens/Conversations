@@ -9,11 +9,9 @@ public class DownloadableFile extends File {
 	private static final long serialVersionUID = 2247012619505115863L;
 
 	private long expectedSize = 0;
-	private String sha1sum;
+	private byte[] sha1sum;
 	private byte[] aeskey;
-
-	private byte[] iv = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
-			0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0xf };
+	private byte[] iv;
 
 	public DownloadableFile(String path) {
 		super(path);
@@ -42,26 +40,30 @@ public class DownloadableFile extends File {
 		this.expectedSize = size;
 	}
 
-	public String getSha1Sum() {
+	public byte[] getSha1Sum() {
 		return this.sha1sum;
 	}
 
-	public void setSha1Sum(String sum) {
+	public void setSha1Sum(byte[] sum) {
 		this.sha1sum = sum;
 	}
 
 	public void setKeyAndIv(byte[] keyIvCombo) {
+		// originally, we used a 16 byte IV, then found for aes-gcm a 12 byte IV is ideal
+		// this code supports reading either length, with sending 12 byte IV to be done in future
 		if (keyIvCombo.length == 48) {
 			this.aeskey = new byte[32];
 			this.iv = new byte[16];
 			System.arraycopy(keyIvCombo, 0, this.iv, 0, 16);
 			System.arraycopy(keyIvCombo, 16, this.aeskey, 0, 32);
+		} else if (keyIvCombo.length == 44) {
+			this.aeskey = new byte[32];
+			this.iv = new byte[12];
+			System.arraycopy(keyIvCombo, 0, this.iv, 0, 12);
+			System.arraycopy(keyIvCombo, 12, this.aeskey, 0, 32);
 		} else if (keyIvCombo.length >= 32) {
 			this.aeskey = new byte[32];
 			System.arraycopy(keyIvCombo, 0, aeskey, 0, 32);
-		} else if (keyIvCombo.length >= 16) {
-			this.aeskey = new byte[16];
-			System.arraycopy(keyIvCombo, 0, this.aeskey, 0, 16);
 		}
 	}
 

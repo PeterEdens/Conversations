@@ -1,6 +1,5 @@
 package eu.siacs.conversations.http;
 
-import android.app.PendingIntent;
 import android.os.PowerManager;
 import android.util.Log;
 import android.util.Pair;
@@ -24,9 +23,8 @@ import eu.siacs.conversations.parser.IqParser;
 import eu.siacs.conversations.persistance.FileBackend;
 import eu.siacs.conversations.services.AbstractConnectionManager;
 import eu.siacs.conversations.services.XmppConnectionService;
-import eu.siacs.conversations.ui.UiCallback;
 import eu.siacs.conversations.utils.CryptoHelper;
-import eu.siacs.conversations.utils.Xmlns;
+import eu.siacs.conversations.xml.Namespace;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xmpp.OnIqPacketReceived;
 import eu.siacs.conversations.xmpp.jid.Jid;
@@ -98,11 +96,16 @@ public class HttpUploadConnection implements Transferable {
 		this.message = message;
 		this.account = message.getConversation().getAccount();
 		this.file = mXmppConnectionService.getFileBackend().getFile(message, false);
-		this.mime = this.file.getMimeType();
+		if (message.getEncryption() == Message.ENCRYPTION_PGP || message.getEncryption() == Message.ENCRYPTION_DECRYPTED) {
+			this.mime = "application/pgp-encrypted";
+		} else {
+			this.mime = this.file.getMimeType();
+		}
 		this.delayed = delay;
 		if (Config.ENCRYPT_ON_HTTP_UPLOADED
-				|| message.getEncryption() == Message.ENCRYPTION_AXOLOTL) {
-			this.key = new byte[48];
+				|| message.getEncryption() == Message.ENCRYPTION_AXOLOTL
+				|| message.getEncryption() == Message.ENCRYPTION_OTR) {
+			this.key = new byte[48]; // todo: change this to 44 for 12-byte IV instead of 16-byte at some point in future
 			mXmppConnectionService.getRNG().nextBytes(this.key);
 			this.file.setKeyAndIv(this.key);
 		}
@@ -115,14 +118,15 @@ public class HttpUploadConnection implements Transferable {
 			return;
 		}
 		this.file.setExpectedSize(pair.second);
+		message.resetFileParams();
 		this.mFileInputStream = pair.first;
-		Jid host = account.getXmppConnection().findDiscoItemByFeature(Xmlns.HTTP_UPLOAD);
+		Jid host = account.getXmppConnection().findDiscoItemByFeature(Namespace.HTTP_UPLOAD);
 		IqPacket request = mXmppConnectionService.getIqGenerator().requestHttpUploadSlot(host,file,mime);
 		mXmppConnectionService.sendIqPacket(account, request, new OnIqPacketReceived() {
 			@Override
 			public void onIqPacketReceived(Account account, IqPacket packet) {
 				if (packet.getType() == IqPacket.TYPE.RESULT) {
-					Element slot = packet.findChild("slot",Xmlns.HTTP_UPLOAD);
+					Element slot = packet.findChild("slot", Namespace.HTTP_UPLOAD);
 					if (slot != null) {
 						try {
 							mGetUrl = new URL(slot.findChildContent("get"));
@@ -157,7 +161,9 @@ public class HttpUploadConnection implements Transferable {
 			PowerManager.WakeLock wakeLock = mHttpConnectionManager.createWakeLock("http_upload_"+message.getUuid());
 			try {
 				wakeLock.acquire();
-				Log.d(Config.LOGTAG, "uploading to " + mPutUrl.toString());
+				final int expectedFileSize = (int) file.getExpectedSize();
+				final int readTimeout = (expectedFileSize / 2048) + Config.SOCKET_TIMEOUT; //assuming a minimum transfer speed of 16kbit/s
+				Log.d(Config.LOGTAG, "uploading to " + mPutUrl.toString()+ " w/ read timeout of "+readTimeout+"s");
 				if (mUseTor) {
 					connection = (HttpURLConnection) mPutUrl.openConnection(mHttpConnectionManager.getProxy());
 				} else {
@@ -167,12 +173,12 @@ public class HttpUploadConnection implements Transferable {
 					mHttpConnectionManager.setupTrustManager((HttpsURLConnection) connection, true);
 				}
 				connection.setRequestMethod("PUT");
-				connection.setFixedLengthStreamingMode((int) file.getExpectedSize());
+				connection.setFixedLengthStreamingMode(expectedFileSize);
 				connection.setRequestProperty("Content-Type", mime == null ? "application/octet-stream" : mime);
 				connection.setRequestProperty("User-Agent",mXmppConnectionService.getIqGenerator().getIdentityName());
 				connection.setDoOutput(true);
 				connection.setConnectTimeout(Config.SOCKET_TIMEOUT * 1000);
-				connection.setReadTimeout(Config.SOCKET_TIMEOUT * 1000);
+				connection.setReadTimeout(readTimeout * 1000);
 				connection.connect();
 				os = connection.getOutputStream();
 				transmitted = 0;
@@ -181,7 +187,7 @@ public class HttpUploadConnection implements Transferable {
 				while (((count = mFileInputStream.read(buffer)) != -1) && !canceled) {
 					transmitted += count;
 					os.write(buffer, 0, count);
-					mXmppConnectionService.updateConversationUi();
+					mHttpConnectionManager.updateConversationUi(false);
 				}
 				os.flush();
 				os.close();
@@ -190,33 +196,13 @@ public class HttpUploadConnection implements Transferable {
 				if (code == 200 || code == 201) {
 					Log.d(Config.LOGTAG, "finished uploading file");
 					if (key != null) {
-						mGetUrl = new URL(mGetUrl.toString() + "#" + CryptoHelper.bytesToHex(key));
+						mGetUrl = CryptoHelper.toAesGcmUrl(new URL(mGetUrl.toString() + "#" + CryptoHelper.bytesToHex(key)));
 					}
 					mXmppConnectionService.getFileBackend().updateFileParams(message, mGetUrl);
 					mXmppConnectionService.getFileBackend().updateMediaScanner(file);
 					message.setTransferable(null);
 					message.setCounterpart(message.getConversation().getJid().toBareJid());
-					if (message.getEncryption() == Message.ENCRYPTION_DECRYPTED) {
-						mXmppConnectionService.getPgpEngine().encrypt(message, new UiCallback<Message>() {
-							@Override
-							public void success(Message message) {
-								mXmppConnectionService.resendMessage(message,delayed);
-							}
-
-							@Override
-							public void error(int errorCode, Message object) {
-								Log.d(Config.LOGTAG,"pgp encryption failed");
-								fail("pgp encryption failed");
-							}
-
-							@Override
-							public void userInputRequried(PendingIntent pi, Message object) {
-								fail("pgp encryption failed");
-							}
-						});
-					} else {
-						mXmppConnectionService.resendMessage(message, delayed);
-					}
+					mXmppConnectionService.resendMessage(message, delayed);
 				} else {
 					Log.d(Config.LOGTAG,"http upload failed because response code was "+code);
 					fail("http upload failed because response code was "+code);

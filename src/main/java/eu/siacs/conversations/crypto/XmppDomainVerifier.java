@@ -1,5 +1,6 @@
 package eu.siacs.conversations.crypto;
 
+import android.os.Build;
 import android.util.Log;
 import android.util.Pair;
 
@@ -16,29 +17,38 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateHolder;
 
 import java.io.IOException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
 
-public class XmppDomainVerifier implements HostnameVerifier {
+import de.duenndns.ssl.DomainHostnameVerifier;
+
+public class XmppDomainVerifier implements DomainHostnameVerifier {
 
 	private static final String LOGTAG = "XmppDomainVerifier";
 
-	private final String SRVName = "1.3.6.1.5.5.7.8.7";
-	private final String xmppAddr = "1.3.6.1.5.5.7.8.5";
+	private static final String SRV_NAME = "1.3.6.1.5.5.7.8.7";
+	private static final String XMPP_ADDR = "1.3.6.1.5.5.7.8.5";
 
 	@Override
-	public boolean verify(String domain, SSLSession sslSession) {
+	public boolean verify(String domain, String hostname, SSLSession sslSession) {
 		try {
 			Certificate[] chain = sslSession.getPeerCertificates();
 			if (chain.length == 0 || !(chain[0] instanceof X509Certificate)) {
 				return false;
 			}
 			X509Certificate certificate = (X509Certificate) chain[0];
+			final List<String> commonNames = getCommonNames(certificate);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT && isSelfSigned(certificate)) {
+				if (commonNames.size() == 1 && matchDomain(domain,commonNames)) {
+					Log.d(LOGTAG,"accepted CN in self signed cert as work around for "+domain);
+					return true;
+				}
+			}
 			Collection<List<?>> alternativeNames = certificate.getSubjectAlternativeNames();
 			List<String> xmppAddrs = new ArrayList<>();
 			List<String> srvNames = new ArrayList<>();
@@ -50,10 +60,10 @@ public class XmppDomainVerifier implements HostnameVerifier {
 						Pair<String, String> otherName = parseOtherName((byte[]) san.get(1));
 						if (otherName != null) {
 							switch (otherName.first) {
-								case SRVName:
+								case SRV_NAME:
 									srvNames.add(otherName.second);
 									break;
-								case xmppAddr:
+								case XMPP_ADDR:
 									xmppAddrs.add(otherName.second);
 									break;
 								default:
@@ -69,16 +79,32 @@ public class XmppDomainVerifier implements HostnameVerifier {
 				}
 			}
 			if (srvNames.size() == 0 && xmppAddrs.size() == 0 && domains.size() == 0) {
-				X500Name x500name = new JcaX509CertificateHolder(certificate).getSubject();
-				RDN[] rdns = x500name.getRDNs(BCStyle.CN);
-				for (int i = 0; i < rdns.length; ++i) {
-					domains.add(IETFUtils.valueToString(x500name.getRDNs(BCStyle.CN)[i].getFirst().getValue()));
-				}
+				domains.addAll(commonNames);
 			}
 			Log.d(LOGTAG, "searching for " + domain + " in srvNames: " + srvNames + " xmppAddrs: " + xmppAddrs + " domains:" + domains);
-			return xmppAddrs.contains(domain) || srvNames.contains("_xmpp-client." + domain) || matchDomain(domain, domains);
+			if (hostname != null) {
+				Log.d(LOGTAG,"also trying to verify hostname "+hostname);
+			}
+			return xmppAddrs.contains(domain)
+					|| srvNames.contains("_xmpp-client." + domain)
+					|| matchDomain(domain, domains)
+					|| (hostname != null && matchDomain(hostname,domains));
 		} catch (Exception e) {
 			return false;
+		}
+	}
+
+	private static List<String> getCommonNames(X509Certificate certificate) {
+		List<String> domains = new ArrayList<>();
+		try {
+			X500Name x500name = new JcaX509CertificateHolder(certificate).getSubject();
+			RDN[] rdns = x500name.getRDNs(BCStyle.CN);
+			for (int i = 0; i < rdns.length; ++i) {
+				domains.add(IETFUtils.valueToString(x500name.getRDNs(BCStyle.CN)[i].getFirst().getValue()));
+			}
+			return domains;
+		} catch (CertificateEncodingException e) {
+			return domains;
 		}
 	}
 
@@ -123,5 +149,19 @@ public class XmppDomainVerifier implements HostnameVerifier {
 			}
 		}
 		return false;
+	}
+
+	private boolean isSelfSigned(X509Certificate certificate) {
+		try {
+			certificate.verify(certificate.getPublicKey());
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	@Override
+	public boolean verify(String domain, SSLSession sslSession) {
+		return verify(domain,null,sslSession);
 	}
 }

@@ -2,11 +2,11 @@ package eu.siacs.conversations.generator;
 
 import eu.siacs.conversations.entities.Account;
 import eu.siacs.conversations.entities.Contact;
+import eu.siacs.conversations.entities.MucOptions;
 import eu.siacs.conversations.entities.Presence;
 import eu.siacs.conversations.services.XmppConnectionService;
 import eu.siacs.conversations.xml.Element;
 import eu.siacs.conversations.xmpp.stanzas.PresencePacket;
-
 
 public class PresenceGenerator extends AbstractGenerator {
 
@@ -57,10 +57,18 @@ public class PresenceGenerator extends AbstractGenerator {
 			Element cap = packet.addChild("c",
 					"http://jabber.org/protocol/caps");
 			cap.setAttribute("hash", "sha-1");
-			cap.setAttribute("node", "http://" + account.getJid().getDomainpart());
+			cap.setAttribute("node", "http://conversations.im");
 			cap.setAttribute("ver", capHash);
 		}
 		return packet;
+	}
+
+	public PresencePacket leave(final MucOptions mucOptions) {
+		PresencePacket presencePacket = new PresencePacket();
+		presencePacket.setTo(mucOptions.getSelf().getFullJid());
+		presencePacket.setFrom(mucOptions.getAccount().getJid());
+		presencePacket.setAttribute("type", "unavailable");
+		return presencePacket;
 	}
 
 	public PresencePacket sendOfflinePresence(Account account) {
