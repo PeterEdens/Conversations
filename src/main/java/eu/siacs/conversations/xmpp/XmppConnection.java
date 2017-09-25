@@ -50,6 +50,8 @@ import javax.net.ssl.X509TrustManager;
 
 import de.duenndns.ssl.DomainHostnameVerifier;
 import de.duenndns.ssl.MemorizingTrustManager;
+import de.measite.minidns.DNSClient;
+import de.measite.minidns.dnsserverlookup.AndroidUsingExec;
 import eu.siacs.conversations.Config;
 import eu.siacs.conversations.crypto.XmppDomainVerifier;
 import eu.siacs.conversations.crypto.sasl.Anonymous;
@@ -268,6 +270,7 @@ public class XmppConnection implements Runnable {
 		if (mXmppConnectionService.areMessagesInitialized()) {
 			mXmppConnectionService.resetSendingToWaiting(account);
 		}
+		DNSClient.removeDNSServerLookupMechanism(AndroidUsingExec.INSTANCE);
 		Log.d(Config.LOGTAG, account.getJid().toBareJid().toString() + ": connecting");
 		features.encryptionEnabled = false;
 		this.attempt++;

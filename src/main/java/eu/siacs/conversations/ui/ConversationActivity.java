@@ -29,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
@@ -94,6 +95,7 @@ public class ConversationActivity extends DrawerActivity
 	public static final int REQUEST_TRUST_KEYS_TEXT = 0x0208;
 	public static final int REQUEST_TRUST_KEYS_MENU = 0x0209;
 	public static final int REQUEST_START_DOWNLOAD = 0x0210;
+    public static final int REQUEST_ADD_EDITOR_CONTENT = 0x211;
 	public static final int ATTACHMENT_CHOICE_CHOOSE_IMAGE = 0x0301;
 	public static final int ATTACHMENT_CHOICE_TAKE_PHOTO = 0x0302;
 	public static final int ATTACHMENT_CHOICE_CHOOSE_FILE = 0x0303;
@@ -132,6 +134,7 @@ public class ConversationActivity extends DrawerActivity
 	private AtomicBoolean mRedirected = new AtomicBoolean(false);
 	private Pair<Integer, Intent> mPostponedActivityResult;
 	private boolean mUnprocessedNewIntent = false;
+    public Uri mPendingEditorContent = null;
 	private Toolbar toolbar;
 
 	public Conversation getSelectedConversation() {
@@ -183,6 +186,9 @@ public class ConversationActivity extends DrawerActivity
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+        // PE: prevent screenshot
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+
 		if (savedInstanceState != null) {
 			mOpenConversation = savedInstanceState.getString(STATE_OPEN_CONVERSATION, null);
 			mPanelOpen = savedInstanceState.getBoolean(STATE_PANEL_OPEN, true);
@@ -659,7 +665,11 @@ public class ConversationActivity extends DrawerActivity
 					if (this.mPendingDownloadableMessage != null) {
 						startDownloadable(this.mPendingDownloadableMessage);
 					}
-				} else {
+				} if (requestCode == REQUEST_ADD_EDITOR_CONTENT) {
+                    if (this.mPendingEditorContent != null) {
+                        attachImageToConversation(this.mPendingEditorContent);
+                    }
+                } else {
 					attachFile(requestCode);
 				}
 			} else {

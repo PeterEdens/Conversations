@@ -438,13 +438,13 @@ public class AvatarService implements OnAdvancedStreamFeaturesLoaded {
 
 			Bitmap bitmap = mXmppConnectionService.getBitmapCache().get(KEY);
 
-			if (bitmap != null) {
+			/*if (bitmap != null) {
 				imageView.setImageBitmap(bitmap);
 				imageView.clearColorFilter();
 				imageView.setBackgroundColor(0x00000000);
 				imageView.setTag(null);
 				return;
-			}
+			}*/
 			if (cancelPotentialWork(imageView, contact.getAccount())) {
 				final NextcloudBitmapWorkerTask task = new NextcloudBitmapWorkerTask(imageView);
 				task.size = size;

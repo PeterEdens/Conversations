@@ -68,7 +68,7 @@ android {
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 25
-        versionCode 241
+        versionCode 244
         versionName "1.0.2"
         archivesBaseName = "Spreedbox-$versionName-$versionCode"
         applicationId "spreedbox.me.app"

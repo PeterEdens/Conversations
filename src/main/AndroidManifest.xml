@@ -390,7 +390,7 @@
             android:name="com.owncloud.android.providers.UsersAndGroupsSearchProvider"
             android:authorities="@string/share_with_authority"
             android:enabled="true"
-            android:exported="false"
+            android:exported="true"
             android:label="@string/search_users_and_groups_hint" />
         <provider
             android:name="org.nextcloud.providers.DocumentsStorageProvider"
