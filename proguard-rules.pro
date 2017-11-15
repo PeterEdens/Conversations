@@ -45,10 +45,9 @@
 
 -keep class org.appspot.apprtc.**  { *; }
 
-
+-keep class com.apple.** { *; }
 
 -keep class de.tavendo.autobahn.**  { *; }
-
 
 
 -keepclasseswithmembernames class * { native <methods>; }
@@ -61,3 +60,4 @@
 -dontwarn org.bouncycastle.**
 -dontwarn com.squareup.**
 -dontwarn android.app.Notification
+-dontwarn sun.misc.Unsafe

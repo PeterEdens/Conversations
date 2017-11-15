@@ -115,6 +115,16 @@
 				android:background="@android:color/transparent"
                 android:contentDescription="@string/auth_refresh_button"
 			    />
+
+            <ImageButton
+                android:id="@+id/search"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_search_grey"
+                android:layout_marginRight="@dimen/alternate_half_margin"
+                android:padding="@dimen/zero"
+                android:background="@color/white"
+                android:layout_gravity="center_vertical|right"/>
 		</FrameLayout>
 
 		<TextView
@@ -265,4 +275,10 @@
 
     </LinearLayout>
 
+
+    <FrameLayout
+        android:id="@+id/search_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_margin="@dimen/standard_padding"></FrameLayout>
 </FrameLayout>

@@ -6,9 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.view.View;
+import android.widget.ImageView;
 
+import com.github.druk.rxdnssd.BonjourService;
 import com.owncloud.android.authentication.AuthenticatorActivity;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 
@@ -21,10 +25,24 @@ import eu.siacs.conversations.xmpp.jid.InvalidJidException;
 import eu.siacs.conversations.xmpp.jid.Jid;
 import spreedbox.me.app.R;
 
-public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
+public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity implements ServiceBrowserFragment.ServiceListener {
 
     public XmppConnectionService xmppConnectionService;
     public boolean xmppConnectionServiceBound = false;
+    ServiceBrowserFragment serviceBrowserFragment;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        serviceBrowserFragment = new ServiceBrowserFragment();
+        ImageView searchBtn = (ImageView) findViewById(R.id.search);
+        searchBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getSupportFragmentManager().beginTransaction().add(R.id.search_container, serviceBrowserFragment).commit();
+            }
+        });
+    }
 
     protected ServiceConnection mConnection = new ServiceConnection() {
 
@@ -130,5 +148,17 @@ public class SpreedboxAuthenticatorActivity extends AuthenticatorActivity{
                 }
             }
         }
+    }
+
+    @Override
+    public void onServiceWasSelected(String domain, String regType, BonjourService service) {
+        mHostUrlInput.setText(service.getInet4Address().getHostAddress());
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentById(R.id.search_container)).commit();
+        checkOcServer();
+    }
+
+    @Override
+    public void onCancel() {
+        getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentById(R.id.search_container)).commit();
     }
 }

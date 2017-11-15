@@ -72,5 +72,5 @@
     <declare-styleable name="UnreadCountCustomView">
         <attr name="backgroundColor" format="reference|color"/>
     </declare-styleable>
-
+    <attr name="selectedItemBackground" format="reference" />
 </resources>

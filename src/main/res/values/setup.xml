@@ -93,6 +93,8 @@
 
     <!-- login data links -->
     <string name="login_data_own_scheme" translatable="false">cloud</string>
+
+    <string name="not_resolved_yet">Not resolved yet</string>
 </resources>
 
 

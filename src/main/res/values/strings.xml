@@ -819,4 +819,5 @@
             \n\nSecureFileShare based upon Nextcloud https://github.com/nextcloud/android\n(GPLv3)
 
 	</string>
+    <string name="spreedbox_discovery">Local Spreedbox Discovery</string>
 </resources>
